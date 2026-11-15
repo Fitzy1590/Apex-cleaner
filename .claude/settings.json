@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./gradlew check 1>&2 || exit 2"
+          }
+        ]
+      }
+    ]
+  }
+}

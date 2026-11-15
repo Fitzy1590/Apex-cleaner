@@ -1,0 +1,139 @@
+package com.fitzy.apexcleaner.ui.mobile
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
+import com.fitzy.apexcleaner.core.formatBytes
+import com.fitzy.apexcleaner.ui.AppEntry
+import com.fitzy.apexcleaner.ui.UiState
+import com.fitzy.apexcleaner.ui.theme.Accent
+import com.fitzy.apexcleaner.ui.theme.ApexTheme
+import com.fitzy.apexcleaner.ui.theme.Bad
+import com.fitzy.apexcleaner.ui.theme.Warn
+
+@Composable
+fun MobileDashboard(
+    state: UiState,
+    onClean: () -> Unit,
+    onBoost: () -> Unit,
+    onCool: () -> Unit,
+    onToggleApp: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onGrantFiles: () -> Unit,
+) {
+    ApexTheme {
+        Scaffold { pad ->
+            LazyColumn(
+                Modifier.fillMaxSize().padding(pad).padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item { Text("Apex Cleaner", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
+                state.message?.let { m ->
+                    item {
+                        Card(Modifier.fillMaxWidth()) {
+                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(m, Modifier.weight(1f))
+                                OutlinedButton(onClick = onDismiss) { Text("OK") }
+                            }
+                        }
+                    }
+                }
+                state.health?.let { h ->
+                    item {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            Gauge("Storage free", h.storageFreePct)
+                            Gauge("Memory free", h.ramFreePct)
+                            Gauge("Battery", h.batteryPct)
+                        }
+                    }
+                    item {
+                        Text(
+                            "${formatBytes(h.storageFreeBytes)} free of ${formatBytes(h.storageTotalBytes)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+                item {
+                    Button(onClick = onClean, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                        val size = state.scan?.totalBytes?.let { " (${formatBytes(it)})" }.orEmpty()
+                        Text(if (state.busy) "Working…" else "Safe Clean$size")
+                    }
+                }
+                item {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onBoost, enabled = !state.busy, modifier = Modifier.weight(1f)) { Text("1-Tap Boost") }
+                        OutlinedButton(onClick = onCool, enabled = !state.busy, modifier = Modifier.weight(1f)) { Text("Cool Down") }
+                    }
+                }
+                item { OutlinedButton(onClick = onGrantFiles, modifier = Modifier.fillMaxWidth()) { Text("Allow deep clean of leftovers") } }
+                state.scan?.let { s ->
+                    item { Text("What can be cleaned", style = MaterialTheme.typography.titleMedium) }
+                    items(s.bytesByCategory.entries.toList()) { (cat, b) ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(cat.label); Text(formatBytes(b))
+                        }
+                    }
+                }
+                item { Text("Protected apps (never interrupted)", style = MaterialTheme.typography.titleMedium) }
+                items(state.apps, key = { it.pkg }) { AppRow(it, onToggleApp) }
+                item { Spacer(Modifier.height(24.dp)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppRow(app: AppEntry, onToggle: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(app.label)
+            if (app.automatic) Text("Automatically protected", style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = app.protectedByUser || app.automatic, onCheckedChange = { onToggle(app.pkg) }, enabled = !app.automatic)
+    }
+}
+
+@Composable
+fun Gauge(label: String, percent: Int) {
+    val color = when { percent < 15 -> Bad; percent < 30 -> Warn; else -> Accent }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(88.dp), contentAlignment = Alignment.Center) {
+            val track = MaterialTheme.colorScheme.surfaceVariant
+            Canvas(Modifier.fillMaxSize()) {
+                val stroke = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round)
+                val inset = 5.dp.toPx()
+                val sz = Size(size.width - inset * 2, size.height - inset * 2)
+                drawArc(track, 135f, 270f, false, Offset(inset, inset), sz, style = stroke)
+                drawArc(color, 135f, 270f * percent.coerceIn(0, 100) / 100f, false, Offset(inset, inset), sz, style = stroke)
+            }
+            Text("$percent%", style = MaterialTheme.typography.titleMedium, color = Color.Unspecified)
+        }
+        Text(label, style = MaterialTheme.typography.bodySmall)
+    }
+}
