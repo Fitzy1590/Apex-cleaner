@@ -1,6 +1,6 @@
 package com.fitzy.apexcleaner.core
 
-import android.app.AppWidgetManager
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager

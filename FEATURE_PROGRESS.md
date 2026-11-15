@@ -3,8 +3,8 @@
 ## Audit (2026-11-15)
 Repo held only a README: no existing app. Owner chose "build fresh here".
 
-## Status: CODE WRITTEN, NOT YET COMPILED
-Android SDK is not installed in this cloud machine; installing it needs the owner to accept Google's licence terms. Until then `./gradlew check` has not run.
+## Status: BUILD PASSING
+`./gradlew check` (compile, lint, unit tests) passes. Android SDK installed on the cloud machine with owner approval.
 
 ## Done (written)
 - [x] Gradle/Compose/TV project setup, manifest (phone + TV launcher)
@@ -16,6 +16,5 @@ Android SDK is not installed in this cloud machine; installing it needs the owne
 - [x] Guardrails: CLAUDE.md, .claude/settings.json hook, path rules
 
 ## Pending
-- [ ] Install Android SDK, generate Gradle wrapper, run `./gradlew check`, fix errors
 - [ ] Real-device test (cleaning, notifications, TV focus)
 - [ ] Known limits: cannot clear OTHER apps' private caches without system permission; deep clean needs "All files access"
