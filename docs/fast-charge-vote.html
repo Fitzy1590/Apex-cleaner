@@ -1,0 +1,234 @@
+<title>Fast-Charge Voting Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one column of question cards; each card = mock-up beside tickable options; sticky answer bar at the bottom. */
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --fg:#14202b; --muted:#566574; --line:#dde2e8;
+  --accent:#b86800; --accent-soft:#fdf0d9; --on-accent:#ffffff; --good:#12805c; --warn:#a15c00;
+  --dev-frame:#2b3440; --dev-bg:#0d141b; --dev-card:#1a242e; --dev-fg:#eef3f7; --dev-muted:#8d9aa7; --dev-accent:#ffb43b; --dev-ok:#3ddc97;
+  --f-head:"Space Grotesk",system-ui,sans-serif; --f-body:Inter,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --card:#17212b; --fg:#eaf0f5; --muted:#9aa8b6; --line:#2a3846;
+  --accent:#ffb43b; --accent-soft:#33260f; --on-accent:#1a1100; --good:#3ddc97; --warn:#ffb43b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --card:#17212b; --fg:#eaf0f5; --muted:#9aa8b6; --line:#2a3846;
+  --accent:#ffb43b; --accent-soft:#33260f; --on-accent:#1a1100; --good:#3ddc97; --warn:#ffb43b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 110px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.1}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lead{color:var(--muted);max-width:65ch;margin:8px 0 0}
+.note{background:var(--accent-soft);border-radius:10px;padding:12px 14px;max-width:70ch}
+.note b{font-weight:600}
+.q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px}
+@media(max-width:760px){.q{grid-template-columns:minmax(0,1fr)}}
+.q header{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.q h2{font-size:20px}
+.pickhint{font-size:12px;color:var(--muted)}
+.mock{display:flex;flex-direction:column;gap:14px;align-items:center;min-width:0}
+.cap{font-size:12px;color:var(--muted);text-align:center;max-width:280px}
+.opts{display:flex;flex-direction:column;gap:10px;min-width:0}
+.opt{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;background:transparent;text-align:left;color:inherit;font:inherit;width:100%}
+.opt:hover{border-color:var(--muted)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.box{width:22px;height:22px;border:2px solid var(--muted);border-radius:6px;display:grid;place-items:center;margin-top:1px}
+.opt[role="radio"] .box{border-radius:50%}
+.opt[aria-checked="true"] .box{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.opt .box svg{width:14px;height:14px;opacity:0}
+.opt[aria-checked="true"] .box svg{opacity:1}
+.ot{font-weight:600;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.star{font-size:11px;font-weight:600;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 8px}
+.od{color:var(--muted);font-size:14px;margin-top:2px}
+.pc{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:13px;margin-top:6px}
+.pc span:first-child{color:var(--good)} .pc span:last-child{color:var(--warn)}
+/* device mock-ups */
+.phone{width:210px;border:6px solid var(--dev-frame);border-radius:28px;background:var(--dev-bg);color:var(--dev-fg);padding:14px 10px 16px;display:flex;flex-direction:column;gap:8px;font-size:11px}
+.sb{display:flex;justify-content:space-between;color:var(--dev-muted);font-size:10px}
+.dcard{background:var(--dev-card);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:5px}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.m{color:var(--dev-muted)} .big{font:700 20px var(--f-head)} .acc{color:var(--dev-accent)} .ok{color:var(--dev-ok)}
+.badge{background:var(--dev-accent);color:#1a1100;border-radius:99px;padding:1px 7px;font-weight:600;font-size:9.5px;white-space:nowrap}
+.bar{height:5px;border-radius:3px;background:#2a3846;overflow:hidden}.bar i{display:block;height:100%;background:var(--dev-accent)}
+.clock{text-align:center;font:500 38px var(--f-head);margin:6px 0 0}.date{text-align:center;color:var(--dev-muted);margin-bottom:6px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tile{background:var(--dev-card);border-radius:14px;padding:9px;display:flex;flex-direction:column;gap:2px;min-height:54px}
+.tile.on{background:var(--dev-accent);color:#1a1100}.tile.on .m{color:#4a3500}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.chip{border-radius:99px;padding:2px 8px;font-size:10px;background:#2a3846}
+.chip.p{background:#4a3500;color:var(--dev-accent)}.chip.s{background:#0f3b2c;color:var(--dev-ok)}
+.tv{width:100%;max-width:290px;aspect-ratio:16/9;border:5px solid var(--dev-frame);border-radius:8px;background:var(--dev-bg);color:var(--dev-fg);display:grid;grid-template-columns:34px 1fr;gap:8px;padding:8px;font-size:10px}
+.tv .nav{display:flex;flex-direction:column;gap:6px}.tv .nav i{height:16px;border-radius:4px;background:#2a3846}
+.tv .grid{display:grid;grid-template-columns:1fr 1.25fr;gap:6px}
+.tv .c{background:var(--dev-card);border-radius:7px;padding:6px;display:flex;flex-direction:column;gap:3px}
+.tv .c.f{border:3px solid var(--dev-accent);transform:scale(1.04)}
+.heat{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,#3ddc97 0 55%,#ffb43b 55% 75%,#ff6b5a 75%)}
+.heat i{position:absolute;top:-4px;width:3px;height:20px;background:#fff;border-radius:2px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:290px}
+.cmp .dcard{background:var(--dev-card);color:var(--dev-fg)}
+.tag{font-size:10px;color:var(--dev-muted);text-transform:uppercase;letter-spacing:.06em}
+svg text{font-family:var(--f-body)}
+/* answer bar */
+.bar-fixed{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:5}
+.bar-in{max-width:980px;margin:0 auto;display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap}
+.sum{flex:1 1 240px;min-width:0}.sum b{font-family:var(--f-head);font-size:17px}.sum div{color:var(--muted);font-size:13px}
+button.btn{font:600 14px var(--f-body);border-radius:10px;padding:10px 14px;border:1.5px solid var(--accent);background:transparent;color:var(--fg);cursor:pointer}
+button.btn.pri{background:var(--accent);color:var(--on-accent)}
+button.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.foot{color:var(--muted);font-size:13px}
+@media(prefers-reduced-motion:no-preference){.opt{transition:border-color .15s,background .15s}}
+</style>
+
+<div class="wrap">
+  <div>
+    <div class="eyebrow">Apex Cleaner · Phase 1</div>
+    <h1>Fast-Charge Accelerator: pick how it should work</h1>
+    <p class="lead">Tap the answers you want. Items marked <span class="star">Recommended</span> are my suggestions. The pictures are mock-ups of how each choice would look on your phone and TV. The numbers in them are examples only.</p>
+  </div>
+  <div class="note"><b>Straight talk:</b> an app can't make a charger send more power. What Apex Cleaner can do is cut heat and extra drain so your phone charges at the best speed the charger allows, and show you the real speed live.</div>
+  <div id="qs" class="wrap" style="gap:20px"></div>
+  <p class="foot">Research came from open-source battery apps (ABattery, Amply and others). I borrow ideas only, never code, because most are GPL-licensed. One app that force-stops other apps was ruled out because it breaks your safety rules.</p>
+</div>
+
+<div class="bar-fixed"><div class="bar-in">
+  <div class="sum"><b id="count">0 of 7 answered</b><div id="picks">Nothing picked yet.</div></div>
+  <button class="btn" id="stars" type="button">Tick all recommended</button>
+  <button class="btn pri" id="copy" type="button">Copy my picks</button>
+</div></div>
+
+<script>
+const bolt='<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>';
+const chk='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8.5 3.2 3L13 4.5"/></svg>';
+
+const lock=`<div class="phone"><div class="sb"><span>Apex</span><span>62%</span></div>
+<div class="clock">9:41</div><div class="date">Monday, 16 November</div>
+<div class="dcard"><div class="row"><span class="m">Apex Cleaner</span><span class="badge">${bolt} Fast-Charge Active</span></div>
+<div class="row"><span class="big acc">16.0 W</span><span class="m">15W Fast Charge</span></div>
+<div class="bar"><i style="width:62%"></i></div>
+<div class="row"><span>Full in about 45 min</span><span class="m">34.5°C</span></div></div></div>`;
+const tile=`<div class="phone"><div class="sb"><span>Quick settings</span><span>62%</span></div>
+<div class="tiles"><div class="tile"><span>Wi-Fi</span><span class="m">Home</span></div><div class="tile"><span>Bluetooth</span><span class="m">Off</span></div>
+<div class="tile on"><span style="font-weight:600">${bolt} Charging</span><span class="m">16.0 W</span></div><div class="tile"><span>Torch</span><span class="m">Off</span></div></div></div>`;
+const dial=`<div class="phone"><div class="sb"><span>Charging</span><span>62%</span></div>
+<div class="dcard"><div style="display:flex;justify-content:center"><svg width="124" height="124" viewBox="0 0 120 120" role="img" aria-label="Wattage dial showing 16 of 30 watts">
+<circle cx="60" cy="60" r="44" fill="none" stroke="#2a3846" stroke-width="10"/>
+<circle cx="60" cy="60" r="44" fill="none" stroke="#ffb43b" stroke-width="10" stroke-linecap="round" stroke-dasharray="147.5 276.5" transform="rotate(-90 60 60)"/>
+<text x="60" y="62" text-anchor="middle" font-size="22" font-weight="700" fill="#eef3f7">16.0</text>
+<text x="60" y="78" text-anchor="middle" font-size="10" fill="#8d9aa7">watts · 0–30 W scale</text></svg></div>
+<div class="row"><span class="badge">15W Fast Charge</span><span class="m">Full in ~45 min</span></div></div>
+<div class="dcard"><div class="tag">Speed during this charge</div>
+<svg viewBox="0 0 220 96" width="100%" role="img" aria-label="Charging speed by battery level">
+<g stroke="#2a3846" stroke-width="1"><line x1="20" y1="10" x2="210" y2="10"/><line x1="20" y1="45" x2="210" y2="45"/><line x1="20" y1="80" x2="210" y2="80"/></g>
+<g font-size="8" fill="#8d9aa7"><text x="2" y="13">30</text><text x="2" y="48">15</text><text x="6" y="83">0</text><text x="20" y="93">0%</text><text x="104" y="93">50%</text><text x="188" y="93">100%</text></g>
+<polyline points="20,52 38,45 74,42.7 110,42.7 146,52 164,61 182,70.7 200,77.7" fill="none" stroke="#ffb43b" stroke-width="2"/>
+<circle cx="131.6" cy="47.4" r="3.5" fill="#ffb43b"/></svg></div></div>`;
+const health=`<div class="phone"><div class="sb"><span>Battery health</span><span>62%</span></div>
+<div class="dcard"><div class="row"><span class="m">Temperature</span><b class="ok">34.5°C</b></div>
+<div class="heat"><i style="left:56%"></i></div><div class="row m"><span>Cool</span><span>38°C limit</span><span>Hot</span></div></div>
+<div class="dcard"><div class="row"><span class="m">Voltage</span><b>4.10 V</b></div><div class="row"><span class="m">Current</span><b>3.90 A</b></div>
+<div class="row"><span class="m">Power</span><b class="acc">16.0 W</b></div><div class="row"><span class="m">Profile</span><b>15W Fast Charge</b></div></div>
+<div class="m">Examples: 5W USB · 15W Fast Charge · 45W+ Super Fast</div></div>`;
+const hist=`<div class="phone"><div class="sb"><span>Charge history</span><span></span></div>
+<div class="dcard"><div class="row"><span>Today 9:12</span><span class="acc">avg 14.8 W</span></div><div class="row m"><span>41% to 62%</span><span>peak 35.9°C</span></div></div>
+<div class="dcard"><div class="row"><span>Yesterday 22:40</span><span class="acc">avg 11.2 W</span></div><div class="row m"><span>18% to 100%</span><span>peak 37.1°C</span></div></div>
+<div class="dcard"><div class="row"><span>Sat 07:05</span><span class="acc">avg 5.1 W</span></div><div class="row m"><span>55% to 79%</span><span>peak 33.8°C</span></div></div></div>`;
+const tvm=`<div class="tv"><div class="nav"><i></i><i></i><i></i></div><div class="grid">
+<div class="c"><span class="m">Storage</span><b>62% free</b></div>
+<div class="c f"><span class="m">${bolt} Charging</span><b class="acc" style="font-size:15px">16.0 W</b><span>Full in ~45 min</span><span class="badge" style="align-self:flex-start">Fast-Charge Active</span></div>
+<div class="c"><span class="m">Memory</span><b>48% free</b></div><div class="c"><span class="m">Battery</span><b>62% · 34.5°C</b></div></div></div>`;
+const heatm=`<div class="phone"><div class="sb"><span>Heat guard</span><span></span></div>
+<div class="dcard"><div class="row"><span class="m">Now</span><b class="ok">34.5°C</b></div><div class="heat"><i style="left:56%"></i></div>
+<div class="row m"><span>35</span><span>38 limit</span><span>40</span></div></div>
+<div class="dcard"><span class="acc" style="font-weight:600">At 38°C and above</span><span>Background jobs wait until the phone cools down.</span></div></div>`;
+const pausem=`<div class="phone"><div class="sb"><span>While charging</span><span></span></div>
+<div class="dcard"><div class="tag">Paused for now</div><div class="chips"><span class="chip p">Apex cache cleaning</span><span class="chip p">Apex background checks</span><span class="chip p">Heavy scheduled jobs</span></div></div>
+<div class="dcard"><div class="tag">Never touched</div><div class="chips"><span class="chip s">Alarms</span><span class="chip s">Widgets</span><span class="chip s">Music and video</span><span class="chip s">Launchers</span><span class="chip s">Your whitelist</span></div></div></div>`;
+const trig=`<div class="phone"><div class="sb"><span>Start fast-charge</span><span></span></div>
+<div class="dcard"><div class="row"><span>Plug in at 40%</span><span class="ok">Starts</span></div><div class="row"><span>Plug in at 92%</span><span class="m">A starts · B waits</span></div><div class="row"><span>Slow 5 W charger</span><span class="m">A, B start · C waits</span></div><div class="row"><span>Warm phone</span><span class="m">All start · C leads</span></div></div>
+<div class="m">How each option reacts in four everyday moments.</div></div>`;
+const ttf=`<div class="cmp"><div class="dcard"><span class="tag">Option A</span><span class="m">First minute</span><b>Estimating…</b><span class="m">Then</span><b class="acc">40–50 min</b></div>
+<div class="dcard"><span class="tag">Option B</span><span class="m">Right away</span><b>45 min</b><span class="m">A minute later</span><b class="acc">38 min</b></div></div>`;
+
+const Q=[
+{id:'q1',t:'When should fast-charge switch on?',type:'one',mock:trig,cap:'Mock-up: how each option behaves.',o:[
+ ['A','Every time power is plugged in','Simple and predictable.','Same every time','Also runs on a slow trickle charge',1],
+ ['B','Only below a battery level you choose (e.g. 80%)','Skips pointless action near full.','Smarter near full','One more setting to manage'],
+ ['C','Only when charging is slow or the phone is warm','Smartest, reacts to what is really happening.','Least wasted effort','Can misfire on phones with odd readings']]},
+{id:'q2',t:'Heat limit',type:'one',mock:heatm,cap:'Mock-up: the heat guard.',o:[
+ ['A','38°C, plus follow the phone’s own “getting hot” warning','Works on every phone and adapts to each one.','Fits all phones','Slightly more going on behind the scenes',1],
+ ['B','38°C only','The simplest version.','Easy to understand','Ignores how phones differ'],
+ ['C','You choose 35 to 40°C in settings','Full control.','Your call','More clutter in settings']]},
+{id:'q3',t:'What gets paused while charging',type:'one',mock:pausem,cap:'Mock-up: what pauses and what never does.',o:[
+ ['A','Apex’s own syncs and cleaning, plus heavy scheduled work','Alarms, widgets, music and your whitelist are never touched.','Safe and automatic','Cannot pause other apps (by design)',1],
+ ['B','Everything in A, plus on-screen suggestions','Hints like “lower brightness” or “try airplane mode”.','Honest extra tips','Not automatic']]},
+{id:'q4',t:'Lock-screen display',type:'many',mock:lock+tile,cap:'Mock-ups: lock-screen notification (A) and quick-settings tile (B).',o:[
+ ['A','A live notification','Watts, time to 100%, temperature and a Fast-Charge Active badge.','Works on every phone','Notification area is busier while charging',1],
+ ['B','A quick-settings tile','See the wattage with one swipe down.','Fast to reach','You add the tile once'],
+ ['C','An on-screen overlay','Floats over other apps.','Always visible','Needs an extra permission, awkward on TV. I would skip it.']]},
+{id:'q5',t:'Inside the app',type:'many',mock:dial+health+hist,cap:'Mock-ups: charging card (A), health panel (B), history (C).',o:[
+ ['A','A charging card','Live wattage dial and a speed curve for this charge.','Looks great, easy to read','Needs a short charge to draw the curve',1],
+ ['B','A battery health panel','Temperature, voltage, current and the charger type (5W, 15W, 45W+).','Shows what is really happening','A few more numbers on screen',1],
+ ['C','Saved charge history','Compare charges over days.','Nice for spotting a weak cable','Uses a little storage']]},
+{id:'q6',t:'Time to 100%',type:'one',mock:ttf,cap:'Mock-up: how the estimate behaves.',o:[
+ ['A','Smoothed over a few minutes','Says “estimating…” at first and gives a range from 80 to 100%.','Believable, because charging slows near full','Takes a minute to appear',1],
+ ['B','One instant number','Shows a figure straight away.','Immediate','Jumps around']]},
+{id:'q7',t:'Android TV',type:'one',mock:tvm,cap:'Mock-up: the TV charging card with its glowing focus border.',o:[
+ ['A','Add a simple charging card to the TV screen','Only shows when the device has a battery. Same focus rules as the rest of the TV app.','Same look on every screen','Rarely useful on a plugged-in TV box',1],
+ ['B','Phone only','Leave the TV app as it is.','Less to build','TV users miss out']]}
+];
+
+const state={}; let db=null, ref=null, saveT=0;
+const el=document.getElementById('qs');
+el.innerHTML=Q.map((q,n)=>`<section class="q" aria-labelledby="h-${q.id}">
+<header><h2 id="h-${q.id}">${n+1}. ${q.t}</h2><span class="pickhint">${q.type==='many'?'Tick any that you want':'Pick one'}</span></header>
+<div class="mock">${q.mock}<div class="cap">${q.cap}</div></div>
+<div class="opts" role="${q.type==='many'?'group':'radiogroup'}" aria-labelledby="h-${q.id}">${q.o.map(o=>`
+<button type="button" class="opt" role="${q.type==='many'?'checkbox':'radio'}" aria-checked="false" data-q="${q.id}" data-k="${o[0]}">
+<span class="box">${chk}</span><span><span class="ot">${o[0]}. ${o[1]}${o[5]?'<span class="star">Recommended</span>':''}</span>
+<span class="od" style="display:block">${o[2]}</span><span class="pc"><span>+ ${o[3]}</span><span>− ${o[4]}</span></span></span></button>`).join('')}</div></section>`).join('');
+
+function get(id){return state[id]||[]}
+function render(){
+  document.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-checked',get(b.dataset.q).includes(b.dataset.k)));
+  const done=Q.filter(q=>get(q.id).length).length;
+  document.getElementById('count').textContent=done+' of 7 answered';
+  const t=text();document.getElementById('picks').textContent=t||'Nothing picked yet.';
+}
+function text(){return Q.map((q,i)=>get(q.id).length?(i+1)+get(q.id).join('+'):'').filter(Boolean).join(', ')}
+function save(){
+  try{localStorage.setItem('fcvote',JSON.stringify(state))}catch(e){}
+  clearTimeout(saveT);saveT=setTimeout(()=>{ if(ref) ref.set({picks:state,summary:text(),at:new Date().toISOString()}).catch(()=>{}) },600);
+}
+function setPick(q,k){
+  const type=Q.find(x=>x.id===q).type, cur=get(q);
+  state[q]= type==='many' ? (cur.includes(k)?cur.filter(x=>x!==k):[...cur,k].sort()) : (cur[0]===k?[]:[k]);
+  render();save();
+}
+el.addEventListener('click',e=>{const b=e.target.closest('.opt');if(b)setPick(b.dataset.q,b.dataset.k)});
+document.getElementById('stars').onclick=()=>{
+  Q.forEach(q=>{state[q.id]=q.o.filter(o=>o[5]).map(o=>o[0]); if(q.type==='one')state[q.id]=state[q.id].slice(0,1)});
+  render();save();
+};
+document.getElementById('copy').onclick=async e=>{
+  const b=e.currentTarget,t=text();if(!t)return;
+  try{await navigator.clipboard.writeText(t);b.textContent='Copied'}catch(_){b.textContent='Select the picks above';}
+  setTimeout(()=>b.textContent='Copy my picks',1800);
+};
+try{Object.assign(state,JSON.parse(localStorage.getItem('fcvote')||'{}'))}catch(e){}
+render();
+(async()=>{
+  try{
+    db=await claude.use('db'); if(!db)return;
+    ref=db.doc('votes/owner');
+    const s=await ref.get();
+    const d=s.exists&&s.data();
+    if(d&&d.picks&&!Object.keys(state).length){Object.assign(state,d.picks);render()}
+    else if(Object.keys(state).length) save();
+  }catch(e){}
+})();
+</script>
