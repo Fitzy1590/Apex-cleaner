@@ -19,6 +19,7 @@ Android system optimizer: safe storage cleaner, quiet background tuner, no-kill 
 ## Layout (package com.fitzy.apexcleaner)
 - `core/` engine: PathGuard (delete gatekeeper), SafeCleaner, HealthMonitor, Whitelist/ProtectedApps,
   PowerPolicy (WorkManager + screen state), Workers, TunerService, Notifications/Actions.
+- `power/` charging engine (ChargeMath, ChargeEngine, ChargeNotifier): rules in `.claude/rules/charging-engine.md`.
 - `ui/` MainViewModel, `mobile/MobileDashboard`, `tv/TvDashboard`, `theme/`.
 - `MainActivity` picks TV or phone UI from UiModeManager.
 
@@ -27,4 +28,5 @@ Android system optimizer: safe storage cleaner, quiet background tuner, no-kill 
 2. Never force-stop or kill other apps. No killer loops.
 3. Protected apps (alarms, notification listeners, widgets, launchers, media, user whitelist) are never interrupted.
 4. Heavy work only via WorkManager with charging + idle constraints.
-5. TV: focus must scale >= 1.03x or show >= 2dp accent border; list containers use `focusRestorer()`.
+5. Charging: only pause this app's own work; never claim it can cut charger power.
+6. TV: focus must scale >= 1.03x or show >= 2dp accent border; list containers use `focusRestorer()`.

@@ -20,6 +20,17 @@ Repo held only a README: no existing app. Owner chose "build fresh here".
 - [x] Automatic GitHub test-app builder
 - [x] Shizuku helper support (optional): clears other apps' cache folders on Android 13+, skips protected apps, guarded by PathGuard plus a second check inside the helper; setup card on phone and TV
 
+## Fast-Charge Accelerator & Wattage Monitor (BUILD PASSING)
+`./gradlew check` (compile, lint, unit tests incl. 14 charging checks) passes with Android SDK 35 installed on the cloud machine.
+- [x] Charging rules + tests (wattage, charger type, heat, time to full, limit alerts)
+- [x] Auto start on plug-in / auto restore on unplug; pauses only Apex's own background work
+- [x] Live lock-screen notification with Fast-Charge Active badge
+- [x] Charging card in the phone app (dial, speed curve, health panel, limit, on/off switch)
+- [x] Default 80% limit alert + "unplug now" alert at 100% (cannot cut power itself)
+- [x] Run full build/lint, fix anything it finds
+- [ ] Real-device check of wattage readings and the lock-screen card
+- [ ] Optional later: start the light service after phone restart
+
 ## Pending
 - [ ] Real-device test (cleaning, notifications, TV focus, Shizuku with the helper app running)
 - [ ] Known limits: cannot clear OTHER apps' private caches without system permission; deep clean needs "All files access"
