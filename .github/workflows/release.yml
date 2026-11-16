@@ -2,6 +2,11 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to create, e.g. v1.1.0"
+        required: true
 permissions:
   contents: write
 jobs:
@@ -17,12 +22,15 @@ jobs:
       - name: Check and build
         run: ./gradlew check assembleDebug
       - name: Name the file
-        run: cp app/build/outputs/apk/debug/app-debug.apk "ApexCleaner-${GITHUB_REF_NAME}.apk"
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: cp app/build/outputs/apk/debug/app-debug.apk "ApexCleaner-${VERSION}.apk"
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version || github.ref_name }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "ApexCleaner-${GITHUB_REF_NAME}.apk" \
-            --title "Apex Cleaner ${GITHUB_REF_NAME}: Fast-Charge Accelerator" \
+          gh release create "$VERSION" "ApexCleaner-${VERSION}.apk" --target "$GITHUB_SHA" \
+            --title "Apex Cleaner ${VERSION}: Fast-Charge Accelerator" \
             --prerelease \
             --notes "Safe fast-charge care on plug-in, live wattage and charger type, lock-screen charging card, in-app charging card with speed curve and battery health, default 80% charge limit alert, and an unplug alert at 100%. Test build: install the .apk file on your phone."
