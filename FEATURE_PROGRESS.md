@@ -15,6 +15,10 @@ Repo held only a README: no existing app. Owner chose "build fresh here".
 - [x] 5. Phone Material 3 dashboard + TV dashboard (focus scale 1.05x + 3dp border, focusRestorer)
 - [x] Guardrails: CLAUDE.md, .claude/settings.json hook, path rules
 
+- [x] Deep clean of OTHER apps' caches via Android's official space-request (OtherAppCaches) + hidden cache folders on shared storage
+- [x] Permission check on launch
+- [x] Automatic GitHub test-app builder
+
 ## Pending
 - [ ] Real-device test (cleaning, notifications, TV focus)
 - [ ] Known limits: cannot clear OTHER apps' private caches without system permission; deep clean needs "All files access"

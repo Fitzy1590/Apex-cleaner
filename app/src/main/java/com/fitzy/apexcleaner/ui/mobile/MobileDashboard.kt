@@ -100,7 +100,7 @@ fun MobileDashboard(
                 }
                 item {
                     Button(onClick = onClean, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                        val size = state.scan?.totalBytes?.let { " (${formatBytes(it)})" }.orEmpty()
+                        val size = " (${formatBytes((state.scan?.totalBytes ?: 0L) + state.otherCacheBytes)})"
                         Text(if (state.busy) "Working…" else "Safe Clean$size")
                     }
                 }
@@ -124,6 +124,11 @@ fun MobileDashboard(
                 item { OutlinedButton(onClick = onStorageSettings, modifier = Modifier.fillMaxWidth()) { Text("Free more space: see what uses storage") } }
                 state.scan?.let { s ->
                     item { Text("What can be cleaned", style = MaterialTheme.typography.titleMedium) }
+                    item {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Other apps' caches"); Text("~" + formatBytes(state.otherCacheBytes))
+                        }
+                    }
                     items(s.bytesByCategory.entries.toList()) { (cat, b) ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(cat.label); Text(formatBytes(b))

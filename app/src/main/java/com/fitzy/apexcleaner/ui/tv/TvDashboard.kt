@@ -87,7 +87,7 @@ fun TvDashboard(
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        TvButton("Safe Clean${state.scan?.totalBytes?.let { " (${formatBytes(it)})" }.orEmpty()}", onClean, Modifier.focusRequester(firstFocus))
+                        TvButton("Safe Clean${" (${formatBytes((state.scan?.totalBytes ?: 0L) + state.otherCacheBytes)})"}", onClean, Modifier.focusRequester(firstFocus))
                         TvButton("1-Tap Boost", onBoost)
                         TvButton("Cool Down", onCool)
                     }

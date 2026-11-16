@@ -26,4 +26,12 @@ class PathGuardTest {
         assertFalse(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/Documents/notes.pdf")))
         assertFalse(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/Backups/export.db")))
     }
+
+    @Test fun hiddenCacheFolders() {
+        assertTrue(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/SomeApp/cache/img.bin")))
+        assertTrue(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/.cache/x.dat")))
+        assertFalse(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/SomeApp/cache/data.db")))
+        assertFalse(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/SomeApp/files/img.bin")))
+        assertFalse(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/Documents/cache/a.txt")))
+    }
 }

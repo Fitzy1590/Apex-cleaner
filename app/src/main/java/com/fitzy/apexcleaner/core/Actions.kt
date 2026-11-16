@@ -15,7 +15,8 @@ object Actions {
 
     fun clearCache(ctx: Context): String {
         val report = SafeCleaner(ctx).clean()
-        return "Cleared ${formatBytes(report.totalBytes)} of hidden cache. Your data was not touched."
+        val others = OtherAppCaches.clear(ctx)
+        return "Cleared ${formatBytes(report.totalBytes + others)} of cache. Your data was not touched."
     }
 
     /** Cool down = pause our own background work and cancel heavy scheduled jobs for a while. */

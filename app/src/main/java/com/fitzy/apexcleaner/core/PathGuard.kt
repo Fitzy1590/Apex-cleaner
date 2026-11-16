@@ -20,6 +20,10 @@ object PathGuard {
         "db", "sqlite", "sqlite3", "xml", "json", "preferences_pb", "pb", "jpg", "jpeg",
         "png", "mp4", "pdf", "doc", "docx", "zip", "kdbx", "bak", "crypt14", "crypt15",
     )
+    private val cacheDirNames = setOf("cache", ".cache", "tmp", ".tmp", "temp", ".temp", "thumbnails", ".thumbnails", ".thumbcache", "lost.dir")
+    private val protectedDataExtensions = setOf(
+        "db", "sqlite", "sqlite3", "xml", "json", "preferences_pb", "pb", "kdbx", "bak", "crypt14", "crypt15",
+    )
     private val disposableExtensions = setOf("tmp", "temp", "log", "apk", "thumb", "cache", "old")
 
     fun isDenied(file: File): Boolean {
@@ -44,6 +48,8 @@ object PathGuard {
         if (path.contains("/.thumbnails/") || path.contains("/.thumbcache")) return true
         val segments = path.split('/').filter { it.isNotEmpty() }
         if (segments.any { it in deniedSegments }) return false
+        // Anything inside a folder literally named cache/tmp/etc. is rebuildable, except settings-like files.
+        if (segments.dropLast(1).any { it in cacheDirNames } && file.extension.lowercase() !in protectedDataExtensions) return true
         return file.extension.lowercase() in disposableExtensions
     }
 

@@ -9,6 +9,7 @@ import com.fitzy.apexcleaner.core.CleanReport
 import com.fitzy.apexcleaner.core.Health
 import com.fitzy.apexcleaner.core.HealthMonitor
 import com.fitzy.apexcleaner.core.NeededPermission
+import com.fitzy.apexcleaner.core.OtherAppCaches
 import com.fitzy.apexcleaner.core.Permissions
 import com.fitzy.apexcleaner.core.SafeCleaner
 import com.fitzy.apexcleaner.core.WhitelistStore
@@ -29,6 +30,7 @@ data class UiState(
     val message: String? = null,
     val busy: Boolean = false,
     val filesAccess: Boolean = true,
+    val otherCacheBytes: Long = 0L,
     val missing: List<NeededPermission> = emptyList(),
 )
 
@@ -41,16 +43,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() = launchBusy {
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
-        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), missing = Permissions.missing(ctx))
+        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), otherCacheBytes = OtherAppCaches.clearableBytes(ctx), missing = Permissions.missing(ctx))
     }
 
     fun clean() = launchBusy {
         val r = SafeCleaner(ctx).clean()
+        val others = OtherAppCaches.clear(ctx)
         val health = HealthMonitor(ctx).read()
         _state.value = _state.value.copy(
             health = health,
             scan = SafeCleaner(ctx).scan(),
-            message = "Freed ${formatBytes(r.totalBytes)}. Your apps, logins and settings were not touched.",
+            otherCacheBytes = OtherAppCaches.clearableBytes(ctx),
+            message = "Freed ${formatBytes(r.totalBytes + others)} " +
+                "(${formatBytes(others)} from other apps' caches). Your apps, logins and settings were not touched.",
         )
     }
 
