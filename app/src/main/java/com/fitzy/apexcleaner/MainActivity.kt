@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
                     vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
+                    vm::setChargeLimit, vm::setFastCharge,
                 )
             }
         }

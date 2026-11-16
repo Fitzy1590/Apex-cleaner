@@ -17,6 +17,11 @@ import com.fitzy.apexcleaner.core.ShizukuBridge
 import com.fitzy.apexcleaner.core.WhitelistStore
 import com.fitzy.apexcleaner.core.ProtectedApps
 import com.fitzy.apexcleaner.core.formatBytes
+import com.fitzy.apexcleaner.power.ChargeEngine
+import com.fitzy.apexcleaner.power.ChargeMath
+import com.fitzy.apexcleaner.power.ChargeSettings
+import com.fitzy.apexcleaner.power.ChargeUi
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +40,7 @@ data class UiState(
     val otherCacheBytes: Long = 0L,
     val missing: List<NeededPermission> = emptyList(),
     val helper: HelperState = HelperState.NotInstalled,
+    val charge: ChargeUi = ChargeUi(),
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -43,7 +49,22 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state
 
+    init {
+        viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
+    }
+
+    fun setChargeLimit(pct: Int) {
+        ChargeSettings(ctx).limitPct = ChargeMath.clampLimit(pct)
+        ChargeEngine.update(ctx, force = true)
+    }
+
+    fun setFastCharge(on: Boolean) {
+        ChargeSettings(ctx).fastEnabled = on
+        ChargeEngine.update(ctx, force = true)
+    }
+
     fun refresh() = launchBusy {
+        ChargeEngine.update(ctx, force = true)
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
         _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), otherCacheBytes = OtherAppCaches.clearableBytes(ctx), missing = Permissions.missing(ctx), helper = ShizukuBridge.state(ctx))

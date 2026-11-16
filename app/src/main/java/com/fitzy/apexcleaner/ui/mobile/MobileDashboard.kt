@@ -56,6 +56,8 @@ fun MobileDashboard(
     onStorageSettings: () -> Unit,
     onGrant: (NeededPermission) -> Unit,
     onHelper: () -> Unit,
+    onChargeLimit: (Int) -> Unit,
+    onFastCharge: (Boolean) -> Unit,
 ) {
     ApexTheme {
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -100,6 +102,7 @@ fun MobileDashboard(
                         )
                     }
                 }
+                item { ChargingCard(state.charge, onChargeLimit, onFastCharge) }
                 item {
                     Button(onClick = onClean, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                         val size = " (${formatBytes((state.scan?.totalBytes ?: 0L) + state.otherCacheBytes)})"

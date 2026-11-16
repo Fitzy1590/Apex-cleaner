@@ -27,6 +27,18 @@ object PowerPolicy {
     fun isPaused(ctx: Context): Boolean =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong("paused_until", 0) > System.currentTimeMillis()
 
+    /** While fast-charge care is on, our own background work waits so all power goes to the battery. */
+    fun setChargeHold(ctx: Context, on: Boolean) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("charge_hold", on).apply()
+    }
+
+    /** True only while a charger is really plugged in and fast-charge care is on. Self-heals if we missed an unplug. */
+    fun chargeHold(ctx: Context): Boolean {
+        if (!ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("charge_hold", false)) return false
+        val b = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        return (b?.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
+    }
+
     /** Light check: every ~30 min, any network/battery state, tiny work. */
     fun scheduleLightCheck(ctx: Context) {
         val req = PeriodicWorkRequestBuilder<TuneWorker>(30, TimeUnit.MINUTES)
