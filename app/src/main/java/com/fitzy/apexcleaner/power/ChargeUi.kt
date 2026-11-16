@@ -1,6 +1,7 @@
 package com.fitzy.apexcleaner.power
 
-data class CurvePoint(val level: Int, val watts: Float)
+/** One speed reading, `seconds` after the charger was plugged in. */
+data class CurvePoint(val seconds: Int, val watts: Float)
 
 /** Everything the charging card and the lock-screen notification show. */
 data class ChargeUi(

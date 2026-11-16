@@ -92,7 +92,7 @@ fun MobileDashboard(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             Gauge("Storage free", h.storageFreePct)
                             Gauge("Memory free", h.ramFreePct)
-                            Gauge("Battery", h.batteryPct)
+                            Gauge("Battery", if (state.charge.pluggedIn) state.charge.level else h.batteryPct)
                         }
                     }
                     item {

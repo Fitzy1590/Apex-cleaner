@@ -56,9 +56,14 @@ fun ChargingCard(c: ChargeUi, onLimit: (Int) -> Unit, onFast: (Boolean) -> Unit)
                         color = Warn,
                     )
                 }
-                Text("Charging speed during this charge", style = MaterialTheme.typography.labelLarge)
+                Text("Charging speed since you plugged in", style = MaterialTheme.typography.labelLarge)
                 if (c.curve.size >= 2) {
                     SpeedCurve(c, scaleMax)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Plugged in", style = MaterialTheme.typography.bodySmall)
+                        Text("Top line = ${scaleMax.toInt()} W", style = MaterialTheme.typography.bodySmall)
+                        Text("Now", style = MaterialTheme.typography.bodySmall)
+                    }
                 } else {
                     Text("The speed curve appears after a few minutes of charging.", style = MaterialTheme.typography.bodySmall)
                 }
@@ -129,12 +134,13 @@ private fun SpeedCurve(c: ChargeUi, scaleMax: Float) {
             drawLine(grid, Offset(0f, y), Offset(w, y), strokeWidth = 1.dp.toPx())
         }
         fun yFor(watts: Float) = h - h * (watts / scaleMax).coerceIn(0f, 1f)
+        val span = maxOf(c.curve.last().seconds, 120).toFloat()
         val path = Path()
         c.curve.forEachIndexed { i, p ->
-            val x = w * p.level / 100f
+            val x = w * p.seconds / span
             if (i == 0) path.moveTo(x, yFor(p.watts)) else path.lineTo(x, yFor(p.watts))
         }
         drawPath(path, Accent, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
-        c.watts?.let { drawCircle(Accent, 4.dp.toPx(), Offset(w * c.level / 100f, yFor(it))) }
+        c.watts?.let { drawCircle(Accent, 4.dp.toPx(), Offset(w * c.curve.last().seconds / span, yFor(it))) }
     }
 }

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.SystemClock
 import com.fitzy.apexcleaner.core.PowerPolicy
-import java.util.TreeMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -26,7 +25,7 @@ object ChargeEngine {
     private var alertedLimit = false
     private var alertedFull = false
     private var lastUpdate = 0L
-    private val curve = TreeMap<Int, Float>()
+    private val curve = ArrayList<CurvePoint>()
 
     @Synchronized
     fun update(ctx: Context, force: Boolean = false) {
@@ -69,7 +68,16 @@ object ChargeEngine {
         val watts = ChargeMath.watts(s.voltageMv, currentUa)
         val fastActive = fastEnabled && !s.full
         PowerPolicy.setChargeHold(app, fastActive)
-        if (watts != null && !s.full) curve[s.level] = watts
+        if (watts != null && !s.full) {
+            val sec = ((now - startedAt) / 1000).toInt()
+            if (curve.isEmpty() || sec - curve.last().seconds >= 14) {
+                curve.add(CurvePoint(sec, watts))
+                if (curve.size > 240) {
+                    val thinned = curve.filterIndexed { i, _ -> i % 2 == 0 }
+                    curve.clear(); curve.addAll(thinned)
+                }
+            }
+        }
 
         val settled = now - startedAt >= 60_000L && samples >= 4
         val eta = if (s.full) 0 to 0 else if (settled) ChargeMath.etaRange(s.level, s.chargeCounterUa, currentUa) else null
@@ -87,7 +95,7 @@ object ChargeEngine {
             etaMin = eta?.first, etaMax = eta?.second,
             fastActive = fastActive, tooWarm = ChargeMath.isTooWarm(s.tempC, s.thermalStatus),
             limitPct = limit, fastEnabled = fastEnabled,
-            curve = curve.map { CurvePoint(it.key, it.value) },
+            curve = curve.toList(),
         )
         _ui.value = ui
         ChargeNotifier.hud(app, ui)
