@@ -50,10 +50,19 @@ class MainActivity : ComponentActivity() {
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
-                    vm::dismissMessage, ::openAllFilesAccess,
+                    vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings,
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        vm.refresh()
+    }
+
+    private fun openStorageSettings() {
+        startActivity(Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS))
     }
 
     private fun openAllFilesAccess() {

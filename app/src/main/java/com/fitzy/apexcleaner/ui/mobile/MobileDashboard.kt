@@ -46,6 +46,7 @@ fun MobileDashboard(
     onToggleApp: (String) -> Unit,
     onDismiss: () -> Unit,
     onGrantFiles: () -> Unit,
+    onStorageSettings: () -> Unit,
 ) {
     ApexTheme {
         Scaffold { pad ->
@@ -91,7 +92,18 @@ fun MobileDashboard(
                         OutlinedButton(onClick = onCool, enabled = !state.busy, modifier = Modifier.weight(1f)) { Text("Cool Down") }
                     }
                 }
-                item { OutlinedButton(onClick = onGrantFiles, modifier = Modifier.fillMaxWidth()) { Text("Allow deep clean of leftovers") } }
+                if (!state.filesAccess) {
+                    item {
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Why does it say 0 B?", style = MaterialTheme.typography.titleMedium)
+                                Text("Without file access, Apex Cleaner can only check its own tiny cache. Turn on deep clean to find leftover installers, thumbnails, logs and empty folders. Your photos, documents, logins and settings are never touched.")
+                                Button(onClick = onGrantFiles, modifier = Modifier.fillMaxWidth()) { Text("Turn on deep clean") }
+                            }
+                        }
+                    }
+                }
+                item { OutlinedButton(onClick = onStorageSettings, modifier = Modifier.fillMaxWidth()) { Text("Free more space: see what uses storage") } }
                 state.scan?.let { s ->
                     item { Text("What can be cleaned", style = MaterialTheme.typography.titleMedium) }
                     items(s.bytesByCategory.entries.toList()) { (cat, b) ->

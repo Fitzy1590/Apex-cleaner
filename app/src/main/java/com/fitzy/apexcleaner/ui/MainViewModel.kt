@@ -26,6 +26,7 @@ data class UiState(
     val apps: List<AppEntry> = emptyList(),
     val message: String? = null,
     val busy: Boolean = false,
+    val filesAccess: Boolean = true,
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -37,7 +38,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() = launchBusy {
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
-        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps())
+        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess())
     }
 
     fun clean() = launchBusy {
@@ -75,6 +76,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             _state.value = _state.value.copy(busy = false)
         }
     }
+
+    private fun hasFilesAccess() =
+        android.os.Build.VERSION.SDK_INT < 30 || android.os.Environment.isExternalStorageManager()
 
     private fun loadApps(): List<AppEntry> {
         val pm = ctx.packageManager
