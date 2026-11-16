@@ -8,6 +8,8 @@ import com.fitzy.apexcleaner.core.Actions
 import com.fitzy.apexcleaner.core.CleanReport
 import com.fitzy.apexcleaner.core.Health
 import com.fitzy.apexcleaner.core.HealthMonitor
+import com.fitzy.apexcleaner.core.NeededPermission
+import com.fitzy.apexcleaner.core.Permissions
 import com.fitzy.apexcleaner.core.SafeCleaner
 import com.fitzy.apexcleaner.core.WhitelistStore
 import com.fitzy.apexcleaner.core.ProtectedApps
@@ -27,6 +29,7 @@ data class UiState(
     val message: String? = null,
     val busy: Boolean = false,
     val filesAccess: Boolean = true,
+    val missing: List<NeededPermission> = emptyList(),
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -38,7 +41,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() = launchBusy {
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
-        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess())
+        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), missing = Permissions.missing(ctx))
     }
 
     fun clean() = launchBusy {

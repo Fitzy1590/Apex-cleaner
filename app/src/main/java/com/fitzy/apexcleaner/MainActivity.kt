@@ -17,6 +17,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.fitzy.apexcleaner.core.NeededPermission
 import com.fitzy.apexcleaner.core.PowerPolicy
 import com.fitzy.apexcleaner.core.TunerService
 import com.fitzy.apexcleaner.ui.MainViewModel
@@ -39,18 +40,25 @@ class MainActivity : ComponentActivity() {
             val state by vm.state.collectAsState()
             val notifPermission = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission(),
-            ) { TunerService.start(this) }
+            ) { TunerService.start(this); vm.refresh() }
+            val grant: (NeededPermission) -> Unit = { p ->
+                when (p) {
+                    NeededPermission.Notifications ->
+                        if (Build.VERSION.SDK_INT >= 33) notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    NeededPermission.AllFiles -> openAllFilesAccess()
+                    NeededPermission.UsageAccess -> startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                }
+            }
             LaunchedEffect(Unit) {
                 vm.refresh()
-                if (Build.VERSION.SDK_INT >= 33) notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                else TunerService.start(this@MainActivity)
+                TunerService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
-                    vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings,
+                    vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant,
                 )
             }
         }

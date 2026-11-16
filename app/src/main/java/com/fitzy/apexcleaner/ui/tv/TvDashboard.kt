@@ -33,6 +33,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
+import com.fitzy.apexcleaner.core.NeededPermission
 import com.fitzy.apexcleaner.core.formatBytes
 import com.fitzy.apexcleaner.ui.UiState
 import com.fitzy.apexcleaner.ui.theme.Accent
@@ -49,6 +50,7 @@ fun TvDashboard(
     onCool: () -> Unit,
     onToggleApp: (String) -> Unit,
     onDismiss: () -> Unit,
+    onGrant: (NeededPermission) -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = Accent)) {
         Surface(Modifier.fillMaxSize()) {
@@ -59,6 +61,14 @@ fun TvDashboard(
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 item { Text("Apex Cleaner", style = MaterialTheme.typography.displaySmall) }
+                items(state.missing) { p ->
+                    Card(onClick = { onGrant(p) }, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                        Column(Modifier.padding(20.dp)) {
+                            Text("Allow ${p.title} (press to set up)", style = MaterialTheme.typography.titleMedium)
+                            Text(p.why, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
                 state.message?.let { m ->
                     item {
                         Card(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
