@@ -33,7 +33,10 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
+import com.fitzy.apexcleaner.core.HelperState
 import com.fitzy.apexcleaner.core.NeededPermission
+import com.fitzy.apexcleaner.ui.mobile.helperButton
+import com.fitzy.apexcleaner.ui.mobile.helperExplain
 import com.fitzy.apexcleaner.core.formatBytes
 import com.fitzy.apexcleaner.ui.UiState
 import com.fitzy.apexcleaner.ui.theme.Accent
@@ -51,6 +54,7 @@ fun TvDashboard(
     onToggleApp: (String) -> Unit,
     onDismiss: () -> Unit,
     onGrant: (NeededPermission) -> Unit,
+    onHelper: () -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = Accent)) {
         Surface(Modifier.fillMaxSize()) {
@@ -66,6 +70,16 @@ fun TvDashboard(
                         Column(Modifier.padding(20.dp)) {
                             Text("Allow ${p.title} (press to set up)", style = MaterialTheme.typography.titleMedium)
                             Text(p.why, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+                if (state.helper != HelperState.Ready) {
+                    item {
+                        Card(onClick = onHelper, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                            Column(Modifier.padding(20.dp)) {
+                                Text("Deeper clean: ${helperButton(state.helper)} (press)", style = MaterialTheme.typography.titleMedium)
+                                Text(helperExplain(state.helper), style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                 }

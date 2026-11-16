@@ -35,3 +35,26 @@ class PathGuardTest {
         assertFalse(PathGuard.mayDeleteOnSharedStorage(File("/sdcard/Documents/cache/a.txt")))
     }
 }
+
+class OtherAppCacheGuardTest {
+    @Test fun allowsOnlyCacheFolderFiles() {
+        assertTrue(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/img/1.png")))
+        assertTrue(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/x.tmp")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/files/save.dat")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/../files/x.tmp")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/main.db")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/settings.json")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/auth_token")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/Android/data/com.a/cache/databases/x.tmp")))
+        assertFalse(PathGuard.mayDeleteInOtherAppCache(File("/storage/emulated/0/DCIM/cache/x.tmp")))
+    }
+
+    @Test fun helperRefusesPathsOutsideCache() {
+        assertTrue(ShellFileService.isCacheFile("/storage/emulated/0/Android/data/com.a/cache/x.tmp"))
+        assertFalse(ShellFileService.isCacheFile("/storage/emulated/0/Android/data/com.a/files/x.tmp"))
+        assertFalse(ShellFileService.isCacheFile("/storage/emulated/0/Android/data/com.a/cache/../files/x"))
+        assertFalse(ShellFileService.isCacheFile("/storage/emulated/0/Android/data/../../DCIM/x.jpg"))
+        assertFalse(ShellFileService.isCacheFile("/storage/emulated/0/Android/data/com.a/cache"))
+        assertFalse(ShellFileService.isCacheFile("/storage/emulated/0/Pictures/a/cache/x.tmp"))
+    }
+}

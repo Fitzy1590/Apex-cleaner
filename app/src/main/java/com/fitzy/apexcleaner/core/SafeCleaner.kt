@@ -11,6 +11,7 @@ enum class CleanCategory(val label: String) {
     Thumbnails("Thumbnail caches"),
     Logs("Log files"),
     EmptyFolders("Empty leftover folders"),
+    OtherAppFolders("Other apps' cache folders (helper app)"),
 }
 
 data class CleanReport(val bytesByCategory: Map<CleanCategory, Long>, val filesRemoved: Int) {
@@ -67,6 +68,30 @@ class SafeCleaner(private val context: Context) {
                 .onEnter { dir -> !isOffLimits(dir) }
                 .filter { it.isDirectory && it != root && it.list()?.isEmpty() == true && !PathGuard.isDenied(it) }
                 .forEach { if (dryRun || it.delete()) { count++ } }
+        }
+
+        // Layer 3: other apps' own cache folders, only when the optional Shizuku helper is on.
+        // Apps the user or system protects are skipped; PathGuard approves every file.
+        if (ShizukuBridge.isReady(context)) {
+            val protectedApps = ProtectedApps(context, WhitelistStore(context))
+            ShizukuBridge.withService(context) { svc ->
+                for (pkg in svc.cachePackages()) {
+                    if (protectedApps.isProtected(pkg)) continue
+                    val approved = svc.cacheFiles(pkg).mapNotNull { line ->
+                        val size = line.substringBefore('\t').toLongOrNull() ?: return@mapNotNull null
+                        File(line.substringAfter('\t')).takeIf { PathGuard.mayDeleteInOtherAppCache(it) }?.let { it to size }
+                    }
+                    if (approved.isEmpty()) continue
+                    val removed = if (dryRun) BooleanArray(approved.size) { true }
+                    else svc.deleteCacheFiles(approved.map { it.first.path }.toTypedArray())
+                    approved.forEachIndexed { i, (_, size) ->
+                        if (removed[i]) {
+                            bytes[CleanCategory.OtherAppFolders] = (bytes[CleanCategory.OtherAppFolders] ?: 0L) + size
+                            count++
+                        }
+                    }
+                }
+            }
         }
         return CleanReport(bytes, count)
     }

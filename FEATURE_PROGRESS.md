@@ -18,7 +18,8 @@ Repo held only a README: no existing app. Owner chose "build fresh here".
 - [x] Deep clean of OTHER apps' caches via Android's official space-request (OtherAppCaches) + hidden cache folders on shared storage
 - [x] Permission check on launch
 - [x] Automatic GitHub test-app builder
+- [x] Shizuku helper support (optional): clears other apps' cache folders on Android 13+, skips protected apps, guarded by PathGuard plus a second check inside the helper; setup card on phone and TV
 
 ## Pending
-- [ ] Real-device test (cleaning, notifications, TV focus)
+- [ ] Real-device test (cleaning, notifications, TV focus, Shizuku with the helper app running)
 - [ ] Known limits: cannot clear OTHER apps' private caches without system permission; deep clean needs "All files access"

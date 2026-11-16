@@ -53,6 +53,20 @@ object PathGuard {
         return file.extension.lowercase() in disposableExtensions
     }
 
+    /**
+     * Another app's cache folder reached through the Shizuku helper. Only files inside
+     * Android/data/<app>/cache are eligible; settings-like, database and credential-like files are not.
+     */
+    fun mayDeleteInOtherAppCache(file: File): Boolean {
+        val path = file.path.replace('\\', '/')
+        val parts = path.substringAfter("/Android/data/", "").split('/')
+        if (parts.size < 3 || parts[0].isEmpty() || parts[1] != "cache" || ".." in parts) return false
+        val inside = parts.drop(2).map { it.lowercase() }
+        if (inside.any { it in deniedSegments }) return false
+        if (hasProtectedName(file)) return false
+        return file.extension.lowercase() !in protectedDataExtensions
+    }
+
     private fun hasProtectedName(file: File): Boolean {
         val name = file.name.lowercase()
         return deniedNameParts.any { name.contains(it) }

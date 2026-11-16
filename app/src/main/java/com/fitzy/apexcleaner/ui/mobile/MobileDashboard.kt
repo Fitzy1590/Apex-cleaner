@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.fitzy.apexcleaner.core.HelperState
 import com.fitzy.apexcleaner.core.NeededPermission
 import com.fitzy.apexcleaner.core.formatBytes
 import com.fitzy.apexcleaner.ui.AppEntry
@@ -54,6 +55,7 @@ fun MobileDashboard(
     onGrantFiles: () -> Unit,
     onStorageSettings: () -> Unit,
     onGrant: (NeededPermission) -> Unit,
+    onHelper: () -> Unit,
 ) {
     ApexTheme {
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -121,6 +123,15 @@ fun MobileDashboard(
                         }
                     }
                 }
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Deeper clean (optional)", style = MaterialTheme.typography.titleMedium)
+                            Text(helperExplain(state.helper))
+                            helperButton(state.helper)?.let { Button(onClick = onHelper, modifier = Modifier.fillMaxWidth()) { Text(it) } }
+                        }
+                    }
+                }
                 item { OutlinedButton(onClick = onStorageSettings, modifier = Modifier.fillMaxWidth()) { Text("Free more space: see what uses storage") } }
                 state.scan?.let { s ->
                     item { Text("What can be cleaned", style = MaterialTheme.typography.titleMedium) }
@@ -171,4 +182,18 @@ fun Gauge(label: String, percent: Int) {
         }
         Text(label, style = MaterialTheme.typography.bodySmall)
     }
+}
+
+internal fun helperExplain(h: HelperState) = when (h) {
+    HelperState.NotInstalled -> "Android 13 hides other apps' cache folders from normal apps. The free Shizuku helper app lets Apex Cleaner clear them safely, like SD Maid does on a rooted phone. It only ever removes cache files, never logins, settings or your photos."
+    HelperState.NotRunning -> "Shizuku is installed but not started. Open it and tap Start, then come back here."
+    HelperState.NeedsPermission -> "Shizuku is running. Tap below to let Apex Cleaner use it for deeper cache cleaning."
+    HelperState.Ready -> "Deeper clean is on. Safe Clean now also clears other apps' cache folders."
+}
+
+internal fun helperButton(h: HelperState) = when (h) {
+    HelperState.NotInstalled -> "Get the helper app"
+    HelperState.NotRunning -> "Open the helper app"
+    HelperState.NeedsPermission -> "Allow deeper clean"
+    HelperState.Ready -> null
 }

@@ -12,6 +12,8 @@ import com.fitzy.apexcleaner.core.NeededPermission
 import com.fitzy.apexcleaner.core.OtherAppCaches
 import com.fitzy.apexcleaner.core.Permissions
 import com.fitzy.apexcleaner.core.SafeCleaner
+import com.fitzy.apexcleaner.core.HelperState
+import com.fitzy.apexcleaner.core.ShizukuBridge
 import com.fitzy.apexcleaner.core.WhitelistStore
 import com.fitzy.apexcleaner.core.ProtectedApps
 import com.fitzy.apexcleaner.core.formatBytes
@@ -32,6 +34,7 @@ data class UiState(
     val filesAccess: Boolean = true,
     val otherCacheBytes: Long = 0L,
     val missing: List<NeededPermission> = emptyList(),
+    val helper: HelperState = HelperState.NotInstalled,
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -43,7 +46,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() = launchBusy {
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
-        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), otherCacheBytes = OtherAppCaches.clearableBytes(ctx), missing = Permissions.missing(ctx))
+        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), otherCacheBytes = OtherAppCaches.clearableBytes(ctx), missing = Permissions.missing(ctx), helper = ShizukuBridge.state(ctx))
     }
 
     fun clean() = launchBusy {

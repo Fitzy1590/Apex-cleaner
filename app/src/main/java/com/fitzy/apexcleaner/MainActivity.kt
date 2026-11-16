@@ -18,11 +18,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.fitzy.apexcleaner.core.NeededPermission
+import com.fitzy.apexcleaner.core.HelperState
 import com.fitzy.apexcleaner.core.PowerPolicy
+import com.fitzy.apexcleaner.core.ShizukuBridge
 import com.fitzy.apexcleaner.core.TunerService
 import com.fitzy.apexcleaner.ui.MainViewModel
 import com.fitzy.apexcleaner.ui.mobile.MobileDashboard
 import com.fitzy.apexcleaner.ui.tv.TvDashboard
+import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
     private val vm: MainViewModel by viewModels()
@@ -31,8 +34,13 @@ class MainActivity : ComponentActivity() {
         get() = (getSystemService(UI_MODE_SERVICE) as UiModeManager).currentModeType ==
             Configuration.UI_MODE_TYPE_TELEVISION
 
+    private val helperListener = Shizuku.OnRequestPermissionResultListener { _, _ -> vm.refresh() }
+    private val helperBinderListener = Shizuku.OnBinderReceivedListener { vm.refresh() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Shizuku.addRequestPermissionResultListener(helperListener)
+        Shizuku.addBinderReceivedListenerSticky(helperBinderListener)
         PowerPolicy.scheduleLightCheck(this)
         PowerPolicy.scheduleDeepClean(this)
         val tv = isTv
@@ -54,11 +62,11 @@ class MainActivity : ComponentActivity() {
                 TunerService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
-                    vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant,
+                    vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
                 )
             }
         }
@@ -67,6 +75,24 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         vm.refresh()
+    }
+
+    override fun onDestroy() {
+        Shizuku.removeRequestPermissionResultListener(helperListener)
+        Shizuku.removeBinderReceivedListener(helperBinderListener)
+        super.onDestroy()
+    }
+
+    /** One button that walks the owner through the optional helper: install, start, then allow. */
+    private fun setUpHelper() {
+        when (ShizukuBridge.state(this)) {
+            HelperState.NotInstalled ->
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ShizukuBridge.HELPER_URL)))
+            HelperState.NotRunning ->
+                packageManager.getLaunchIntentForPackage(ShizukuBridge.HELPER_PACKAGE)?.let { startActivity(it) }
+            HelperState.NeedsPermission -> ShizukuBridge.requestPermission()
+            HelperState.Ready -> Unit
+        }
     }
 
     private fun openStorageSettings() {
