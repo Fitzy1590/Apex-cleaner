@@ -96,3 +96,8 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [ ] Needs Usage Access (to know which app is on screen); without it nothing is slowed
 - [ ] Known limits: ad shield skips apps outside the limiter; IPv6 not paced; newly installed apps join after the shield restarts; cannot give other apps' CPU away without killing them (forbidden), so this is network priority only
 - [ ] Real-device test on TV
+
+## Ads showing in Chrome (2026-11-21)
+- [x] Cause: Chrome and Samsung Internet are built-in apps, so the shield skipped them (log showed no Chrome lookups). Browsers now join the shield like ordinary apps (tests written, not yet build-checked: no Android tools on this cloud machine)
+- [ ] Owner to confirm: rule 7 now counts browsers as ordinary apps (they are slowed only while a streaming app is on screen)
+- [ ] Known limit: ads served from the same name as the page itself (e.g. Facebook feed ads) cannot be blocked by name

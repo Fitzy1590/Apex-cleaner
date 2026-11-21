@@ -42,12 +42,26 @@ object StreamingApps {
         return out
     }
 
-    /** Apps that go through the speed limiter: ordinary installed apps and the Play Store, minus priority apps. */
+    /**
+     * Web browsers. Many phones ship Chrome or Samsung Internet as a built-in app, which would otherwise be skipped,
+     * so ads on web pages were never filtered. They join the shield like any ordinary app.
+     */
+    val BROWSERS = setOf(
+        "com.android.chrome", "com.chrome.beta", "com.chrome.dev", "com.chrome.canary",
+        "com.sec.android.app.sbrowser", "com.sec.android.app.sbrowser.beta",
+        "org.mozilla.firefox", "org.mozilla.firefox_beta", "org.mozilla.fenix", "org.mozilla.focus",
+        "com.microsoft.emmx", "com.brave.browser", "com.opera.browser", "com.opera.mini.native",
+        "com.vivaldi.browser", "com.duckduckgo.mobile.android", "com.kiwibrowser.browser",
+        "com.google.android.apps.chrome", "org.chromium.chrome", "com.mi.globalbrowser", "com.UCMobile.intl",
+    )
+
+    /** Apps that go through the speed limiter: ordinary installed apps, browsers and the Play Store, minus priority apps. */
     fun limitedApps(ctx: Context): Set<String> {
         val pm = ctx.packageManager
         val priority = priorityApps(ctx) + SafeLists.bankingBypassPackages + ProtectedApps.ALWAYS_PROTECTED + ctx.packageName
-        val out = pm.getInstalledApplications(0)
-            .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 }
+        val installed = pm.getInstalledApplications(0)
+        val out = installed
+            .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 || it.packageName in BROWSERS }
             .map { it.packageName }.toMutableSet()
         if (runCatching { pm.getPackageInfo("com.android.vending", 0) }.isSuccess) out += "com.android.vending"
         return out - priority

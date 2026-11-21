@@ -24,6 +24,11 @@ class LimiterTest {
         assertFalse(StreamingApps.looksLikeStreaming("com.example.filemanager"))
     }
 
+    @Test fun commonBrowsersJoinTheShieldAndAreNotStreamingApps() {
+        listOf("com.android.chrome", "com.sec.android.app.sbrowser", "org.mozilla.firefox", "com.brave.browser")
+            .forEach { assertTrue(it, it in StreamingApps.BROWSERS); assertFalse(it, StreamingApps.looksLikeStreaming(it)) }
+    }
+
     @Test fun otherAppsAreOnlySlowedWhilePriorityAppIsOnScreen() {
         val pri = { p: String -> p == "com.stremio.one" }
         assertEquals(LimiterPolicy.DOWN_WHILE_STREAMING, LimiterPolicy.downRate(true, "com.stremio.one", pri))
