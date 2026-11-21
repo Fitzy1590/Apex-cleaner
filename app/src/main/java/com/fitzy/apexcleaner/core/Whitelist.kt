@@ -62,6 +62,25 @@ class ProtectedApps(private val context: Context, private val store: WhitelistSt
         return out
     }
 
+    /**
+     * Apps that must stay outside the ad shield: launchers, notification listeners, exact-alarm apps and the clock.
+     * Widget and media apps are not listed here, so their ads can be filtered (they are never slowed either way).
+     */
+    fun neverFiltered(): Set<String> {
+        val pm = context.packageManager
+        val out = mutableSetOf(context.packageName)
+        pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_ALL)
+            .forEach { out += it.activityInfo.packageName }
+        Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
+            ?.split(':')?.mapNotNull { android.content.ComponentName.unflattenFromString(it)?.packageName }?.let { out += it }
+        runCatching {
+            pm.getPackagesHoldingPermissions(arrayOf("android.permission.SCHEDULE_EXACT_ALARM", "android.permission.USE_EXACT_ALARM"), 0)
+                .forEach { out += it.packageName }
+        }
+        out += store.all() + ALWAYS_PROTECTED
+        return out
+    }
+
     fun isProtected(pkg: String): Boolean = pkg in store.all() || pkg in automatic()
 
     companion object {

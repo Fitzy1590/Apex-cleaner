@@ -58,15 +58,18 @@ object StreamingApps {
         "com.google.android.apps.chrome", "org.chromium.chrome", "com.mi.globalbrowser", "com.UCMobile.intl",
     )
 
-    /** Apps that go through the speed limiter: ordinary installed apps, browsers and the Play Store, minus priority apps. */
+    /**
+     * Apps that go through the shield: every ordinary installed app, browsers, the Play Store and now also streaming,
+     * sport and game apps (so their ads are filtered). Only banking, push/clock, launchers, notification and alarm apps,
+     * your own whitelist and this app stay outside. Streaming apps in the tunnel are never slowed (see [priorityApps]).
+     */
     fun limitedApps(ctx: Context): Set<String> {
         val pm = ctx.packageManager
-        val priority = priorityApps(ctx) + SafeLists.bankingBypassPackages + ProtectedApps.ALWAYS_PROTECTED + ctx.packageName
-        val installed = pm.getInstalledApplications(0)
-        val out = installed
+        val skip = ProtectedApps(ctx, WhitelistStore(ctx)).neverFiltered() + SafeLists.bankingBypassPackages
+        val out = pm.getInstalledApplications(0)
             .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 || it.packageName in BROWSERS }
             .map { it.packageName }.toMutableSet()
         if (runCatching { pm.getPackageInfo("com.android.vending", 0) }.isSuccess) out += "com.android.vending"
-        return out - priority
+        return out - skip
     }
 }

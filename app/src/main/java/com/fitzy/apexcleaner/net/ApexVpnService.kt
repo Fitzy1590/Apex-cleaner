@@ -45,6 +45,8 @@ class ApexVpnService : VpnService() {
     @Volatile private var flows: FlowTable? = null
     @Volatile private var priority: Set<String> = emptySet()
     @Volatile private var visibleUids: Set<Int> = emptySet()
+    /** Streaming, sport and game apps in the tunnel: never paced, even in the background. */
+    @Volatile private var priorityUids: Set<Int> = emptySet()
     private val tracker = ForegroundTracker()
     private var lastEvents = 0L
 
@@ -95,7 +97,7 @@ class ApexVpnService : VpnService() {
                     cm.getConnectionOwnerUid(if (proto == 6) 6 else 17,
                         java.net.InetSocketAddress(InetAddress.getByAddress(appIp), appPort), java.net.InetSocketAddress(InetAddress.getByAddress(serverIp), serverPort))
                 }.getOrDefault(-1)
-            override fun uidOnScreen(uid: Int) = uid >= 0 && uid in visibleUids
+            override fun uidOnScreen(uid: Int) = uid >= 0 && (uid in visibleUids || uid in priorityUids)
         }
         flows = FlowTable(host)
         priority = runCatching { StreamingApps.priorityApps(this) }.getOrDefault(emptySet())
@@ -107,6 +109,7 @@ class ApexVpnService : VpnService() {
                 val enabled = com.fitzy.apexcleaner.core.AppSettings.limiter(this)
                 val fg = tracker.visible.firstOrNull { it in priority || StreamingApps.looksLikeStreaming(it) } ?: tracker.current
                 visibleUids = tracker.visible.mapNotNull { runCatching { packageManager.getPackageUid(it, 0) }.getOrNull() }.toSet()
+                priorityUids = priority.mapNotNull { runCatching { packageManager.getPackageUid(it, 0) }.getOrNull() }.toSet()
                 val isPri = { p: String -> p in priority || StreamingApps.looksLikeStreaming(p) }
                 down.setRate(LimiterPolicy.downRate(enabled, fg, isPri)); up.setRate(LimiterPolicy.upRate(enabled, fg, isPri))
                 ShieldStats.limiting.value = down.rate > 0
