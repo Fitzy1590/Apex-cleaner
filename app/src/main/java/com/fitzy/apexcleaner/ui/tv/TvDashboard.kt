@@ -85,6 +85,14 @@ fun TvDashboard(
                         }
                     }
                 }
+                state.update?.let { u ->
+                    item {
+                        val uri = androidx.compose.ui.platform.LocalUriHandler.current
+                        Card(onClick = { uri.openUri(u.apkUrl) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                            Text("New version ready (${u.tag}): press to download", Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
                 item {
                     Card(onClick = { onShield(!state.shieldOn) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                         Column(Modifier.padding(20.dp)) {

@@ -95,6 +95,17 @@ fun MobileDashboard(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { Text("Apex Cleaner", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
+                state.update?.let { u ->
+                    item {
+                        val uri = androidx.compose.ui.platform.LocalUriHandler.current
+                        Card(Modifier.fillMaxWidth()) {
+                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("A new version of Apex Cleaner is ready (${u.tag}).", Modifier.weight(1f))
+                                Button(onClick = { uri.openUri(u.apkUrl) }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update") }
+                            }
+                        }
+                    }
+                }
                 state.message?.let { m ->
                     item {
                         Card(Modifier.fillMaxWidth()) {

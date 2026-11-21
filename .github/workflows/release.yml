@@ -1,12 +1,8 @@
 name: Release
 on:
   push:
-    tags: ["v*"]
+    branches: [main]   # every change merged to main becomes a new release the app can update to
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version tag to create, e.g. v1.1.0"
-        required: true
 permissions:
   contents: write
 jobs:
@@ -14,23 +10,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
+      - name: Work out the version
+        run: |
+          N=$(git rev-list --count HEAD)
+          echo "APEX_VERSION_CODE=$N" >> "$GITHUB_ENV"
+          echo "VERSION=v1.0.$N" >> "$GITHUB_ENV"
       - name: Check and build
         run: ./gradlew check assembleDebug
       - name: Name the file
-        env:
-          VERSION: ${{ inputs.version || github.ref_name }}
         run: cp app/build/outputs/apk/debug/app-debug.apk "ApexCleaner-${VERSION}.apk"
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version || github.ref_name }}
         run: |
+          gh release view "$VERSION" >/dev/null 2>&1 && exit 0
           gh release create "$VERSION" "ApexCleaner-${VERSION}.apk" --target "$GITHUB_SHA" \
-            --title "Apex Cleaner ${VERSION}: Fast-Charge Accelerator" \
-            --prerelease \
-            --notes "Safe fast-charge care on plug-in, live wattage and charger type, lock-screen charging card, in-app charging card with speed curve and battery health, default 80% charge limit alert, and an unplug alert at 100%. Test build: install the .apk file on your phone."
+            --title "Apex Cleaner ${VERSION}" \
+            --notes "Automatic build of the latest main. Install the .apk file; the app also offers this update by itself."

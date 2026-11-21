@@ -12,8 +12,20 @@ android {
         applicationId = "com.fitzy.apexcleaner"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI sets APEX_VERSION_CODE (the run number) so each release is newer than the last.
+        val code = (System.getenv("APEX_VERSION_CODE") ?: "1").toInt()
+        versionCode = code
+        versionName = "1.0.$code"
+    }
+
+    // A fixed test-signing key, so every build can update the one before it. Not for a store release.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("apex-test.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -50,4 +62,5 @@ dependencies {
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")
 }

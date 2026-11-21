@@ -60,3 +60,9 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Phone app now has 4 tabs (Home, Shield, Storage, Apps) that switch instantly with no animation; shield card shows how many banking apps skip the shield; TV shows latest blocked names (build passing)
 - [ ] Still to do: tabbed layout on TV
 - [ ] Real-device test of the shield (DNS on many phones/TVs), Quick Settings tile, TV sound/buzz
+
+## Auto update (2026-11-21)
+- [x] Every change merged to main now builds a numbered release (v1.0.N) on GitHub with the app file attached (build passing)
+- [x] The app checks for a newer release when it opens and shows an "Update" card on phone and TV; tapping downloads the new file to install over the old one
+- [x] Fixed test-signing key in the project so updates install over each other. First install after this must remove the older test build once.
+- [ ] Not silent: Android always asks you to confirm each install

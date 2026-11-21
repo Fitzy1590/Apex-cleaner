@@ -47,6 +47,7 @@ data class UiState(
     val recentBlocked: List<String> = emptyList(),
     val listDomains: Int = 0,
     val bankingAppsFound: Int = 0,
+    val update: com.fitzy.apexcleaner.core.UpdateInfo? = null,
     val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
 
@@ -77,7 +78,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         ChargeEngine.update(ctx, force = true)
     }
 
+    private var checkedUpdate = false
+
     fun refresh() = launchBusy {
+        if (!checkedUpdate) {
+            checkedUpdate = true
+            com.fitzy.apexcleaner.core.UpdateChecker.check(ctx)?.let { u -> _state.update { it.copy(update = u) } }
+        }
         ChargeEngine.update(ctx, force = true)
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
