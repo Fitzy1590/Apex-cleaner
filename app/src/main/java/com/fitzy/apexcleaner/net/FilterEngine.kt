@@ -1,7 +1,7 @@
 package com.fitzy.apexcleaner.net
 
 /** Decides what to do with one DNS name. Safe domains always win over blocklists. */
-class FilterEngine(private val blocks: DomainTrie, private val safe: DomainTrie) {
+class FilterEngine(@Volatile var blocks: DomainTrie, private val safe: DomainTrie) {
     enum class Verdict { ALLOW, SAFE_PASSTHROUGH, BLOCK }
 
     /** Your own choices from the log. Allow beats every blocklist; Block cannot override banking or push names. */
@@ -17,6 +17,9 @@ class FilterEngine(private val blocks: DomainTrie, private val safe: DomainTrie)
     }
 
     companion object {
+        /** Starter list plus any downloaded lists. */
+        fun buildBlocks(extra: Sequence<String>): DomainTrie = DomainTrie.fromList(extra).also { t -> SafeLists.starterBlocks.forEach(t::add) }
+
         fun withDefaults(extraBlockLines: Sequence<String> = emptySequence()): FilterEngine {
             val b = DomainTrie.fromList(extraBlockLines)
             SafeLists.starterBlocks.forEach(b::add)

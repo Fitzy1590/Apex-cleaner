@@ -45,6 +45,9 @@ object ShieldRules {
         engine.userDeny = DomainTrie().also { t -> r.filterValues { it == Rule.DENY }.keys.forEach(t::add) }
     }
 
+    /** Swaps freshly downloaded ad lists into the running shield, no restart needed. */
+    fun reloadLists(ctx: Context) { live?.blocks = FilterEngine.buildBlocks(FilterLists.load(ctx)) }
+
     fun record(ctx: Context, domain: String, blocked: Boolean) {
         history.record(domain, blocked, System.currentTimeMillis())
         if (++sinceSave >= 40) save(ctx)

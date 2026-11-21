@@ -69,7 +69,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             com.fitzy.apexcleaner.net.ShieldRules.ensureLoaded(ctx)
             // Refresh the log every few seconds while the app is open.
             while (true) {
-                val h = com.fitzy.apexcleaner.net.ShieldRules.history.top(60)
+                val h = com.fitzy.apexcleaner.net.ShieldRules.history.top(200)
                 val r = com.fitzy.apexcleaner.net.ShieldRules.rules(ctx)
                 _state.update { it.copy(history = h, rules = r) }
                 kotlinx.coroutines.delay(3000)
@@ -118,8 +118,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateLists() = launchBusy {
         val n = com.fitzy.apexcleaner.net.FilterLists.update(ctx)
+        if (n > 0) com.fitzy.apexcleaner.net.ShieldRules.reloadLists(ctx)
         val total = com.fitzy.apexcleaner.net.FilterLists.count(ctx)
-        _state.value = _state.value.copy(listDomains = total, message = if (n == 0) "Could not download the ad lists. Check your connection and try again." else "Ad lists updated: $total names. Turn the shield off and on to use them.")
+        _state.value = _state.value.copy(listDomains = total, message = if (n == 0) "Could not download the ad lists. Check your connection and try again." else "Ad lists updated: $total names..")
     }
 
     fun setRule(domain: String, rule: com.fitzy.apexcleaner.net.Rule?) {

@@ -72,3 +72,6 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Allow / Block buttons on each name (phone) or press-to-cycle cards (TV); choices apply instantly while the shield runs and are kept
 - [x] Your Allow beats every ad list; your Block works on anything except banking and push-alert names, which stay protected
 - [ ] Waiting on owner test results from the first real-device test
+- [x] Real-device test 1 (owner): shield blocks ads (13 seen), ad lists downloaded (262,716 names), cache breakdown and tabs work, 2 banking apps found
+- [x] Network Logs full screen: search, "Show blocked only" switch, time + reason (Ads / Analytics / Tracker / TV tracking), Allow / Block / Undo, Clear, Close (build passing)
+- [x] New ad lists now apply straight away, no need to switch the shield off and on

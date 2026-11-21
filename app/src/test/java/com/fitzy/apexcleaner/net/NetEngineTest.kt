@@ -44,6 +44,18 @@ class NetEngineTest {
         val h2 = DnsHistory(); h2.load(h.toLines()); assertEquals(h.top(10), h2.top(10))
     }
 
+    @Test fun logLabelsAndFilters() {
+        assertEquals("Ads", LogView.category("googleads.g.doubleclick.net"))
+        assertEquals("Analytics", LogView.category("app-measurement.com"))
+        assertEquals("Analytics", LogView.category("firebase-settings.crashlytics.com"))
+        assertEquals("Tracker", LogView.category("something.example"))
+        val items = listOf(DomainStat("a.com", 2, 0, 5), DomainStat("b.com", 0, 3, 9), DomainStat("c.net", 1, 1, 7))
+        assertEquals(listOf("c.net", "a.com"), LogView.filter(items, "", true, emptyMap()).map { it.domain })
+        assertEquals(listOf("b.com", "c.net", "a.com"), LogView.filter(items, "", false, emptyMap()).map { it.domain })
+        assertEquals(listOf("b.com"), LogView.filter(items, "B.", false, emptyMap()).map { it.domain })
+        assertEquals(listOf("b.com", "c.net", "a.com"), LogView.filter(items, "", true, mapOf("b.com" to Rule.DENY)).map { it.domain })
+    }
+
     @Test fun readsAdGuardStyleLines() {
         val t = DomainTrie.fromList(sequenceOf("! comment", "||ads.one.com^", "||bad.two.com^\$third-party", "@@||ok.three.com^", "||x.com/path^"))
         assertTrue(t.matches("ads.one.com")); assertTrue(!t.matches("bad.two.com")); assertTrue(!t.matches("ok.three.com")); assertTrue(!t.matches("x.com"))
