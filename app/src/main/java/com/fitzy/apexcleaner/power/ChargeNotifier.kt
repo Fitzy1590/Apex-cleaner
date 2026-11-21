@@ -77,4 +77,19 @@ object ChargeNotifier {
             .build()
         ctx.getSystemService(NotificationManager::class.java).notify(ID_ALERT, n)
     }
+
+    /** High-priority warning when the battery gets hotter than the limit you set. Once per hot spell. */
+    fun heatAlert(ctx: Context, tempC: Float) {
+        ensureChannels(ctx)
+        val text = "Battery is at ${"%.0f".format(tempC)}°C. Take the phone out of its case, move it somewhere cooler, or unplug for a while."
+        val n = Notification.Builder(ctx, CH_ALERT)
+            .setSmallIcon(R.drawable.ic_stat_apex)
+            .setContentTitle("Phone is getting hot")
+            .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(text))
+            .setContentIntent(openApp(ctx))
+            .setAutoCancel(true)
+            .build()
+        ctx.getSystemService(NotificationManager::class.java).notify(ID_ALERT + 1, n)
+    }
 }

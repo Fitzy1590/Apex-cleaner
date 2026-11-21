@@ -75,3 +75,5 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Real-device test 1 (owner): shield blocks ads (13 seen), ad lists downloaded (262,716 names), cache breakdown and tabs work, 2 banking apps found
 - [x] Network Logs full screen: search, "Show blocked only" switch, time + reason (Ads / Analytics / Tracker / TV tracking), Allow / Block / Undo, Clear, Close (build passing)
 - [x] New ad lists now apply straight away, no need to switch the shield off and on
+- [x] Settings page (phone tab + TV row, build passing): night clean on/off, encrypted DNS on/off, heat warning level 38-46 C, version + check for updates, update ad lists, clear network log
+- [x] High-priority "Phone is getting hot" alert while charging, once per hot spell (uses the heat level from Settings)

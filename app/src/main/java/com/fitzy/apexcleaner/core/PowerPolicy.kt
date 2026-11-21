@@ -49,6 +49,8 @@ object PowerPolicy {
             .enqueueUniquePeriodicWork("light_check", ExistingPeriodicWorkPolicy.KEEP, req)
     }
 
+    fun cancelDeepClean(ctx: Context) { WorkManager.getInstance(ctx).cancelUniqueWork("deep_clean") }
+
     /** Deep clean: only while charging and the phone is idle, so it never causes lag or drain. */
     fun scheduleDeepClean(ctx: Context) {
         val req = PeriodicWorkRequestBuilder<DeepCleanWorker>(1, TimeUnit.DAYS)

@@ -58,6 +58,9 @@ fun TvDashboard(
     onHelper: () -> Unit,
     onShield: (Boolean) -> Unit,
     onRule: (String, com.fitzy.apexcleaner.net.Rule?) -> Unit,
+    onNightClean: (Boolean) -> Unit,
+    onEncryptedDns: (Boolean) -> Unit,
+    onCheckUpdate: () -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet)) {
         Surface(Modifier.fillMaxSize()) {
@@ -163,6 +166,14 @@ fun TvDashboard(
                                 }
                             }
                         }
+                    }
+                }
+                item { Text("Settings (press to change)", style = MaterialTheme.typography.titleLarge) }
+                item {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                        item { StatCard("Night clean 3 AM", if (state.nightClean) "ON" else "OFF", "Charging, idle only", onClick = { onNightClean(!state.nightClean) }) }
+                        item { StatCard("Encrypted DNS", if (state.encryptedDns) "ON" else "OFF", "Private lookups", onClick = { onEncryptedDns(!state.encryptedDns) }) }
+                        item { StatCard("Version", state.version, "Press to check for updates", onClick = onCheckUpdate) }
                     }
                 }
                 item { Text("Protected apps (press to toggle)", style = MaterialTheme.typography.titleLarge) }

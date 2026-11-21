@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         Shizuku.addRequestPermissionResultListener(helperListener)
         Shizuku.addBinderReceivedListenerSticky(helperBinderListener)
         PowerPolicy.scheduleLightCheck(this)
-        PowerPolicy.scheduleDeepClean(this)
+        if (com.fitzy.apexcleaner.core.AppSettings.nightClean(this)) PowerPolicy.scheduleDeepClean(this)
         com.fitzy.apexcleaner.net.FilterLists.schedule(this)
         val tv = isTv
         setContent {
@@ -71,12 +71,12 @@ class MainActivity : ComponentActivity() {
                 TunerService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield, vm::setRule)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield, vm::setRule, vm::setNightClean, vm::setEncryptedDns, vm::checkUpdate)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
                     vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
-                    vm::setChargeLimit, vm::setFastCharge, shield, vm::updateLists, vm::setRule, vm::clearHistory,
+                    vm::setChargeLimit, vm::setFastCharge, shield, vm::updateLists, vm::setRule, vm::clearHistory, vm::setNightClean, vm::setEncryptedDns, vm::setHeat, vm::checkUpdate,
                 )
             }
         }

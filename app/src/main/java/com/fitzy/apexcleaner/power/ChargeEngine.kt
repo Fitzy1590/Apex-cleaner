@@ -24,6 +24,7 @@ object ChargeEngine {
     private var samples = 0
     private var alertedLimit = false
     private var alertedFull = false
+    private var alertedHeat = false
     private var lastUpdate = 0L
     private val curve = ArrayList<CurvePoint>()
 
@@ -46,6 +47,7 @@ object ChargeEngine {
             samples = 0
             alertedLimit = s.level >= limit
             alertedFull = s.level >= 100
+            alertedHeat = false
             curve.clear()
         }
         if (!s.plugged) {
@@ -93,10 +95,13 @@ object ChargeEngine {
             currentA = if (currentUa > 0) currentUa / 1_000_000f else null,
             watts = watts, profile = ChargeMath.profileFor(watts, true),
             etaMin = eta?.first, etaMax = eta?.second,
-            fastActive = fastActive, tooWarm = ChargeMath.isTooWarm(s.tempC, s.thermalStatus),
+            fastActive = fastActive, tooWarm = ChargeMath.isTooWarm(s.tempC, s.thermalStatus, settings.hotC),
             limitPct = limit, fastEnabled = fastEnabled,
             curve = curve.toList(),
         )
+        val (heatState, heatNow) = ChargeMath.heatAlertState(ui.tooWarm, s.tempC, settings.hotC, alertedHeat)
+        alertedHeat = heatState
+        if (heatNow) ChargeNotifier.heatAlert(app, s.tempC)
         _ui.value = ui
         ChargeNotifier.hud(app, ui)
         ChargeNotifier.alert(app, alert, s.level, limit)

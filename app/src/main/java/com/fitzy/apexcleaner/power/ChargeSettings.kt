@@ -10,6 +10,10 @@ class ChargeSettings(context: Context) {
         get() = ChargeMath.clampLimit(prefs.getInt("limit", ChargeMath.DEFAULT_LIMIT))
         set(v) = prefs.edit().putInt("limit", ChargeMath.clampLimit(v)).apply()
 
+    var hotC: Float
+        get() = ChargeMath.clampHot(prefs.getFloat("hot", ChargeMath.HOT_C))
+        set(v) = prefs.edit().putFloat("hot", ChargeMath.clampHot(v)).apply()
+
     var fastEnabled: Boolean
         get() = prefs.getBoolean("fast", true)
         set(v) = prefs.edit().putBoolean("fast", v).apply()

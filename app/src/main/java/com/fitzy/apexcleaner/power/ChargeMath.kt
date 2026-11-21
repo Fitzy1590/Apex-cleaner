@@ -21,6 +21,15 @@ enum class ChargeAlert { NONE, REACHED_LIMIT, FULL }
 /** Pure charging maths and rules. No Android calls, so it is fully unit-tested. */
 object ChargeMath {
     const val HOT_C = 42f
+    const val MIN_HOT_C = 38f
+    const val MAX_HOT_C = 46f
+
+    fun clampHot(c: Float) = c.coerceIn(MIN_HOT_C, MAX_HOT_C)
+
+    /** One heat alert per hot spell; it re-arms once the battery has cooled 2 degrees below the limit. */
+    fun heatAlertState(tooWarm: Boolean, tempC: Float, hotC: Float, alerted: Boolean): Pair<Boolean, Boolean> =
+        if (tooWarm && !alerted) true to true else if (!tooWarm && tempC < hotC - 2f) false to false else alerted to false
+
     const val THERMAL_MODERATE = 2
     const val MAX_PLAUSIBLE_WATTS = 150f
     const val MIN_LIMIT = 50
@@ -61,8 +70,8 @@ object ChargeMath {
         if (previous == null) sample else previous + alpha * (sample - previous)
 
     /** Phone counts as too warm at 42 C, or when Android itself says it is getting hot. */
-    fun isTooWarm(tempC: Float, thermalStatus: Int?): Boolean =
-        tempC >= HOT_C || (thermalStatus != null && thermalStatus >= THERMAL_MODERATE)
+    fun isTooWarm(tempC: Float, thermalStatus: Int?, hotC: Float = HOT_C): Boolean =
+        tempC >= hotC || (thermalStatus != null && thermalStatus >= THERMAL_MODERATE)
 
     /**
      * Minutes to full as a range. Charging slows down above 80%, so that part counts double.

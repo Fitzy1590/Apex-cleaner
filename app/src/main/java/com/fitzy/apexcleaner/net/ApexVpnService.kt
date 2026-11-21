@@ -88,7 +88,8 @@ class ApexVpnService : VpnService() {
     }
 
     /** Encrypted lookup first; plain UDP only if the encrypted one fails. */
-    private fun resolve(query: ByteArray): ByteArray? = doh(query) ?: udp(query)
+    private fun resolve(query: ByteArray): ByteArray? =
+        if (com.fitzy.apexcleaner.core.AppSettings.encryptedDns(this)) doh(query) ?: udp(query) else udp(query)
 
     private fun doh(query: ByteArray): ByteArray? = runCatching {
         val c = URL(DOH_URL).openConnection() as HttpsURLConnection

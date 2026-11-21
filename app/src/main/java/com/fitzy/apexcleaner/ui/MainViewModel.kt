@@ -49,6 +49,10 @@ data class UiState(
     val bankingAppsFound: Int = 0,
     val history: List<com.fitzy.apexcleaner.net.DomainStat> = emptyList(),
     val rules: Map<String, com.fitzy.apexcleaner.net.Rule> = emptyMap(),
+    val nightClean: Boolean = true,
+    val encryptedDns: Boolean = true,
+    val hotC: Float = 42f,
+    val version: String = "",
     val update: com.fitzy.apexcleaner.core.UpdateInfo? = null,
     val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
@@ -61,6 +65,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         _state.update { st -> st.copy(
+            nightClean = com.fitzy.apexcleaner.core.AppSettings.nightClean(ctx),
+            encryptedDns = com.fitzy.apexcleaner.core.AppSettings.encryptedDns(ctx),
+            hotC = ChargeSettings(ctx).hotC,
+            version = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty(),
             bankingDomains = com.fitzy.apexcleaner.net.SafeLists.bankingDomains.size,
             bankingAppsFound = com.fitzy.apexcleaner.net.SafeLists.bankingBypassPackages.count { p -> runCatching { ctx.packageManager.getPackageInfo(p, 0) }.isSuccess },
         ) }
@@ -126,6 +134,28 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun setRule(domain: String, rule: com.fitzy.apexcleaner.net.Rule?) {
         com.fitzy.apexcleaner.net.ShieldRules.set(ctx, domain, rule)
         _state.update { it.copy(rules = com.fitzy.apexcleaner.net.ShieldRules.rules(ctx)) }
+    }
+
+    fun setNightClean(on: Boolean) {
+        com.fitzy.apexcleaner.core.AppSettings.setNightClean(ctx, on)
+        if (on) com.fitzy.apexcleaner.core.PowerPolicy.scheduleDeepClean(ctx) else com.fitzy.apexcleaner.core.PowerPolicy.cancelDeepClean(ctx)
+        _state.update { it.copy(nightClean = on) }
+    }
+
+    fun setEncryptedDns(on: Boolean) {
+        com.fitzy.apexcleaner.core.AppSettings.setEncryptedDns(ctx, on)
+        _state.update { it.copy(encryptedDns = on) }
+    }
+
+    fun setHeat(c: Float) {
+        ChargeSettings(ctx).hotC = c
+        ChargeEngine.update(ctx, force = true)
+        _state.update { it.copy(hotC = ChargeSettings(ctx).hotC) }
+    }
+
+    fun checkUpdate() = launchBusy {
+        val u = com.fitzy.apexcleaner.core.UpdateChecker.check(ctx)
+        _state.update { it.copy(update = u, message = if (u == null) "You have the latest version." else "A newer version is ready. See the Update card on Home.") }
     }
 
     fun clearHistory() {

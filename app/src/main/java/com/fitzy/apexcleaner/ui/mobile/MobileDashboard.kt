@@ -65,6 +65,10 @@ fun MobileDashboard(
     onUpdateLists: () -> Unit,
     onRule: (String, com.fitzy.apexcleaner.net.Rule?) -> Unit,
     onClearHistory: () -> Unit,
+    onNightClean: (Boolean) -> Unit,
+    onEncryptedDns: (Boolean) -> Unit,
+    onHeat: (Float) -> Unit,
+    onCheckUpdate: () -> Unit,
 ) {
     ApexTheme {
         var showLogs by rememberSaveable { mutableStateOf(false) }
@@ -88,7 +92,7 @@ fun MobileDashboard(
         Scaffold(bottomBar = {
             // No animation on purpose: tabs switch instantly.
             NavigationBar {
-                listOf("Home", "Shield", "Storage", "Apps").forEachIndexed { i, label ->
+                listOf("Home", "Shield", "Storage", "Apps", "Settings").forEachIndexed { i, label ->
                     NavigationBarItem(
                         selected = tab == i, onClick = { tab = i },
                         icon = { Spacer(Modifier.size(1.dp)) },
@@ -243,6 +247,32 @@ fun MobileDashboard(
                 item { Text("Protected apps (never interrupted)", style = MaterialTheme.typography.titleMedium) }
                 items(state.apps, key = { it.pkg }) { AppRow(it, onToggleApp) }
                 }
+                if (tab == 4) {
+                    item { Text("Settings", style = MaterialTheme.typography.titleLarge) }
+                    item { SettingRow("Night clean at 3 AM", "Cleans while charging, over 80% battery, with the screen off for 30 minutes.", state.nightClean, onNightClean) }
+                    item { SettingRow("Encrypted DNS", "The shield looks up websites over a private connection. Turn off if a network blocks it.", state.encryptedDns, onEncryptedDns) }
+                    item {
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("Heat warning at ${"%.0f".format(state.hotC)}°C", style = MaterialTheme.typography.titleMedium)
+                                Text("You get an alert while charging when the battery gets this hot.", style = MaterialTheme.typography.bodySmall)
+                                androidx.compose.material3.Slider(value = state.hotC, onValueChange = onHeat, valueRange = 38f..46f, steps = 7)
+                            }
+                        }
+                    }
+                    item {
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Version ${state.version}", style = MaterialTheme.typography.titleMedium)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedButton(onClick = onCheckUpdate, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Check for updates") }
+                                    OutlinedButton(onClick = onUpdateLists, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update ad lists") }
+                                }
+                                OutlinedButton(onClick = onClearHistory, modifier = Modifier.heightIn(min = 44.dp)) { Text("Clear network log") }
+                            }
+                        }
+                    }
+                }
                 item { Spacer(Modifier.height(24.dp)) }
             }
         }
@@ -291,4 +321,17 @@ internal fun helperButton(h: HelperState) = when (h) {
     HelperState.NotRunning -> "Open the helper app"
     HelperState.NeedsPermission -> "Allow deeper clean"
     HelperState.Ready -> null
+}
+
+@Composable
+private fun SettingRow(title: String, sub: String, on: Boolean, onChange: (Boolean) -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(sub, style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(checked = on, onCheckedChange = onChange)
+        }
+    }
 }

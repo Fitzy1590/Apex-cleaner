@@ -35,6 +35,14 @@ class ChargeMathTest {
         assertEquals(120.0, ChargeMath.smooth(100.0, 200.0), 0.001)
     }
 
+    @Test fun heatAlertFiresOncePerHotSpell() {
+        assertEquals(true to true, ChargeMath.heatAlertState(true, 43f, 42f, false))
+        assertEquals(true to false, ChargeMath.heatAlertState(true, 43f, 42f, true))
+        assertEquals(true to false, ChargeMath.heatAlertState(false, 41f, 42f, true)) // still near the limit: stay quiet
+        assertEquals(false to false, ChargeMath.heatAlertState(false, 39f, 42f, true)) // cooled: re-armed
+        assertEquals(40f, ChargeMath.clampHot(30f) + 2f)
+    }
+
     @Test fun warmAt42OrWhenPhoneSaysSo() {
         assertFalse(ChargeMath.isTooWarm(41.9f, 0))
         assertTrue(ChargeMath.isTooWarm(42f, null))
