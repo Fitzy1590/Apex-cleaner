@@ -40,3 +40,6 @@ Owner voted Option A. Phase 2 (build) started.
 - [ ] 2. TV polish only (no speed limiter)
 - [ ] 3. Speed limiter only
 Owner voted 1.
+
+## TV finish build (2026-11-21): owner voted 1 (carry on, decide small things alone, ask only on critical changes)
+- [x] Banking list 284+ names; TV Logs tab. Open: per-app banking screen, real-device tests.

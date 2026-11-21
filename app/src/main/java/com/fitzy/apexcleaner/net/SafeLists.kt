@@ -48,6 +48,16 @@ pay.google.com wallet.google.com samsungpay.com alipay.com tenpay.com npci.org.i
 idfcfirstbank.com yesbank.in pnbindia.in bankofbaroda.in canarabank.com indusind.com
 """
 
+    /** Extra banks, brokers and payment services I am sure of (brings the list to 284). */
+    private const val BANKING_EXTRA = """
+bbt.com suntrust.com 53.com bankwest.com.au stgeorge.com.au bankofmelbourne.com.au suncorp.com.au ubank.com.au
+boq.com.au hsbc.ca laurentianbank.ca eqbank.ca simplii.com wealthsimple.com questrade.com targobank.de
+hypovereinsbank.de consorsbank.de interactivebrokers.com tradestation.com webull.com mercadopago.com paysafe.com trustly.com
+wepay.com authorize.net bluesnap.com bancochile.cl bancoestado.cl banorte.com banamex.com santander.com.mx
+mizuhobank.co.jp smbc.co.jp mufg.jp paypay.ne.jp ing.be kbc.be belfius.be bnpparibasfortis.be
+americafirst.com becu.org tiaa.org principal.com bankofthewest.com
+"""
+
     /** Push and system essentials: keeps alerts, alarms-over-network and connectivity checks instant. */
     private const val ESSENTIAL = """
 mtalk.google.com fcm.googleapis.com android.googleapis.com android.clients.google.com
@@ -73,7 +83,7 @@ lgsmartad.com ad.lgsmartad.com lgtvsdp.com tvinteractive.tv
 
     private fun words(s: String) = s.split(Regex("\\s+")).filter { it.contains('.') }
 
-    val bankingDomains: List<String> get() = (words(BANKING) + words(BANKING_MORE)).distinct()
+    val bankingDomains: List<String> get() = (words(BANKING) + words(BANKING_MORE) + words(BANKING_EXTRA)).distinct()
     val essentialDomains: List<String> get() = words(ESSENTIAL).distinct()
     val starterBlocks: List<String> get() = words(STARTER_BLOCKS).distinct()
 

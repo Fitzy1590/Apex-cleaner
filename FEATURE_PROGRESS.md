@@ -132,3 +132,10 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Full build check (2026-11-21, build passing)
 - [x] Compile, lint, unit tests and the app file all pass with Android tools present. This covers everything marked "not build-checked" above (TV tabs, browser shield fixes, streaming/game ad filtering, installer fix).
 - [ ] Real-device test on a TV
+
+## TV finish (2026-11-21, build passing)
+- [x] Banking passthrough list now 288 names (target 284 reached); a test keeps it at 284 or more
+- [x] TV "Logs" tab: full list of looked-up names, blocked-only switch, press a name to cycle normal / always allow / always block, Clear button
+- [x] Notes corrected: the speed-pacing relay (waits, never drops), the TV tabs and the remote-key shortcuts (red = clean, yellow = boost) are already in the code
+- [x] Apps list (phone and TV) now marks known banking apps "Banking app: skips the shield" (locked on); any other bank app can be added with the existing protect switch (build passing)
+- [ ] Still open: real-device tests (speed pacing on a phone and TV, shield on TVs, quick-settings tile, TV sound and buzz), dark look check on a real TV
