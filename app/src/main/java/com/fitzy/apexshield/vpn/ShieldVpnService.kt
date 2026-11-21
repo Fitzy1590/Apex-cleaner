@@ -21,7 +21,7 @@ class ShieldVpnService : VpnService() {
     @Volatile private var running = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
+        if (intent?.action == ACTION_STOP || intent?.action == ACTION_PAUSE) {
             shutDown()
             return START_NOT_STICKY
         }
@@ -36,7 +36,7 @@ class ShieldVpnService : VpnService() {
         val b = Builder().setSession("Apex Shield").setBlocking(true)
             .addAddress(CLIENT_IP, 32).addDnsServer(FAKE_DNS).addRoute(FAKE_DNS, 32)
         // This app and the owner's protected apps skip the VPN, so their traffic is never touched.
-        val bypass = WhitelistStore(this).all() + packageName
+        val bypass = WhitelistStore(this).all() + packageName + COMPAT_APPS
         bypass.forEach { runCatching { b.addDisallowedApplication(it) } }
         val fd = runCatching { b.establish() }.getOrNull()
         if (fd == null) { shutDown(); return }
@@ -44,7 +44,8 @@ class ShieldVpnService : VpnService() {
         running = true
         pool = Executors.newFixedThreadPool(6)
         ShieldEngine.setRunning(true)
-        ShieldSettings(this).enabled = true
+        ShieldSettings(this).apply { enabled = true; pausedUntil = 0 }
+        ShieldEngine.refreshNotification(this, force = true)
         val input = FileInputStream(fd.fileDescriptor)
         val output = FileOutputStream(fd.fileDescriptor)
         reader = Thread({
@@ -77,6 +78,7 @@ class ShieldVpnService : VpnService() {
         runCatching { tun?.close() }
         tun = null
         ShieldEngine.setRunning(false)
+        ShieldEngine.refreshNotification(this, force = true)
         stopSelf()
     }
 
@@ -95,12 +97,21 @@ class ShieldVpnService : VpnService() {
     companion object {
         private const val CLIENT_IP = "10.111.222.1"
         private const val FAKE_DNS = "10.111.222.2"
+        /** Apps known to show a black screen when their ad/analytics lookups are blocked; they skip the shield. */
+        private val COMPAT_APPS = setOf("com.sofascore.results", "com.sofascore.android")
         private const val ACTION_STOP = "com.fitzy.apexshield.SHIELD_STOP"
+        private const val ACTION_PAUSE = "com.fitzy.apexshield.SHIELD_PAUSE"
+
+        /** Switches the shield off for a while; the background service turns it back on afterwards. */
+        fun pause(ctx: Context, minutes: Int = 15) {
+            ShieldSettings(ctx).pausedUntil = System.currentTimeMillis() + minutes * 60_000L
+            ctx.startService(Intent(ctx, ShieldVpnService::class.java).setAction(ACTION_PAUSE))
+        }
 
         fun start(ctx: Context) { ctx.startService(Intent(ctx, ShieldVpnService::class.java)) }
 
         fun stop(ctx: Context) {
-            ShieldSettings(ctx).enabled = false
+            ShieldSettings(ctx).apply { enabled = false; pausedUntil = 0 }
             ctx.startService(Intent(ctx, ShieldVpnService::class.java).setAction(ACTION_STOP))
         }
     }

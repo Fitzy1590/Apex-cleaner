@@ -9,11 +9,17 @@ import android.content.Context
 import android.content.Intent
 import com.fitzy.apexshield.MainActivity
 import com.fitzy.apexshield.R
+import com.fitzy.apexshield.vpn.ShieldEngine
+import com.fitzy.apexshield.vpn.ShieldSettings
+import com.fitzy.apexshield.vpn.ShieldVpnService
 
 const val ACTION_BOOST = "com.fitzy.apexshield.BOOST"
 const val ACTION_CLEAR_CACHE = "com.fitzy.apexshield.CLEAR_CACHE"
 const val ACTION_COOL_DOWN = "com.fitzy.apexshield.COOL_DOWN"
 const val ACTION_WHITELIST = "com.fitzy.apexshield.WHITELIST"
+const val ACTION_SHIELD_ON = "com.fitzy.apexshield.SHIELD_ON"
+const val ACTION_SHIELD_OFF = "com.fitzy.apexshield.SHIELD_OFF"
+const val ACTION_SHIELD_PAUSE = "com.fitzy.apexshield.SHIELD_PAUSE_15"
 
 object Notifier {
     const val CHANNEL_SERVICE = "service"
@@ -46,13 +52,32 @@ object Notifier {
 
     fun serviceNotification(ctx: Context): Notification {
         ensureChannels(ctx)
-        return Notification.Builder(ctx, CHANNEL_SERVICE)
+        val st = ShieldSettings(ctx)
+        val running = ShieldEngine.ui.value.running
+        val paused = !running && st.pausedUntil > System.currentTimeMillis()
+        val title = when {
+            running -> "Apex Shield is ON"
+            paused -> "Apex Shield is paused"
+            else -> "Apex Shield is OFF"
+        }
+        val text = when {
+            running || paused -> "${st.blockedToday} ads & trackers blocked today"
+            else -> "Tap Turn on to block ads again"
+        }
+        val b = Notification.Builder(ctx, CHANNEL_SERVICE)
             .setSmallIcon(R.drawable.ic_stat_apex)
-            .setContentTitle("Apex Cleaner is keeping watch")
-            .setContentText("Quietly checking memory, storage and heat")
+            .setContentTitle(title)
+            .setContentText(text)
             .setContentIntent(openApp(ctx))
+            .setOnlyAlertOnce(true)
             .setOngoing(true)
-            .build()
+        if (running) {
+            b.addAction(Notification.Action.Builder(null, "Pause 15 min", action(ctx, ACTION_SHIELD_PAUSE, 20)).build())
+            b.addAction(Notification.Action.Builder(null, "Turn off", action(ctx, ACTION_SHIELD_OFF, 21)).build())
+        } else {
+            b.addAction(Notification.Action.Builder(null, "Turn on", action(ctx, ACTION_SHIELD_ON, 22)).build())
+        }
+        return b.build()
     }
 
     /** Actionable card: fix issues straight from the notification shade. */
@@ -94,6 +119,16 @@ object Notifier {
 /** Handles the notification buttons. None of these ever kills another app. */
 class ActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        when (intent.action) {
+            ACTION_SHIELD_OFF -> { ShieldVpnService.stop(context); return }
+            ACTION_SHIELD_PAUSE -> { ShieldVpnService.pause(context); return }
+            ACTION_SHIELD_ON -> {
+                // Android asks for VPN permission once; if it is missing, open the app so it can ask.
+                if (android.net.VpnService.prepare(context) == null) ShieldVpnService.start(context)
+                else context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                return
+            }
+        }
         val pending = goAsync()
         Thread {
             try {

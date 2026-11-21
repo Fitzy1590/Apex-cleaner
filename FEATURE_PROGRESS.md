@@ -59,3 +59,7 @@ Findings:
 - [ ] D2. Download bigger block list (e.g. StevenBlack), add the missing passthrough domains, TV shield screen
 - [x] E. 3 AM nightly clean (starts at next 3 AM, then daily, charging + idle; tested)
 - [x] F. Shield on phone (card + logs) and TV (on/off + secure DNS cards, violet 3dp focus border, 1.05x)
+
+## Shield notification and Sofascore fix (BUILD PASSING)
+- [x] Sofascore (and its helper names) skip the shield so it no longer shows a black screen
+- [x] Always-on notification shows Shield ON/OFF/paused, ads blocked today, with Turn on / Turn off / Pause 15 min buttons

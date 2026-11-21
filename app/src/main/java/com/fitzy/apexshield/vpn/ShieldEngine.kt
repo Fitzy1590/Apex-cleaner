@@ -47,6 +47,15 @@ class ShieldSettings(context: Context) {
     var queriesTotal: Long
         get() = prefs.getLong("queries_total", 0)
         set(v) = prefs.edit().putLong("queries_total", v).apply()
+    /** Ads/trackers blocked since midnight; resets itself each new day. */
+    var blockedToday: Long
+        get() = if (prefs.getString("today_key", null) == today()) prefs.getLong("today_count", 0) else 0
+        set(v) = prefs.edit().putString("today_key", today()).putLong("today_count", v).apply()
+    /** Time (ms) until which the shield is paused; 0 when not paused. */
+    var pausedUntil: Long
+        get() = prefs.getLong("paused_until", 0)
+        set(v) = prefs.edit().putLong("paused_until", v).apply()
+    private fun today() = java.time.LocalDate.now().toString()
     var customBlock: Set<String>
         get() = prefs.getStringSet("custom_block", emptySet()).orEmpty()
         set(v) = prefs.edit().putStringSet("custom_block", v).apply()
@@ -87,10 +96,24 @@ object ShieldEngine {
 
     fun setRunning(on: Boolean) { ui.value = ui.value.copy(running = on) }
 
+    @Volatile private var lastNotifyAt = 0L
+
+    /** Updates the always-on notification; blocked-count refreshes are limited to one every 5 seconds. */
+    fun refreshNotification(ctx: Context, force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastNotifyAt < 5_000) return
+        lastNotifyAt = now
+        runCatching {
+            ctx.getSystemService(android.app.NotificationManager::class.java)
+                .notify(com.fitzy.apexshield.core.Notifier.ID_SERVICE, com.fitzy.apexshield.core.Notifier.serviceNotification(ctx))
+        }
+    }
+
     fun record(ctx: Context, domain: String, category: Category?) {
         val s = ShieldSettings(ctx)
         s.queriesTotal += 1
-        if (category != null) s.blockedTotal += 1
+        if (category != null) { s.blockedTotal += 1; s.blockedToday += 1 }
+        if (category != null) refreshNotification(ctx)
         val e = QueryLog(System.currentTimeMillis(), domain, category)
         ui.value = ui.value.let {
             it.copy(

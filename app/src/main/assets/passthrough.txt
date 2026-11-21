@@ -181,3 +181,8 @@ jiocinema.com
 stan.com.au
 binge.com.au
 kayosports.com.au
+
+# Sports score apps that go blank when their helper services are blocked
+sofascore.com
+sofascore.app
+sofascore.dev

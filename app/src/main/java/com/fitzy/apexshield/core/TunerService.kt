@@ -40,6 +40,20 @@ class TunerService : Service() {
         }
     }
 
+    /** Turns the shield back on when a pause runs out, and keeps the notification's count fresh. */
+    private val shieldTick = object : Runnable {
+        override fun run() {
+            val st = com.fitzy.apexshield.vpn.ShieldSettings(this@TunerService)
+            if (st.pausedUntil in 1..System.currentTimeMillis()) {
+                st.pausedUntil = 0
+                if (android.net.VpnService.prepare(this@TunerService) == null)
+                    com.fitzy.apexshield.vpn.ShieldVpnService.start(this@TunerService)
+            }
+            com.fitzy.apexshield.vpn.ShieldEngine.refreshNotification(this@TunerService)
+            handler.postDelayed(this, 30_000L)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         val n = Notifier.serviceNotification(this)
@@ -52,6 +66,7 @@ class TunerService : Service() {
         PowerEventReceiver.register(this, powerReceiver)
         handler.post(tick)
         handler.post(chargeTick)
+        handler.post(shieldTick)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
@@ -59,6 +74,7 @@ class TunerService : Service() {
     override fun onDestroy() {
         handler.removeCallbacks(tick)
         handler.removeCallbacks(chargeTick)
+        handler.removeCallbacks(shieldTick)
         runCatching { unregisterReceiver(powerReceiver) }
         runCatching { unregisterReceiver(screenReceiver) }
         super.onDestroy()
