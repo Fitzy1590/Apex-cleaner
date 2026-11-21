@@ -32,7 +32,13 @@ object UpdateInstaller {
             try {
                 val apk = download(app, info.apkUrl)
                 status.value = "Opening the installer…"
-                install(app, apk)
+                try { install(app, apk) } catch (e: Exception) {
+                    status.value = "Android would not open the installer. Tap Update to try again."; busy = false; return@Thread
+                }
+                // If Android never answers, do not stay stuck: free the button after a short wait.
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    if (status.value == "Opening the installer…") { status.value = "Android did not open the installer. Tap Update to try again."; busy = false }
+                }, 20_000)
             } catch (e: Exception) {
                 status.value = "The update could not be downloaded. Check your connection and try again."
                 busy = false
@@ -67,7 +73,7 @@ object UpdateInstaller {
         pi.openSession(id).use { s ->
             apk.inputStream().use { i -> s.openWrite("apex.apk", 0, apk.length()).use { o -> i.copyTo(o); s.fsync(o) } }
             val flags = PendingIntent.FLAG_UPDATE_CURRENT or if (android.os.Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0
-            val pend = PendingIntent.getBroadcast(ctx, id, Intent(ACTION).setPackage(ctx.packageName), flags)
+            val pend = PendingIntent.getBroadcast(ctx, id, Intent(ctx, Result::class.java).setAction(ACTION), flags)
             s.commit(pend.intentSender)
         }
     }

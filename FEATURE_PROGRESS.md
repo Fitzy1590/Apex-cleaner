@@ -121,3 +121,6 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 
 ## More aggressive ad lists (2026-11-21)
 - [x] Added Hagezi Pro++ and Peter Lowe lists beside StevenBlack and AdGuard. Lists download on first start (and again if a list is missing). Owner can Allow any wrongly blocked site from Network Logs. Not build-checked.
+
+## Update stuck on "Opening the installer…" (2026-11-21)
+- [x] The installer reply is now addressed straight to the app (newer Android refuses vague replies), and the button frees itself after 20 seconds with a clear message instead of staying stuck. Not build-checked.
