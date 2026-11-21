@@ -39,6 +39,9 @@ object StreamingApps {
         val store = WhitelistStore(ctx)
         out += ProtectedApps(ctx, store).automatic()
         out += store.all()
+        // Browsers ship widgets and media services, which would mark them "protected" and keep web ads unfiltered.
+        // Only a browser you whitelisted yourself stays outside the shield.
+        out -= (BROWSERS - store.all())
         return out
     }
 

@@ -41,6 +41,8 @@ object FilterLists {
         return ok
     }
 
+    fun hasLists(ctx: Context): Boolean = dir(ctx).listFiles()?.any { it.length() > 1000 } == true
+
     fun count(ctx: Context): Int = DomainTrie.fromList(load(ctx)).size
 
     /** Weekly refresh, only on Wi-Fi while charging and idle (heavy work rule). */

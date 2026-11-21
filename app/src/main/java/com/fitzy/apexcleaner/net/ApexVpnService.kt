@@ -74,6 +74,10 @@ class ApexVpnService : VpnService() {
         val engine = FilterEngine.withDefaults(FilterLists.load(this))
         ShieldRules.apply(this, engine); ShieldRules.live = engine
         if (full) startLimiter()
+        // First run: fetch the big ad lists now instead of waiting for a charging, idle, Wi-Fi window.
+        if (!FilterLists.hasLists(this)) Thread({
+            runCatching { if (FilterLists.update(this) > 0) ShieldRules.reloadLists(this) }
+        }, "apex-lists").start()
         Thread({ loop(engine, full) }, "apex-dns").start()
     }
 
