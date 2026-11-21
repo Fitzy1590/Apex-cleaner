@@ -8,6 +8,7 @@ Android system optimizer: safe storage cleaner, quiet background tuner, no-kill 
 - Describe results as what the app now does for the user, in everyday words.
 - End each finished task with 2 sentences: what was completed, what comes next.
 - Frame choices around how the app looks, feels and works.
+- Every voting card must include mock screenshots (publish as a visual page), not just text boxes.
 
 ## Working rules
 - Progress lives in `FEATURE_PROGRESS.md`. Update it after each feature.
