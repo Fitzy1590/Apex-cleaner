@@ -137,4 +137,5 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Banking passthrough list now 288 names (target 284 reached); a test keeps it at 284 or more
 - [x] TV "Logs" tab: full list of looked-up names, blocked-only switch, press a name to cycle normal / always allow / always block, Clear button
 - [x] Notes corrected: the speed-pacing relay (waits, never drops), the TV tabs and the remote-key shortcuts (red = clean, yellow = boost) are already in the code
-- [ ] Still open: per-app banking on/off screen, real-device tests (speed pacing on a phone and TV, shield on TVs, quick-settings tile, TV sound and buzz), dark look check on a real TV
+- [x] Apps list (phone and TV) now marks known banking apps "Banking app: skips the shield" (locked on); any other bank app can be added with the existing protect switch (build passing)
+- [ ] Still open: real-device tests (speed pacing on a phone and TV, shield on TVs, quick-settings tile, TV sound and buzz), dark look check on a real TV

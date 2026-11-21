@@ -241,6 +241,7 @@ fun TvDashboard(
                                         Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
                                         Text(
                                             when {
+                                                app.banking -> "Banking app: skips shield"
                                                 app.automatic -> "Auto-protected"
                                                 app.protectedByUser -> "Protected"
                                                 else -> "Not protected"

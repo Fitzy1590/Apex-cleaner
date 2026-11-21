@@ -287,7 +287,7 @@ private fun AppRow(app: AppEntry, onToggle: (String) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(app.label)
-            if (app.automatic) Text("Automatically protected", style = MaterialTheme.typography.bodySmall)
+            if (app.automatic) Text(if (app.banking) "Banking app: skips the shield" else "Automatically protected", style = MaterialTheme.typography.bodySmall)
         }
         Switch(checked = app.protectedByUser || app.automatic, onCheckedChange = { onToggle(app.pkg) }, enabled = !app.automatic)
     }

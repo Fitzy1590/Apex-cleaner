@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class AppEntry(val pkg: String, val label: String, val protectedByUser: Boolean, val automatic: Boolean)
+data class AppEntry(val pkg: String, val label: String, val protectedByUser: Boolean, val automatic: Boolean, val banking: Boolean = false)
 
 data class UiState(
     val health: Health? = null,
@@ -232,7 +232,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
             .distinctBy { it.first }
             .filter { it.first != ctx.packageName }
-            .map { (p, l) -> AppEntry(p, l, p in mine, p in auto) }
+            .map { (p, l) -> AppEntry(p, l, p in mine, p in auto || p in com.fitzy.apexcleaner.net.SafeLists.bankingBypassPackages, p in com.fitzy.apexcleaner.net.SafeLists.bankingBypassPackages) }
             .sortedBy { it.label.lowercase() }
     }
 }
