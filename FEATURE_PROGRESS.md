@@ -34,3 +34,18 @@ Repo held only a README: no existing app. Owner chose "build fresh here".
 ## Pending
 - [ ] Real-device test (cleaning, notifications, TV focus, Shizuku with the helper app running)
 - [ ] Known limits: cannot clear OTHER apps' private caches without system permission; deep clean needs "All files access"
+
+## Merge Audit: Apex Shield & Cleaner (2026-11-21)
+Goal: combine AdShield-VPN (com.fitzy.adshield) into this app, renamed Apex Shield & Cleaner (com.fitzy.apexshield).
+Findings:
+- No AdShield code is in this repo and its repo is not reachable from this session. The whole network/privacy engine (VPN DNS filter, Trie, DoH, passthrough list, query log) must be built fresh here, or the owner supplies the AdShield source.
+- No VPN pieces exist yet (no VpnService, no VPN permission/service in the manifest).
+- Cleaner engine, Shizuku helper, charging engine and phone/TV dashboards are done and reusable as-is.
+- Deep clean runs daily on charging + idle, but is NOT pinned to 3 AM yet.
+- Heat warning is 38 C today; the merge brief says 42 C. Needs the owner's pick.
+- Name and ID change (apexcleaner -> apexshield) touches the package, manifest, Gradle and tests.
+- Governance gaps: no deny rules in settings.json, no subagent-model setting, no vpn-engine rules file. CLAUDE.md is lean (32 lines).
+
+## Merge Vote (PHASE 1): WAITING FOR OWNER
+- [ ] Option A [RECOMMENDED MERGED BUILD]: Unified Apex Shield & Cleaner
+Phase 2 does not start until this is ticked.

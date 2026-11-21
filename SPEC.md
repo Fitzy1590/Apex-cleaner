@@ -28,3 +28,7 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 
 ### Where it lives
 `power/` package: ChargeMath (rules, tested), ChargeReader, ChargeSettings, ChargeEngine (+ PowerEventReceiver), ChargeNotifier, ChargeUi. Card: `ui/mobile/ChargingCard.kt`. Hooks into `PowerPolicy.chargeHold`, `TunerService`, `Workers`.
+
+## Unified App: Apex Shield & Cleaner (com.fitzy.apexshield), proposed
+Merge of AdShield-VPN into Apex Cleaner. Status: AWAITING OWNER VOTE (Phase 1).
+- [ ] **Option A [RECOMMENDED MERGED BUILD]**: Local VPN DNS ad firewall + safe storage cleaner + Shizuku cache breakdown + battery thermal monitor + dual phone and TV UI. One app, no duplicated background services.
