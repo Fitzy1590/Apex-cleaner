@@ -31,6 +31,17 @@ object UpdateChecker {
         return best
     }
 
+    /** Outcome of a manual check, so "no connection" is never reported as "you are up to date". */
+    sealed class Outcome { data class Found(val info: UpdateInfo) : Outcome(); object UpToDate : Outcome(); object Failed : Outcome() }
+
+    fun checkNow(ctx: Context): Outcome = runCatching {
+        val current = androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(ctx.packageManager.getPackageInfo(ctx.packageName, 0)).toInt()
+        val c = URL(URL_LIST).openConnection() as HttpURLConnection
+        c.connectTimeout = 8000; c.readTimeout = 8000; c.setRequestProperty("Accept", "application/vnd.github+json")
+        if (c.responseCode != 200) return@runCatching Outcome.Failed
+        pick(c.inputStream.use { it.readBytes().decodeToString() }, current)?.let { Outcome.Found(it) } ?: Outcome.UpToDate
+    }.getOrDefault(Outcome.Failed)
+
     fun check(ctx: Context): UpdateInfo? = runCatching {
         val current = androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(ctx.packageManager.getPackageInfo(ctx.packageName, 0)).toInt()
         val c = URL(URL_LIST).openConnection() as HttpURLConnection

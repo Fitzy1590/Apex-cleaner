@@ -105,3 +105,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Never slow the app on screen (2026-11-21, build passing)
 - [x] Any app you are looking at, including both apps in split-screen, is never slowed, even if a video app is also on screen
 - [ ] Android 9 phones (below Android 10) cannot tell which app owns a connection, so the old behaviour applies there
+
+## Check for updates fixed (2026-11-21)
+- [x] Button now shows "Checking…", works even while other jobs run, names the version found, and says so when the update server cannot be reached (it used to say "latest version" on a failed check)
+- [x] Buttons can no longer get stuck greyed out after a job (build check below)

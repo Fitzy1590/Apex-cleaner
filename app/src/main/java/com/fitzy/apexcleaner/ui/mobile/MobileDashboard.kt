@@ -267,7 +267,7 @@ fun MobileDashboard(
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("Version ${state.version}", style = MaterialTheme.typography.titleMedium)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(onClick = onCheckUpdate, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Check for updates") }
+                                    OutlinedButton(onClick = onCheckUpdate, enabled = !state.checking, modifier = Modifier.heightIn(min = 44.dp)) { Text(if (state.checking) "Checking…" else "Check for updates") }
                                     OutlinedButton(onClick = onUpdateLists, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update ad lists") }
                                 }
                                 OutlinedButton(onClick = onClearHistory, modifier = Modifier.heightIn(min = 44.dp)) { Text("Clear network log") }

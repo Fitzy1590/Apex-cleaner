@@ -36,6 +36,7 @@ data class UiState(
     val apps: List<AppEntry> = emptyList(),
     val message: String? = null,
     val busy: Boolean = false,
+    val checking: Boolean = false,
     val filesAccess: Boolean = true,
     val otherCacheBytes: Long = 0L,
     val missing: List<NeededPermission> = emptyList(),
@@ -169,9 +170,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(hotC = ChargeSettings(ctx).hotC) }
     }
 
-    fun checkUpdate() = launchBusy {
-        val u = com.fitzy.apexcleaner.core.UpdateChecker.check(ctx)
-        _state.update { it.copy(update = u, message = if (u == null) "You have the latest version." else "A newer version is ready. See the Update card on Home.") }
+    /** Has its own "Checking…" state so it never waits on, or gets stuck behind, other jobs. */
+    fun checkUpdate() {
+        if (_state.value.checking) return
+        _state.update { it.copy(checking = true, message = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) { com.fitzy.apexcleaner.core.UpdateChecker.checkNow(ctx) }
+            _state.update { st ->
+                when (r) {
+                    is com.fitzy.apexcleaner.core.UpdateChecker.Outcome.Found -> st.copy(checking = false, update = r.info, message = "Version ${r.info.tag} is ready. Tap Update at the top of the page.")
+                    com.fitzy.apexcleaner.core.UpdateChecker.Outcome.UpToDate -> st.copy(checking = false, update = null, message = "You have the latest version.")
+                    com.fitzy.apexcleaner.core.UpdateChecker.Outcome.Failed -> st.copy(checking = false, message = "Could not reach the update server. Check your connection and try again.")
+                }
+            }
+        }
     }
 
     fun clearHistory() {
@@ -199,9 +211,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun launchBusy(block: suspend () -> Unit) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(busy = true)
-            withContext(Dispatchers.IO) { block() }
-            _state.value = _state.value.copy(busy = false)
+            _state.update { it.copy(busy = true) }
+            try { withContext(Dispatchers.IO) { block() } } finally { _state.update { it.copy(busy = false) } }
         }
     }
 
