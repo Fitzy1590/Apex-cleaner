@@ -56,6 +56,7 @@ fun TvDashboard(
     onDismiss: () -> Unit,
     onGrant: (NeededPermission) -> Unit,
     onHelper: () -> Unit,
+    onShield: (Boolean) -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet)) {
         Surface(Modifier.fillMaxSize()) {
@@ -81,6 +82,14 @@ fun TvDashboard(
                                 Text("Deeper clean: ${helperButton(state.helper)} (press)", style = MaterialTheme.typography.titleMedium)
                                 Text(helperExplain(state.helper), style = MaterialTheme.typography.bodyMedium)
                             }
+                        }
+                    }
+                }
+                item {
+                    Card(onClick = { onShield(!state.shieldOn) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                        Column(Modifier.padding(20.dp)) {
+                            Text("Ad & tracker shield: ${if (state.shieldOn) "ON" else "OFF"} (press to switch)", style = MaterialTheme.typography.titleMedium)
+                            Text(if (state.shieldOn) "${state.blockedCount} ads, trackers and TV spying lookups blocked. Banking and push alerts are never touched." else "Blocks ad, tracker and smart-TV spying lookups on this device.", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }

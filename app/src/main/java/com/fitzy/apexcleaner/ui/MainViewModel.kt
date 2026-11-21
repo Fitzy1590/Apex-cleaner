@@ -41,6 +41,9 @@ data class UiState(
     val missing: List<NeededPermission> = emptyList(),
     val helper: HelperState = HelperState.NotInstalled,
     val charge: ChargeUi = ChargeUi(),
+    val shieldOn: Boolean = false,
+    val blockedCount: Int = 0,
+    val bankingDomains: Int = 0,
     val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
 
@@ -51,6 +54,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<UiState> = _state
 
     init {
+        _state.update { it.copy(bankingDomains = com.fitzy.apexcleaner.net.SafeLists.bankingDomains.size) }
+        viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
+        viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
     }
 

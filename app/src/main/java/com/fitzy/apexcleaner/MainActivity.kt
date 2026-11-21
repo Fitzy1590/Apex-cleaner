@@ -49,6 +49,14 @@ class MainActivity : ComponentActivity() {
             val notifPermission = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission(),
             ) { TunerService.start(this); vm.refresh() }
+            val vpnConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                if (it.resultCode == RESULT_OK) com.fitzy.apexcleaner.net.ApexVpnService.start(this)
+            }
+            val shield: (Boolean) -> Unit = { on ->
+                if (!on) com.fitzy.apexcleaner.net.ApexVpnService.stop(this)
+                else android.net.VpnService.prepare(this)?.let { vpnConsent.launch(it) }
+                    ?: com.fitzy.apexcleaner.net.ApexVpnService.start(this)
+            }
             val grant: (NeededPermission) -> Unit = { p ->
                 when (p) {
                     NeededPermission.Notifications ->
@@ -62,12 +70,12 @@ class MainActivity : ComponentActivity() {
                 TunerService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
                     vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
-                    vm::setChargeLimit, vm::setFastCharge,
+                    vm::setChargeLimit, vm::setFastCharge, shield,
                 )
             }
         }

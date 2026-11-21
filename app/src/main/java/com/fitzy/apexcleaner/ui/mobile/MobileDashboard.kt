@@ -58,6 +58,7 @@ fun MobileDashboard(
     onHelper: () -> Unit,
     onChargeLimit: (Int) -> Unit,
     onFastCharge: (Boolean) -> Unit,
+    onShield: (Boolean) -> Unit,
 ) {
     ApexTheme {
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -100,6 +101,21 @@ fun MobileDashboard(
                             "${formatBytes(h.storageFreeBytes)} free of ${formatBytes(h.storageTotalBytes)}",
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                    }
+                }
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Ad & tracker shield", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    if (state.shieldOn) "On: ${state.blockedCount} ads and trackers blocked. Banking, alarms and push alerts are never touched (${state.bankingDomains} banking sites pass straight through)."
+                                    else "Off. Blocks ad, tracker and smart-TV spying lookups on this device, using a private on-device filter.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                            Switch(checked = state.shieldOn, onCheckedChange = onShield)
+                        }
                     }
                 }
                 item { ChargingCard(state.charge, onChargeLimit, onFastCharge) }
