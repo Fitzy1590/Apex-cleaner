@@ -16,5 +16,5 @@ jobs:
         run: ./gradlew check assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: ApexCleaner-test-app
+          name: ApexShield-test-app
           path: app/build/outputs/apk/debug/app-debug.apk

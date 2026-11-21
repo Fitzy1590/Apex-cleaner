@@ -54,7 +54,7 @@ Findings:
 ## Phase 2 steps
 - [x] A. Governance (settings deny rules, subagent model, vpn-engine rules)
 - [x] B. Heat 40 C (written; not yet compiled, no Android SDK on this machine)
-- [ ] C. Rename to com.fitzy.apexshield
+- [x] C. Rename to com.fitzy.apexshield (build passes; SDK reinstalled at /root/android-sdk)
 - [ ] D. VPN DNS engine (Trie, DoH, passthrough list, query log)
 - [ ] E. 3 AM nightly clean
 - [ ] F. Unified phone + TV screens

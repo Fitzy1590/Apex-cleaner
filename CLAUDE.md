@@ -1,6 +1,6 @@
-# Apex Cleaner (com.fitzy.apexcleaner)
+# Apex Shield & Cleaner (com.fitzy.apexshield)
 
-Android system optimizer: safe storage cleaner, quiet background tuner, no-kill battery saver,
+Android privacy + system optimizer (merged AdShield-VPN + Apex Cleaner): local VPN DNS ad blocker, safe storage cleaner, quiet background tuner, no-kill battery saver,
 1-tap notification actions, phone (Material 3) + Android TV (Compose TV 1.0.0) UIs.
 
 ## Owner communication (non-technical owner)

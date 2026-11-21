@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.fitzy.apexcleaner"
+    namespace = "com.fitzy.apexshield"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.fitzy.apexcleaner"
+        applicationId = "com.fitzy.apexshield"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

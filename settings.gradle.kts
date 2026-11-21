@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ApexCleaner"
+rootProject.name = "ApexShield"
 include(":app")
