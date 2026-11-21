@@ -47,7 +47,9 @@ class ApexVpnService : VpnService() {
         bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
         tun = b.establish() ?: return
         running = true; ShieldStats.running.value = true
+        ShieldRules.ensureLoaded(this)
         val engine = FilterEngine.withDefaults(FilterLists.load(this))
+        ShieldRules.apply(this, engine); ShieldRules.live = engine
         Thread({ loop(engine) }, "apex-dns").start()
     }
 
@@ -76,7 +78,9 @@ class ApexVpnService : VpnService() {
         if (dport != 53 || p.size < ihl + 8) return
         val dns = p.copyOfRange(ihl + 8, p.size)
         val q = DnsPacket.parseQuestion(dns) ?: return
-        val answer = when (engine.decide(q.name)) {
+        val verdict = engine.decide(q.name)
+        ShieldRules.record(this, q.name, verdict == FilterEngine.Verdict.BLOCK)
+        val answer = when (verdict) {
             FilterEngine.Verdict.BLOCK -> { ShieldStats.blocked.value++; ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40); DnsPacket.blockedResponse(dns, dns.size, q) }
             else -> resolve(dns)
         } ?: return
@@ -119,7 +123,7 @@ class ApexVpnService : VpnService() {
     }
 
     private fun stop() {
-        running = false; ShieldStats.running.value = false
+        running = false; ShieldStats.running.value = false; ShieldRules.live = null; ShieldRules.save(this)
         runCatching { tun?.close() }; tun = null
         stopSelf()
     }

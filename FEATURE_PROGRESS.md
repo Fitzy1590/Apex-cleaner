@@ -66,3 +66,9 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] The app checks for a newer release when it opens and shows an "Update" card on phone and TV; tapping downloads the new file to install over the old one
 - [x] Fixed test-signing key in the project so updates install over each other. First install after this must remove the older test build once.
 - [ ] Not silent: Android always asks you to confirm each install
+
+## Ad blocking log rebuilt (2026-11-21)
+- [x] Every lookup is remembered on the device (how often, blocked or allowed), busiest first, with a Clear button (build passing)
+- [x] Allow / Block buttons on each name (phone) or press-to-cycle cards (TV); choices apply instantly while the shield runs and are kept
+- [x] Your Allow beats every ad list; your Block works on anything except banking and push-alert names, which stay protected
+- [ ] Waiting on owner test results from the first real-device test

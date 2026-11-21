@@ -25,6 +25,25 @@ class NetEngineTest {
         assertEquals(2, t.size)
     }
 
+    @Test fun yourChoicesBeatBlocklistsButNotBanking() {
+        val e = FilterEngine.withDefaults(sequenceOf("ads.test.com"))
+        e.userAllow = DomainTrie().apply { add("ads.test.com") }
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decide("ads.test.com"))
+        e.userDeny = DomainTrie().apply { add("news.org"); add("chase.com") }
+        assertEquals(FilterEngine.Verdict.BLOCK, e.decide("www.news.org"))
+        assertEquals(FilterEngine.Verdict.SAFE_PASSTHROUGH, e.decide("chase.com"))
+    }
+
+    @Test fun historyCountsSortsAndSurvivesSaving() {
+        val h = DnsHistory(max = 3)
+        h.record("a.com", true, 1); h.record("a.com", true, 2); h.record("b.com", false, 3); h.record("C.com", false, 4)
+        assertEquals(listOf("a.com", "c.com", "b.com"), h.top(5).map { it.domain })
+        assertEquals(2, h.top(1)[0].blocked)
+        h.record("d.com", false, 5) // over the limit: the name seen longest ago goes
+        assertTrue(h.top(10).none { it.domain == "a.com" })
+        val h2 = DnsHistory(); h2.load(h.toLines()); assertEquals(h.top(10), h2.top(10))
+    }
+
     @Test fun readsAdGuardStyleLines() {
         val t = DomainTrie.fromList(sequenceOf("! comment", "||ads.one.com^", "||bad.two.com^\$third-party", "@@||ok.three.com^", "||x.com/path^"))
         assertTrue(t.matches("ads.one.com")); assertTrue(!t.matches("bad.two.com")); assertTrue(!t.matches("ok.three.com")); assertTrue(!t.matches("x.com"))

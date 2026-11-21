@@ -63,6 +63,8 @@ fun MobileDashboard(
     onFastCharge: (Boolean) -> Unit,
     onShield: (Boolean) -> Unit,
     onUpdateLists: () -> Unit,
+    onRule: (String, com.fitzy.apexcleaner.net.Rule?) -> Unit,
+    onClearHistory: () -> Unit,
 ) {
     ApexTheme {
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -151,10 +153,37 @@ fun MobileDashboard(
                         Row(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
                             OutlinedButton(onClick = onUpdateLists, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update ad lists") }
                         }
-                        if (state.recentBlocked.isNotEmpty()) {
-                            Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
-                                Text("Network log: recently blocked", style = MaterialTheme.typography.titleSmall)
-                                state.recentBlocked.take(8).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    }
+                }
+                item {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Lookup history", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        if (state.history.isNotEmpty()) OutlinedButton(onClick = onClearHistory, modifier = Modifier.heightIn(min = 44.dp)) { Text("Clear") }
+                    }
+                }
+                if (state.history.isEmpty()) {
+                    item { Text("Nothing yet. Turn the shield on and use your phone; the sites your apps look up will show here so you can allow or block them.", style = MaterialTheme.typography.bodySmall) }
+                }
+                items(state.history, key = { it.domain }) { d ->
+                    val rule = state.rules[d.domain]
+                    val status = when {
+                        rule == com.fitzy.apexcleaner.net.Rule.ALLOW -> "Always allowed by you"
+                        rule == com.fitzy.apexcleaner.net.Rule.DENY -> "Always blocked by you"
+                        d.blocked > 0 && d.allowed == 0 -> "Blocked ${d.blocked}x"
+                        d.blocked > 0 -> "Blocked ${d.blocked}x, allowed ${d.allowed}x"
+                        else -> "Allowed ${d.allowed}x"
+                    }
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(d.domain, style = MaterialTheme.typography.bodyMedium)
+                            Text(status, style = MaterialTheme.typography.bodySmall)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                val allowOn = rule == com.fitzy.apexcleaner.net.Rule.ALLOW
+                                val denyOn = rule == com.fitzy.apexcleaner.net.Rule.DENY
+                                (if (allowOn) Button(onClick = { onRule(d.domain, null) }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Allowed (undo)") }
+                                else OutlinedButton(onClick = { onRule(d.domain, com.fitzy.apexcleaner.net.Rule.ALLOW) }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Allow") })
+                                (if (denyOn) Button(onClick = { onRule(d.domain, null) }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Blocked (undo)") }
+                                else OutlinedButton(onClick = { onRule(d.domain, com.fitzy.apexcleaner.net.Rule.DENY) }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Block") })
                             }
                         }
                     }

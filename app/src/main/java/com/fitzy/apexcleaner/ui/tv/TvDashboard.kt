@@ -57,6 +57,7 @@ fun TvDashboard(
     onGrant: (NeededPermission) -> Unit,
     onHelper: () -> Unit,
     onShield: (Boolean) -> Unit,
+    onRule: (String, com.fitzy.apexcleaner.net.Rule?) -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet)) {
         Surface(Modifier.fillMaxSize()) {
@@ -98,6 +99,28 @@ fun TvDashboard(
                         Column(Modifier.padding(20.dp)) {
                             Text("Ad & tracker shield: ${if (state.shieldOn) "ON" else "OFF"} (press to switch)", style = MaterialTheme.typography.titleMedium)
                             Text(if (state.shieldOn) "${state.blockedCount} ads, trackers and TV spying lookups blocked. Banking and push alerts are never touched.${if (state.recentBlocked.isNotEmpty()) " Latest: " + state.recentBlocked.take(3).joinToString(", ") else ""}" else "Blocks ad, tracker and smart-TV spying lookups on this device.", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+                if (state.history.isNotEmpty()) {
+                    item { Text("Lookup history (press to switch: normal, always allow, always block)", style = MaterialTheme.typography.titleLarge) }
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                            items(state.history.take(12), key = { it.domain }) { d ->
+                                val rule = state.rules[d.domain]
+                                Card(
+                                    onClick = {
+                                        onRule(d.domain, when (rule) { null -> com.fitzy.apexcleaner.net.Rule.ALLOW; com.fitzy.apexcleaner.net.Rule.ALLOW -> com.fitzy.apexcleaner.net.Rule.DENY; com.fitzy.apexcleaner.net.Rule.DENY -> null })
+                                    },
+                                    modifier = Modifier.width(280.dp).focusFeedback(),
+                                    scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder),
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(d.domain, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                        Text(when (rule) { com.fitzy.apexcleaner.net.Rule.ALLOW -> "Always allowed"; com.fitzy.apexcleaner.net.Rule.DENY -> "Always blocked"; null -> if (d.blocked > 0) "Blocked ${d.blocked}x" else "Allowed ${d.allowed}x" }, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

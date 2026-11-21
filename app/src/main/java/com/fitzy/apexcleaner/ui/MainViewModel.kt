@@ -47,6 +47,8 @@ data class UiState(
     val recentBlocked: List<String> = emptyList(),
     val listDomains: Int = 0,
     val bankingAppsFound: Int = 0,
+    val history: List<com.fitzy.apexcleaner.net.DomainStat> = emptyList(),
+    val rules: Map<String, com.fitzy.apexcleaner.net.Rule> = emptyMap(),
     val update: com.fitzy.apexcleaner.core.UpdateInfo? = null,
     val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
@@ -63,6 +65,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             bankingAppsFound = com.fitzy.apexcleaner.net.SafeLists.bankingBypassPackages.count { p -> runCatching { ctx.packageManager.getPackageInfo(p, 0) }.isSuccess },
         ) }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.recent.collect { r -> _state.update { it.copy(recentBlocked = r) } } }
+        viewModelScope.launch {
+            com.fitzy.apexcleaner.net.ShieldRules.ensureLoaded(ctx)
+            // Refresh the log every few seconds while the app is open.
+            while (true) {
+                val h = com.fitzy.apexcleaner.net.ShieldRules.history.top(60)
+                val r = com.fitzy.apexcleaner.net.ShieldRules.rules(ctx)
+                _state.update { it.copy(history = h, rules = r) }
+                kotlinx.coroutines.delay(3000)
+            }
+        }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
@@ -108,6 +120,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val n = com.fitzy.apexcleaner.net.FilterLists.update(ctx)
         val total = com.fitzy.apexcleaner.net.FilterLists.count(ctx)
         _state.value = _state.value.copy(listDomains = total, message = if (n == 0) "Could not download the ad lists. Check your connection and try again." else "Ad lists updated: $total names. Turn the shield off and on to use them.")
+    }
+
+    fun setRule(domain: String, rule: com.fitzy.apexcleaner.net.Rule?) {
+        com.fitzy.apexcleaner.net.ShieldRules.set(ctx, domain, rule)
+        _state.update { it.copy(rules = com.fitzy.apexcleaner.net.ShieldRules.rules(ctx)) }
+    }
+
+    fun clearHistory() {
+        com.fitzy.apexcleaner.net.ShieldRules.clearHistory(ctx)
+        _state.update { it.copy(history = emptyList()) }
     }
 
     fun boost() = launchBusy {

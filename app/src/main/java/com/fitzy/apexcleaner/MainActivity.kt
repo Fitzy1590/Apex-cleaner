@@ -71,12 +71,12 @@ class MainActivity : ComponentActivity() {
                 TunerService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield, vm::setRule)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
                     vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
-                    vm::setChargeLimit, vm::setFastCharge, shield, vm::updateLists,
+                    vm::setChargeLimit, vm::setFastCharge, shield, vm::updateLists, vm::setRule, vm::clearHistory,
                 )
             }
         }
