@@ -59,6 +59,7 @@ fun MobileDashboard(
     onChargeLimit: (Int) -> Unit,
     onFastCharge: (Boolean) -> Unit,
     onShield: (Boolean) -> Unit,
+    onUpdateLists: () -> Unit,
 ) {
     ApexTheme {
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -115,6 +116,15 @@ fun MobileDashboard(
                                 )
                             }
                             Switch(checked = state.shieldOn, onCheckedChange = onShield)
+                        }
+                        Row(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
+                            OutlinedButton(onClick = onUpdateLists, enabled = !state.busy) { Text("Update ad lists") }
+                        }
+                        if (state.recentBlocked.isNotEmpty()) {
+                            Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
+                                Text("Network log: recently blocked", style = MaterialTheme.typography.titleSmall)
+                                state.recentBlocked.take(8).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            }
                         }
                     }
                 }

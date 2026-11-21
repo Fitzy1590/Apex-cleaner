@@ -55,7 +55,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Slice 5 (build passing): Ad & tracker shield = local DNS firewall (trie matching, encrypted DNS over HTTPS with plain fallback, built-in starter blocklist, hosts-list parser), banking/push/government passthrough list, banking apps skip the tunnel; switch on phone and TV
 - [x] Guardrails: settings.json (deny rules, tool search, Haiku subagents, offline-first check hook), vpn-engine.md rule
 - [ ] Still to do: real speed-pacing relay (needs a full tunnel that forwards TCP/UDP; not built, riskiest piece)
-- [ ] Still to do: download StevenBlack / AdGuard lists inside the app (only a small built-in list today)
-- [ ] Still to do: banking list is about 179 domains, not 284 (I only listed ones I am sure of); per-app banking toggle screen; network log screen
+- [x] StevenBlack + AdGuard lists download inside the app (weekly on Wi-Fi while charging and idle, or tap "Update ad lists"), plus a recent-blocked network log on the phone card (build passing)
+- [ ] Still to do: banking list is about 179 domains, not 284 (I only listed ones I am sure of); per-app banking toggle screen; TV network log
 - [ ] Still to do: tabbed Control Center (instant tab switching) and the combined dashboard layout
 - [ ] Real-device test of the shield (DNS on many phones/TVs), Quick Settings tile, TV sound/buzz

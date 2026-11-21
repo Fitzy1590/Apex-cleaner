@@ -25,6 +25,11 @@ class NetEngineTest {
         assertEquals(2, t.size)
     }
 
+    @Test fun readsAdGuardStyleLines() {
+        val t = DomainTrie.fromList(sequenceOf("! comment", "||ads.one.com^", "||bad.two.com^\$third-party", "@@||ok.three.com^", "||x.com/path^"))
+        assertTrue(t.matches("ads.one.com")); assertTrue(!t.matches("bad.two.com")); assertTrue(!t.matches("ok.three.com")); assertTrue(!t.matches("x.com"))
+    }
+
     @Test fun bankingAndPushNeverBlocked() {
         val e = FilterEngine.withDefaults(sequenceOf("chase.com", "mtalk.google.com", "ads.test.com"))
         assertEquals(FilterEngine.Verdict.SAFE_PASSTHROUGH, e.decide("secure.chase.com"))

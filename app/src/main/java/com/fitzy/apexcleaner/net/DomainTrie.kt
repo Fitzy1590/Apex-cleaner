@@ -28,8 +28,12 @@ class DomainTrie {
         /** Reads a hosts-style or plain list ("0.0.0.0 ads.example.com", "ads.example.com", "# comment"). */
         fun fromList(lines: Sequence<String>): DomainTrie = DomainTrie().apply {
             for (raw in lines) {
-                val line = raw.substringBefore('#').trim()
-                if (line.isEmpty()) continue
+                var line = raw.substringBefore('#').trim()
+                if (line.isEmpty() || line.startsWith("!") || line.startsWith("@@")) continue
+                if (line.startsWith("||")) { // AdGuard style: ||ads.example.com^
+                    if (line.any { it == '$' || it == '*' || it == '/' }) continue
+                    line = line.removePrefix("||").removeSuffix("^")
+                }
                 val parts = line.split(Regex("\\s+"))
                 val host = if (parts.size >= 2 && (parts[0] == "0.0.0.0" || parts[0] == "127.0.0.1")) parts[1] else parts[0]
                 if (host.contains('.') && host != "0.0.0.0" && host != "localhost") add(host)

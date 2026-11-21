@@ -20,6 +20,8 @@ import javax.net.ssl.HttpsURLConnection
 object ShieldStats {
     val running = MutableStateFlow(false)
     val blocked = MutableStateFlow(0)
+    /** Newest blocked names first, for the network log. */
+    val recent = MutableStateFlow<List<String>>(emptyList())
 }
 
 /**
@@ -45,7 +47,7 @@ class ApexVpnService : VpnService() {
         bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
         tun = b.establish() ?: return
         running = true; ShieldStats.running.value = true
-        val engine = FilterEngine.withDefaults()
+        val engine = FilterEngine.withDefaults(FilterLists.load(this))
         Thread({ loop(engine) }, "apex-dns").start()
     }
 
@@ -75,7 +77,7 @@ class ApexVpnService : VpnService() {
         val dns = p.copyOfRange(ihl + 8, p.size)
         val q = DnsPacket.parseQuestion(dns) ?: return
         val answer = when (engine.decide(q.name)) {
-            FilterEngine.Verdict.BLOCK -> { ShieldStats.blocked.value++; DnsPacket.blockedResponse(dns, dns.size, q) }
+            FilterEngine.Verdict.BLOCK -> { ShieldStats.blocked.value++; ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40); DnsPacket.blockedResponse(dns, dns.size, q) }
             else -> resolve(dns)
         } ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }

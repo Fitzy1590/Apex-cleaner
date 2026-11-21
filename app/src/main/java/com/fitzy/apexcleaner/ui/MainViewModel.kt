@@ -44,6 +44,8 @@ data class UiState(
     val shieldOn: Boolean = false,
     val blockedCount: Int = 0,
     val bankingDomains: Int = 0,
+    val recentBlocked: List<String> = emptyList(),
+    val listDomains: Int = 0,
     val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
 
@@ -55,6 +57,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         _state.update { it.copy(bankingDomains = com.fitzy.apexcleaner.net.SafeLists.bankingDomains.size) }
+        viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.recent.collect { r -> _state.update { it.copy(recentBlocked = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
@@ -88,6 +91,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             message = "Freed ${formatBytes(r.totalBytes + others)} " +
                 "(${formatBytes(others)} from other apps' caches). Your apps, logins and settings were not touched.",
         )
+    }
+
+    fun updateLists() = launchBusy {
+        val n = com.fitzy.apexcleaner.net.FilterLists.update(ctx)
+        val total = com.fitzy.apexcleaner.net.FilterLists.count(ctx)
+        _state.value = _state.value.copy(listDomains = total, message = if (n == 0) "Could not download the ad lists. Check your connection and try again." else "Ad lists updated: $total names. Turn the shield off and on to use them.")
     }
 
     fun boost() = launchBusy {
