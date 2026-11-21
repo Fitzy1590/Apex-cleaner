@@ -89,7 +89,7 @@ fun TvDashboard(
                     Card(onClick = { onShield(!state.shieldOn) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                         Column(Modifier.padding(20.dp)) {
                             Text("Ad & tracker shield: ${if (state.shieldOn) "ON" else "OFF"} (press to switch)", style = MaterialTheme.typography.titleMedium)
-                            Text(if (state.shieldOn) "${state.blockedCount} ads, trackers and TV spying lookups blocked. Banking and push alerts are never touched." else "Blocks ad, tracker and smart-TV spying lookups on this device.", style = MaterialTheme.typography.bodyMedium)
+                            Text(if (state.shieldOn) "${state.blockedCount} ads, trackers and TV spying lookups blocked. Banking and push alerts are never touched.${if (state.recentBlocked.isNotEmpty()) " Latest: " + state.recentBlocked.take(3).joinToString(", ") else ""}" else "Blocks ad, tracker and smart-TV spying lookups on this device.", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }

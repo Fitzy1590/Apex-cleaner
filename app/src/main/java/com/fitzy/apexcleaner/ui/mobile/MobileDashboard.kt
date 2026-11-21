@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -73,7 +76,20 @@ fun MobileDashboard(
                 dismissButton = { OutlinedButton(onClick = { dismissed = true }) { Text("Later") } },
             )
         }
-        Scaffold { pad ->
+        var tab by rememberSaveable { mutableStateOf(0) }
+        Scaffold(bottomBar = {
+            // No animation on purpose: tabs switch instantly.
+            NavigationBar {
+                listOf("Home", "Shield", "Storage", "Apps").forEachIndexed { i, label ->
+                    NavigationBarItem(
+                        selected = tab == i, onClick = { tab = i },
+                        icon = { Spacer(Modifier.size(1.dp)) },
+                        label = { Text(label) },
+                        modifier = Modifier.heightIn(min = 56.dp),
+                    )
+                }
+            }
+        }) { pad ->
             LazyColumn(
                 Modifier.fillMaxSize().padding(pad).padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -89,6 +105,7 @@ fun MobileDashboard(
                         }
                     }
                 }
+                if (tab == 0) {
                 state.health?.let { h ->
                     item {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -104,6 +121,8 @@ fun MobileDashboard(
                         )
                     }
                 }
+                }
+                if (tab == 1) {
                 item {
                     Card(Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -114,11 +133,12 @@ fun MobileDashboard(
                                     else "Off. Blocks ad, tracker and smart-TV spying lookups on this device, using a private on-device filter.",
                                     style = MaterialTheme.typography.bodySmall,
                                 )
+                                if (state.bankingAppsFound > 0) Text("${state.bankingAppsFound} banking or payment apps found here skip the shield completely, so their security checks stay valid.", style = MaterialTheme.typography.bodySmall)
                             }
                             Switch(checked = state.shieldOn, onCheckedChange = onShield)
                         }
                         Row(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
-                            OutlinedButton(onClick = onUpdateLists, enabled = !state.busy) { Text("Update ad lists") }
+                            OutlinedButton(onClick = onUpdateLists, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update ad lists") }
                         }
                         if (state.recentBlocked.isNotEmpty()) {
                             Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
@@ -128,6 +148,8 @@ fun MobileDashboard(
                         }
                     }
                 }
+                }
+                if (tab == 0) {
                 item { ChargingCard(state.charge, onChargeLimit, onFastCharge) }
                 item {
                     Button(onClick = onClean, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(56.dp)) {
@@ -141,6 +163,8 @@ fun MobileDashboard(
                         OutlinedButton(onClick = onCool, enabled = !state.busy, modifier = Modifier.weight(1f)) { Text("Cool Down") }
                     }
                 }
+                }
+                if (tab == 2) {
                 if (!state.filesAccess) {
                     item {
                         Card(Modifier.fillMaxWidth()) {
@@ -192,8 +216,11 @@ fun MobileDashboard(
                         }
                     }
                 }
+                }
+                if (tab == 3) {
                 item { Text("Protected apps (never interrupted)", style = MaterialTheme.typography.titleMedium) }
                 items(state.apps, key = { it.pkg }) { AppRow(it, onToggleApp) }
+                }
                 item { Spacer(Modifier.height(24.dp)) }
             }
         }

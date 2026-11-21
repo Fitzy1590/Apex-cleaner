@@ -57,5 +57,6 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [ ] Still to do: real speed-pacing relay (needs a full tunnel that forwards TCP/UDP; not built, riskiest piece)
 - [x] StevenBlack + AdGuard lists download inside the app (weekly on Wi-Fi while charging and idle, or tap "Update ad lists"), plus a recent-blocked network log on the phone card (build passing)
 - [ ] Still to do: banking list is about 179 domains, not 284 (I only listed ones I am sure of); per-app banking toggle screen; TV network log
-- [ ] Still to do: tabbed Control Center (instant tab switching) and the combined dashboard layout
+- [x] Phone app now has 4 tabs (Home, Shield, Storage, Apps) that switch instantly with no animation; shield card shows how many banking apps skip the shield; TV shows latest blocked names (build passing)
+- [ ] Still to do: tabbed layout on TV
 - [ ] Real-device test of the shield (DNS on many phones/TVs), Quick Settings tile, TV sound/buzz

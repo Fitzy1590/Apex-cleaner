@@ -46,6 +46,7 @@ data class UiState(
     val bankingDomains: Int = 0,
     val recentBlocked: List<String> = emptyList(),
     val listDomains: Int = 0,
+    val bankingAppsFound: Int = 0,
     val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
 
@@ -56,7 +57,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<UiState> = _state
 
     init {
-        _state.update { it.copy(bankingDomains = com.fitzy.apexcleaner.net.SafeLists.bankingDomains.size) }
+        _state.update { st -> st.copy(
+            bankingDomains = com.fitzy.apexcleaner.net.SafeLists.bankingDomains.size,
+            bankingAppsFound = com.fitzy.apexcleaner.net.SafeLists.bankingBypassPackages.count { p -> runCatching { ctx.packageManager.getPackageInfo(p, 0) }.isSuccess },
+        ) }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.recent.collect { r -> _state.update { it.copy(recentBlocked = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
