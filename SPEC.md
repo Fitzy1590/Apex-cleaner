@@ -34,3 +34,9 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 - [ ] Option B: Storage & Battery only (no VPN)
 - [ ] Option C: Network VPN engine only
 Owner voted Option A. Phase 2 (build) started.
+
+## TV build vote (2026-11-21)
+- [x] 1. Finish the TV suite (recommended): instant TV tabs, real speed limiter (wait, never drop), banking list toward 284, home-row tile + remote-key shortcut, dark look check
+- [ ] 2. TV polish only (no speed limiter)
+- [ ] 3. Speed limiter only
+Owner voted 1.

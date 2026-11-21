@@ -77,3 +77,13 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] New ad lists now apply straight away, no need to switch the shield off and on
 - [x] Settings page (phone tab + TV row, build passing): night clean on/off, encrypted DNS on/off, heat warning level 38-46 C, version + check for updates, update ad lists, clear network log
 - [x] High-priority "Phone is getting hot" alert while charging, once per hot spell (uses the heat level from Settings)
+
+## TV build vote (2026-11-21): OPTION 1 chosen
+- [x] 1. Finish the TV suite
+- [ ] 2. TV polish only
+- [ ] 3. Speed limiter only
+- [x] TV tabs: Home, Shield, Storage, Settings, instant switch (written, NOT yet build-checked: no Android tools on this cloud machine today)
+- [ ] Real speed limiter (waits, never drops): BLOCKED on owner decision. Needs a full tunnel for all traffic, which breaks hard rule 7 (VPN carries DNS only)
+- [x] Banking list grown from about 179 to about 243 names (only ones I am sure of)
+- [x] TV home-row tile already exists (launcher banner); remote red button = Safe Clean, yellow = 1-Tap Boost while app is open (a key that works anywhere needs an accessibility service, not built)
+- [x] TV background now #0B0E14 (glass-border cards still to polish)

@@ -34,6 +34,20 @@ europa.eu service-public.fr bund.de
 gov.in incometax.gov.in uidai.gov.in
 """
 
+    /** More banks, card, credit and wallet sites I am sure of (added for the TV build). */
+    private const val BANKING_MORE = """
+standardchartered.com hsbc.com.hk bankofscotland.co.uk firstdirect.com santander.co.uk tescobank.com virginmoney.com coop.co.uk
+ing.com ingdirect.com ing.es volksbank.de postfinance.ch raiffeisen.ch zkb.ch bancsabadell.com kutxabank.es
+bancobpi.pt millenniumbcp.pt cgd.pt op.fi sparebank1.no dnb.no jyskebank.dk nykredit.dk
+nedbank.co.za absa.co.za standardbank.co.za fnb.co.za capitecbank.co.za
+tdameritrade.com merrilledge.com ml.com morganstanley.com goldmansachs.com marcus.com plaid.com
+intuit.com creditkarma.com experian.com equifax.com transunion.com
+dcu.org penfed.org alliantcreditunion.org firstcitizens.com zionsbank.com comerica.com bmoharris.com
+synchronybank.com barclaycard.com breadfinancial.com
+pay.google.com wallet.google.com samsungpay.com alipay.com tenpay.com npci.org.in
+idfcfirstbank.com yesbank.in pnbindia.in bankofbaroda.in canarabank.com indusind.com
+"""
+
     /** Push and system essentials: keeps alerts, alarms-over-network and connectivity checks instant. */
     private const val ESSENTIAL = """
 mtalk.google.com fcm.googleapis.com android.googleapis.com android.clients.google.com
@@ -59,7 +73,7 @@ lgsmartad.com ad.lgsmartad.com lgtvsdp.com tvinteractive.tv
 
     private fun words(s: String) = s.split(Regex("\\s+")).filter { it.contains('.') }
 
-    val bankingDomains: List<String> get() = words(BANKING).distinct()
+    val bankingDomains: List<String> get() = (words(BANKING) + words(BANKING_MORE)).distinct()
     val essentialDomains: List<String> get() = words(ESSENTIAL).distinct()
     val starterBlocks: List<String> get() = words(STARTER_BLOCKS).distinct()
 

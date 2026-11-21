@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 
 val Accent = Color(0xFF00C2A8)
 val TvViolet = Color(0xFF7C3AED)
+val TvObsidian = Color(0xFF0B0E14)
 val Warn = Color(0xFFFFB020)
 val Bad = Color(0xFFFF5A5F)
 

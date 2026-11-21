@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.dp
 import com.fitzy.apexcleaner.ui.focusFeedback
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.tv.material3.Border
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
@@ -41,6 +45,7 @@ import com.fitzy.apexcleaner.ui.mobile.helperExplain
 import com.fitzy.apexcleaner.core.formatBytes
 import com.fitzy.apexcleaner.ui.UiState
 import com.fitzy.apexcleaner.ui.theme.TvViolet
+import com.fitzy.apexcleaner.ui.theme.TvObsidian
 
 /** Every focusable thing grows at least 5% AND gets a 3dp accent border (spec: >=1.03x or >=2dp). */
 private val FocusBorder = Border(BorderStroke(3.dp, TvViolet), shape = RoundedCornerShape(12.dp))
@@ -62,105 +67,99 @@ fun TvDashboard(
     onEncryptedDns: (Boolean) -> Unit,
     onCheckUpdate: () -> Unit,
 ) {
-    MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet)) {
+    MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet, background = TvObsidian, surface = TvObsidian)) {
         Surface(Modifier.fillMaxSize()) {
             val firstFocus = remember { FocusRequester() }
+            var tab by rememberSaveable { mutableIntStateOf(0) }
             LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
-            LazyColumn(
-                Modifier.fillMaxSize().padding(48.dp).focusRestorer(),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-            ) {
-                item { Text("Apex Cleaner", style = MaterialTheme.typography.displaySmall) }
-                items(state.missing) { p ->
-                    Card(onClick = { onGrant(p) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
-                        Column(Modifier.padding(20.dp)) {
-                            Text("Allow ${p.title} (press to set up)", style = MaterialTheme.typography.titleMedium)
-                            Text(p.why, style = MaterialTheme.typography.bodyMedium)
-                        }
+            Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                Text("Apex Cleaner", style = MaterialTheme.typography.displaySmall)
+                // Tabs switch instantly: plain conditional content, no animation (0 ms).
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                    listOf("Home", "Shield", "Storage", "Settings").forEachIndexed { i, name ->
+                        TvButton(if (i == tab) "● $name" else name, { tab = i })
                     }
                 }
-                if (state.helper != HelperState.Ready) {
-                    item {
-                        Card(onClick = onHelper, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+            LazyColumn(
+                Modifier.fillMaxSize().focusRestorer(),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                if (tab == 0) {
+                    items(state.missing) { p ->
+                        Card(onClick = { onGrant(p) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                             Column(Modifier.padding(20.dp)) {
-                                Text("Deeper clean: ${helperButton(state.helper)} (press)", style = MaterialTheme.typography.titleMedium)
-                                Text(helperExplain(state.helper), style = MaterialTheme.typography.bodyMedium)
+                                Text("Allow ${p.title} (press to set up)", style = MaterialTheme.typography.titleMedium)
+                                Text(p.why, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
-                }
-                state.update?.let { u ->
-                    item {
-                        val uri = androidx.compose.ui.platform.LocalUriHandler.current
-                        Card(onClick = { uri.openUri(u.apkUrl) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
-                            Text("New version ready (${u.tag}): press to download", Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                }
-                item {
-                    Card(onClick = { onShield(!state.shieldOn) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
-                        Column(Modifier.padding(20.dp)) {
-                            Text("Ad & tracker shield: ${if (state.shieldOn) "ON" else "OFF"} (press to switch)", style = MaterialTheme.typography.titleMedium)
-                            Text(if (state.shieldOn) "${state.blockedCount} ads, trackers and TV spying lookups blocked. Banking and push alerts are never touched.${if (state.recentBlocked.isNotEmpty()) " Latest: " + state.recentBlocked.take(3).joinToString(", ") else ""}" else "Blocks ad, tracker and smart-TV spying lookups on this device.", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
-                if (state.history.isNotEmpty()) {
-                    item { Text("Lookup history (press to switch: normal, always allow, always block)", style = MaterialTheme.typography.titleLarge) }
-                    item {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
-                            items(state.history.take(12), key = { it.domain }) { d ->
-                                val rule = state.rules[d.domain]
-                                Card(
-                                    onClick = {
-                                        onRule(d.domain, when (rule) { null -> com.fitzy.apexcleaner.net.Rule.ALLOW; com.fitzy.apexcleaner.net.Rule.ALLOW -> com.fitzy.apexcleaner.net.Rule.DENY; com.fitzy.apexcleaner.net.Rule.DENY -> null })
-                                    },
-                                    modifier = Modifier.width(280.dp).focusFeedback(),
-                                    scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder),
-                                ) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text(d.domain, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                                        Text(when (rule) { com.fitzy.apexcleaner.net.Rule.ALLOW -> "Always allowed"; com.fitzy.apexcleaner.net.Rule.DENY -> "Always blocked"; null -> if (d.blocked > 0) "Blocked ${d.blocked}x" else "Allowed ${d.allowed}x" }, style = MaterialTheme.typography.bodyMedium)
-                                    }
+                    if (state.helper != HelperState.Ready) {
+                        item {
+                            Card(onClick = onHelper, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                                Column(Modifier.padding(20.dp)) {
+                                    Text("Deeper clean: ${helperButton(state.helper)} (press)", style = MaterialTheme.typography.titleMedium)
+                                    Text(helperExplain(state.helper), style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
                         }
                     }
-                }
-                state.message?.let { m ->
+                    state.update?.let { u ->
+                        item {
+                            val uri = androidx.compose.ui.platform.LocalUriHandler.current
+                            Card(onClick = { uri.openUri(u.apkUrl) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                                Text("New version ready (${u.tag}): press to download", Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
+                    state.message?.let { m ->
+                        item {
+                            Card(onClick = onDismiss, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                                Text(m, Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
+                    state.health?.let { h ->
+                        item {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(24.dp), modifier = Modifier.focusRestorer()) {
+                                item { StatCard("Storage free", "${h.storageFreePct}%", formatBytes(h.storageFreeBytes), onClick = onClean) }
+                                item { StatCard("Memory free", "${h.ramFreePct}%", if (h.lowRam) "Low" else "Healthy", onClick = onBoost) }
+                                item { StatCard("Battery", "${h.batteryPct}%", "${"%.0f".format(h.batteryTempC)}°C", onClick = onCool) }
+                            }
+                        }
+                    }
                     item {
-                        Card(onClick = onDismiss, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
-                            Text(m, Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            TvButton("Safe Clean${" (${formatBytes((state.scan?.totalBytes ?: 0L) + state.otherCacheBytes)})"}", onClean, Modifier.focusRequester(firstFocus))
+                            TvButton("1-Tap Boost", onBoost)
+                            TvButton("Cool Down", onCool)
                         }
                     }
                 }
-                state.health?.let { h ->
+                if (tab == 1) {
                     item {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(24.dp), modifier = Modifier.focusRestorer()) {
-                            item { StatCard("Storage free", "${h.storageFreePct}%", formatBytes(h.storageFreeBytes), onClick = onClean) }
-                            item { StatCard("Memory free", "${h.ramFreePct}%", if (h.lowRam) "Low" else "Healthy", onClick = onBoost) }
-                            item { StatCard("Battery", "${h.batteryPct}%", "${"%.0f".format(h.batteryTempC)}°C", onClick = onCool) }
+                        Card(onClick = { onShield(!state.shieldOn) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                            Column(Modifier.padding(20.dp)) {
+                                Text("Ad & tracker shield: ${if (state.shieldOn) "ON" else "OFF"} (press to switch)", style = MaterialTheme.typography.titleMedium)
+                                Text(if (state.shieldOn) "${state.blockedCount} ads, trackers and TV spying lookups blocked. Banking and push alerts are never touched.${if (state.recentBlocked.isNotEmpty()) " Latest: " + state.recentBlocked.take(3).joinToString(", ") else ""}" else "Blocks ad, tracker and smart-TV spying lookups on this device.", style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
-                }
-                item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        TvButton("Safe Clean${" (${formatBytes((state.scan?.totalBytes ?: 0L) + state.otherCacheBytes)})"}", onClean, Modifier.focusRequester(firstFocus))
-                        TvButton("1-Tap Boost", onBoost)
-                        TvButton("Cool Down", onCool)
-                    }
-                }
-                if (state.breakdown.isNotEmpty()) {
-                    item { Text("Biggest cache users", style = MaterialTheme.typography.titleLarge) }
-                    item {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
-                            items(state.breakdown, key = { it.pkg }) { a ->
-                                Card(onClick = {}, modifier = Modifier.width(260.dp).focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text(a.label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                                        Text(formatBytes(a.total), style = MaterialTheme.typography.headlineSmall)
-                                        a.bytesByKind.entries.sortedByDescending { it.value }.take(3).forEach { (k, b) ->
-                                            Text("${k.label}: ${formatBytes(b)}", style = MaterialTheme.typography.bodySmall)
+                    if (state.history.isNotEmpty()) {
+                        item { Text("Lookup history (press to switch: normal, always allow, always block)", style = MaterialTheme.typography.titleLarge) }
+                        item {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                                items(state.history.take(12), key = { it.domain }) { d ->
+                                    val rule = state.rules[d.domain]
+                                    Card(
+                                        onClick = {
+                                            onRule(d.domain, when (rule) { null -> com.fitzy.apexcleaner.net.Rule.ALLOW; com.fitzy.apexcleaner.net.Rule.ALLOW -> com.fitzy.apexcleaner.net.Rule.DENY; com.fitzy.apexcleaner.net.Rule.DENY -> null })
+                                        },
+                                        modifier = Modifier.width(280.dp).focusFeedback(),
+                                        scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder),
+                                    ) {
+                                        Column(Modifier.padding(16.dp)) {
+                                            Text(d.domain, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                            Text(when (rule) { com.fitzy.apexcleaner.net.Rule.ALLOW -> "Always allowed"; com.fitzy.apexcleaner.net.Rule.DENY -> "Always blocked"; null -> if (d.blocked > 0) "Blocked ${d.blocked}x" else "Allowed ${d.allowed}x" }, style = MaterialTheme.typography.bodyMedium)
                                         }
                                     }
                                 }
@@ -168,39 +167,65 @@ fun TvDashboard(
                         }
                     }
                 }
-                item { Text("Settings (press to change)", style = MaterialTheme.typography.titleLarge) }
-                item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
-                        item { StatCard("Night clean 3 AM", if (state.nightClean) "ON" else "OFF", "Charging, idle only", onClick = { onNightClean(!state.nightClean) }) }
-                        item { StatCard("Encrypted DNS", if (state.encryptedDns) "ON" else "OFF", "Private lookups", onClick = { onEncryptedDns(!state.encryptedDns) }) }
-                        item { StatCard("Version", state.version, "Press to check for updates", onClick = onCheckUpdate) }
+                if (tab == 2) {
+                    if (state.breakdown.isNotEmpty()) {
+                        item { Text("Biggest cache users", style = MaterialTheme.typography.titleLarge) }
+                        item {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                                items(state.breakdown, key = { it.pkg }) { a ->
+                                    Card(onClick = {}, modifier = Modifier.width(260.dp).focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                                        Column(Modifier.padding(16.dp)) {
+                                            Text(a.label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                            Text(formatBytes(a.total), style = MaterialTheme.typography.headlineSmall)
+                                            a.bytesByKind.entries.sortedByDescending { it.value }.take(3).forEach { (k, b) ->
+                                                Text("${k.label}: ${formatBytes(b)}", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (state.breakdown.isEmpty()) {
+                        item { Text("Nothing to show yet. Turn on the deeper clean helper on Home to see which apps use the most cache.", style = MaterialTheme.typography.bodyLarge) }
                     }
                 }
-                item { Text("Protected apps (press to toggle)", style = MaterialTheme.typography.titleLarge) }
-                item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
-                        items(state.apps, key = { it.pkg }) { app ->
-                            Card(
-                                onClick = { if (!app.automatic) onToggleApp(app.pkg) },
-                                modifier = Modifier.width(220.dp).focusFeedback(),
-                                scale = CardDefaults.scale(focusedScale = FocusScale),
-                                border = CardDefaults.border(focusedBorder = FocusBorder),
-                            ) {
-                                Column(Modifier.padding(16.dp)) {
-                                    Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                                    Text(
-                                        when {
-                                            app.automatic -> "Auto-protected"
-                                            app.protectedByUser -> "Protected"
-                                            else -> "Not protected"
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
+                if (tab == 3) {
+                    item { Text("Settings (press to change)", style = MaterialTheme.typography.titleLarge) }
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                            item { StatCard("Night clean 3 AM", if (state.nightClean) "ON" else "OFF", "Charging, idle only", onClick = { onNightClean(!state.nightClean) }) }
+                            item { StatCard("Encrypted DNS", if (state.encryptedDns) "ON" else "OFF", "Private lookups", onClick = { onEncryptedDns(!state.encryptedDns) }) }
+                            item { StatCard("Version", state.version, "Press to check for updates", onClick = onCheckUpdate) }
+                        }
+                    }
+                    item { Text("Protected apps (press to toggle)", style = MaterialTheme.typography.titleLarge) }
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                            items(state.apps, key = { it.pkg }) { app ->
+                                Card(
+                                    onClick = { if (!app.automatic) onToggleApp(app.pkg) },
+                                    modifier = Modifier.width(220.dp).focusFeedback(),
+                                    scale = CardDefaults.scale(focusedScale = FocusScale),
+                                    border = CardDefaults.border(focusedBorder = FocusBorder),
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(app.label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                        Text(
+                                            when {
+                                                app.automatic -> "Auto-protected"
+                                                app.protectedByUser -> "Protected"
+                                                else -> "Not protected"
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
             }
         }
     }

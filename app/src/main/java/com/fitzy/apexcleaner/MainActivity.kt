@@ -82,6 +82,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** TV remote colour buttons: red = Safe Clean, yellow = 1-Tap Boost (while the app is open). */
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        if (isTv && event?.repeatCount == 0) {
+            when (keyCode) {
+                android.view.KeyEvent.KEYCODE_PROG_RED -> { vm.clean(); return true }
+                android.view.KeyEvent.KEYCODE_PROG_YELLOW -> { vm.boost(); return true }
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
     override fun onResume() {
         super.onResume()
         vm.refresh()
