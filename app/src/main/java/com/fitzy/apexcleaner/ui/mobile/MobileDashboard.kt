@@ -69,6 +69,7 @@ fun MobileDashboard(
     onEncryptedDns: (Boolean) -> Unit,
     onHeat: (Float) -> Unit,
     onCheckUpdate: () -> Unit,
+    onLimiter: (Boolean) -> Unit,
 ) {
     ApexTheme {
         var showLogs by rememberSaveable { mutableStateOf(false) }
@@ -250,6 +251,7 @@ fun MobileDashboard(
                 if (tab == 4) {
                     item { Text("Settings", style = MaterialTheme.typography.titleLarge) }
                     item { SettingRow("Night clean at 3 AM", "Cleans while charging, over 80% battery, with the screen off for 30 minutes.", state.nightClean, onNightClean) }
+                    item { SettingRow("Streaming priority", "While a video, music or game app is on screen, other apps share a small slice of the connection so the stream stays smooth. Streaming apps, banking and your protected apps are never slowed. Needs Usage Access and the shield switched on. Apps outside the limiter skip the ad shield.", state.limiter, onLimiter) }
                     item { SettingRow("Encrypted DNS", "The shield looks up websites over a private connection. Turn off if a network blocks it.", state.encryptedDns, onEncryptedDns) }
                     item {
                         Card(Modifier.fillMaxWidth()) {

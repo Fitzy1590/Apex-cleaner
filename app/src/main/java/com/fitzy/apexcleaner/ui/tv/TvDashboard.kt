@@ -66,6 +66,7 @@ fun TvDashboard(
     onNightClean: (Boolean) -> Unit,
     onEncryptedDns: (Boolean) -> Unit,
     onCheckUpdate: () -> Unit,
+    onLimiter: (Boolean) -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet, background = TvObsidian, surface = TvObsidian)) {
         Surface(Modifier.fillMaxSize()) {
@@ -195,7 +196,8 @@ fun TvDashboard(
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
                             item { StatCard("Night clean 3 AM", if (state.nightClean) "ON" else "OFF", "Charging, idle only", onClick = { onNightClean(!state.nightClean) }) }
-                            item { StatCard("Encrypted DNS", if (state.encryptedDns) "ON" else "OFF", "Private lookups", onClick = { onEncryptedDns(!state.encryptedDns) }) }
+                            item { StatCard("Streaming priority", if (state.limiter) (if (state.limiting) "ACTIVE" else "ON") else "OFF", "Other apps slow down while you stream", onClick = { onLimiter(!state.limiter) }) }
+                        item { StatCard("Encrypted DNS", if (state.encryptedDns) "ON" else "OFF", "Private lookups", onClick = { onEncryptedDns(!state.encryptedDns) }) }
                             item { StatCard("Version", state.version, "Press to check for updates", onClick = onCheckUpdate) }
                         }
                     }

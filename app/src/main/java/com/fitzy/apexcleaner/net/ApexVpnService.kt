@@ -22,6 +22,10 @@ object ShieldStats {
     val blocked = MutableStateFlow(0)
     /** Newest blocked names first, for the network log. */
     val recent = MutableStateFlow<List<String>>(emptyList())
+    /** True while the speed limiter's full tunnel is up (limited apps go through it). */
+    val limiterOn = MutableStateFlow(false)
+    /** True while a priority app is on screen and other apps are being slowed. */
+    val limiting = MutableStateFlow(false)
 }
 
 /**
@@ -34,6 +38,14 @@ class ApexVpnService : VpnService() {
     @Volatile private var tun: ParcelFileDescriptor? = null
     @Volatile private var running = false
     private val pool = Executors.newFixedThreadPool(4)
+    private val relayPool = Executors.newCachedThreadPool()
+    private val timer = Executors.newSingleThreadScheduledExecutor()
+    private val down = PaceGate()
+    private val up = PaceGate()
+    @Volatile private var flows: FlowTable? = null
+    @Volatile private var priority: Set<String> = emptySet()
+    private val tracker = ForegroundTracker()
+    private var lastEvents = 0L
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) { stop(); return START_NOT_STICKY }
@@ -42,21 +54,68 @@ class ApexVpnService : VpnService() {
     }
 
     private fun start() {
-        val b = Builder().setSession("Apex Shield").addAddress(LOCAL_ADDR, 32)
-            .addDnsServer(FAKE_DNS).addRoute(FAKE_DNS, 32).setBlocking(true)
-        bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
+        val wantLimiter = com.fitzy.apexcleaner.core.AppSettings.limiter(this)
+        val limited = if (wantLimiter) runCatching { StreamingApps.limitedApps(this) }.getOrDefault(emptySet()) else emptySet()
+        // Limiter mode: only the limited apps enter the tunnel (all their traffic, so it can be paced).
+        // Priority apps, banking, push and system apps stay outside it and run at full speed.
+        val full = limited.isNotEmpty()
+        val b = Builder().setSession("Apex Shield").addAddress(LOCAL_ADDR, 32).addDnsServer(FAKE_DNS).setBlocking(true).setMtu(1500)
+        if (full) {
+            b.addRoute("0.0.0.0", 0)
+            limited.forEach { runCatching { b.addAllowedApplication(it) } }
+        } else {
+            b.addRoute(FAKE_DNS, 32)
+            bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
+        }
         tun = b.establish() ?: return
-        running = true; ShieldStats.running.value = true
+        running = true; ShieldStats.running.value = true; ShieldStats.limiterOn.value = full
         ShieldRules.ensureLoaded(this)
         val engine = FilterEngine.withDefaults(FilterLists.load(this))
         ShieldRules.apply(this, engine); ShieldRules.live = engine
-        Thread({ loop(engine) }, "apex-dns").start()
+        if (full) startLimiter()
+        Thread({ loop(engine, full) }, "apex-dns").start()
+    }
+
+    private fun startLimiter() {
+        val host = object : RelayHost {
+            override fun toApp(packet: ByteArray) { tun?.let { synchronized(this@ApexVpnService) { runCatching { FileOutputStream(it.fileDescriptor).write(packet) } } } }
+            override fun keepOutside(s: java.net.Socket) = protect(s)
+            override fun keepOutside(s: DatagramSocket) = protect(s)
+            override val down get() = this@ApexVpnService.down
+            override val up get() = this@ApexVpnService.up
+            override val pool get() = relayPool
+        }
+        flows = FlowTable(host)
+        priority = runCatching { StreamingApps.priorityApps(this) }.getOrDefault(emptySet())
+        lastEvents = System.currentTimeMillis() - 3_600_000L
+        var tick = 0
+        timer.scheduleWithFixedDelay({
+            runCatching {
+                pollForeground()
+                val enabled = com.fitzy.apexcleaner.core.AppSettings.limiter(this)
+                val fg = tracker.current
+                val isPri = { p: String -> p in priority || StreamingApps.looksLikeStreaming(p) }
+                down.setRate(LimiterPolicy.downRate(enabled, fg, isPri)); up.setRate(LimiterPolicy.upRate(enabled, fg, isPri))
+                ShieldStats.limiting.value = down.rate > 0
+                if (++tick % 10 == 0) flows?.sweep()
+                if (tick % 100 == 0) priority = StreamingApps.priorityApps(this)
+            }
+        }, 1, 3, java.util.concurrent.TimeUnit.SECONDS)
+    }
+
+    /** Which app is on screen now, from Android's usage log. Needs Usage Access; without it nothing is slowed. */
+    private fun pollForeground() {
+        val um = getSystemService(USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
+        val now = System.currentTimeMillis()
+        val ev = um.queryEvents(lastEvents, now); lastEvents = now
+        val e = android.app.usage.UsageEvents.Event()
+        while (ev.hasNextEvent()) { ev.getNextEvent(e); tracker.onEvent(e.packageName, e.eventType) }
     }
 
     private fun bypassPackages(): Set<String> =
         setOf(packageName) + SafeLists.bankingBypassPackages + ProtectedApps.ALWAYS_PROTECTED + WhitelistStore(this).all()
 
-    private fun loop(engine: FilterEngine) {
+    private fun loop(engine: FilterEngine, full: Boolean) {
         val fd = tun ?: return
         val input = FileInputStream(fd.fileDescriptor)
         val output = FileOutputStream(fd.fileDescriptor)
@@ -66,7 +125,9 @@ class ApexVpnService : VpnService() {
                 val n = input.read(buf)
                 if (n <= 0) continue
                 val pkt = buf.copyOf(n)
-                pool.execute { handle(pkt, engine, output) }
+                val h = if (full) Packets.header(pkt) else null
+                val isDns = h != null && h.proto == Packets.UDP && n >= h.ihl + 4 && Packets.u16(pkt, h.ihl + 2) == 53 && h.dst.contentEquals(FAKE_DNS_BYTES)
+                if (h == null || isDns) pool.execute { handle(pkt, engine, output) } else flows?.onPacket(pkt, h)
             }
         } catch (_: Exception) { /* tunnel closed */ } finally { stop() }
     }
@@ -124,18 +185,20 @@ class ApexVpnService : VpnService() {
     }
 
     private fun stop() {
-        running = false; ShieldStats.running.value = false; ShieldRules.live = null; ShieldRules.save(this)
+        running = false; ShieldStats.running.value = false; ShieldStats.limiterOn.value = false; ShieldStats.limiting.value = false
+        ShieldRules.live = null; ShieldRules.save(this); flows?.closeAll(); flows = null
         runCatching { tun?.close() }; tun = null
         stopSelf()
     }
 
     override fun onRevoke() { stop() }
-    override fun onDestroy() { running = false; ShieldStats.running.value = false; pool.shutdownNow(); super.onDestroy() }
+    override fun onDestroy() { running = false; ShieldStats.running.value = false; pool.shutdownNow(); relayPool.shutdownNow(); timer.shutdownNow(); super.onDestroy() }
 
     companion object {
         const val ACTION_STOP = "com.fitzy.apexcleaner.STOP_SHIELD"
         private const val LOCAL_ADDR = "10.111.222.1"
         private const val FAKE_DNS = "10.111.222.2"
+        private val FAKE_DNS_BYTES = byteArrayOf(10, 111.toByte(), 222.toByte(), 2)
         private const val DOH_URL = "https://cloudflare-dns.com/dns-query"
         private const val FALLBACK_DNS = "1.1.1.1"
 

@@ -71,12 +71,12 @@ class MainActivity : ComponentActivity() {
                 TunerService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield, vm::setRule, vm::setNightClean, vm::setEncryptedDns, vm::checkUpdate)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, shield, vm::setRule, vm::setNightClean, vm::setEncryptedDns, vm::checkUpdate, vm::setLimiter)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
                     vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
-                    vm::setChargeLimit, vm::setFastCharge, shield, vm::updateLists, vm::setRule, vm::clearHistory, vm::setNightClean, vm::setEncryptedDns, vm::setHeat, vm::checkUpdate,
+                    vm::setChargeLimit, vm::setFastCharge, shield, vm::updateLists, vm::setRule, vm::clearHistory, vm::setNightClean, vm::setEncryptedDns, vm::setHeat, vm::checkUpdate, vm::setLimiter,
                 )
             }
         }

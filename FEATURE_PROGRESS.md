@@ -83,7 +83,16 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [ ] 2. TV polish only
 - [ ] 3. Speed limiter only
 - [x] TV tabs: Home, Shield, Storage, Settings, instant switch (written, NOT yet build-checked: no Android tools on this cloud machine today)
-- [ ] Real speed limiter (waits, never drops): BLOCKED on owner decision. Needs a full tunnel for all traffic, which breaks hard rule 7 (VPN carries DNS only)
+- [x] Streaming Priority limiter (owner chose: build, ON by default). Build passing incl. a test of the relay against a real local server. Not yet tested on a real TV.
 - [x] Banking list grown from about 179 to about 243 names (only ones I am sure of)
 - [x] TV home-row tile already exists (launcher banner); remote red button = Safe Clean, yellow = 1-Tap Boost while app is open (a key that works anywhere needs an accessibility service, not built)
 - [x] TV background now #0B0E14 (glass-border cards still to polish)
+
+## Streaming Priority limiter (2026-11-21, build passing)
+- [x] While a video, music or game app is on screen, other apps share about 1.5 Mbps down / 0.4 Mbps up; they wait, never drop
+- [x] Never limited: streaming apps by name (YouTube, Stremio, Nuvio, Kayo, Nexus, Netflix and more), Android video/music/game apps, banking, push, clock, system, launchers, anything on your Protected apps list
+- [x] Switch in Settings (phone + TV), on by default; "Protected apps" list is also the limiter whitelist
+- [x] Rules updated (CLAUDE.md rule 7, vpn-engine.md)
+- [ ] Needs Usage Access (to know which app is on screen); without it nothing is slowed
+- [ ] Known limits: ad shield skips apps outside the limiter; IPv6 not paced; newly installed apps join after the shield restarts; cannot give other apps' CPU away without killing them (forbidden), so this is network priority only
+- [ ] Real-device test on TV

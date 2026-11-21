@@ -51,6 +51,9 @@ data class UiState(
     val rules: Map<String, com.fitzy.apexcleaner.net.Rule> = emptyMap(),
     val nightClean: Boolean = true,
     val encryptedDns: Boolean = true,
+    val limiter: Boolean = true,
+    val limiterOn: Boolean = false,
+    val limiting: Boolean = false,
     val hotC: Float = 42f,
     val version: String = "",
     val update: com.fitzy.apexcleaner.core.UpdateInfo? = null,
@@ -67,6 +70,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { st -> st.copy(
             nightClean = com.fitzy.apexcleaner.core.AppSettings.nightClean(ctx),
             encryptedDns = com.fitzy.apexcleaner.core.AppSettings.encryptedDns(ctx),
+            limiter = com.fitzy.apexcleaner.core.AppSettings.limiter(ctx),
             hotC = ChargeSettings(ctx).hotC,
             version = runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull().orEmpty(),
             bankingDomains = com.fitzy.apexcleaner.net.SafeLists.bankingDomains.size,
@@ -83,6 +87,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 kotlinx.coroutines.delay(3000)
             }
         }
+        viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiterOn.collect { r -> _state.update { it.copy(limiterOn = r) } } }
+        viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiting.collect { r -> _state.update { it.copy(limiting = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
@@ -140,6 +146,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         com.fitzy.apexcleaner.core.AppSettings.setNightClean(ctx, on)
         if (on) com.fitzy.apexcleaner.core.PowerPolicy.scheduleDeepClean(ctx) else com.fitzy.apexcleaner.core.PowerPolicy.cancelDeepClean(ctx)
         _state.update { it.copy(nightClean = on) }
+    }
+
+    /** Streaming priority on/off. If the shield is running it restarts so the new mode takes effect. */
+    fun setLimiter(on: Boolean) {
+        com.fitzy.apexcleaner.core.AppSettings.setLimiter(ctx, on)
+        _state.update { it.copy(limiter = on) }
+        if (com.fitzy.apexcleaner.net.ShieldStats.running.value) {
+            com.fitzy.apexcleaner.net.ApexVpnService.stop(ctx)
+            viewModelScope.launch { kotlinx.coroutines.delay(800); com.fitzy.apexcleaner.net.ApexVpnService.start(ctx) }
+        }
     }
 
     fun setEncryptedDns(on: Boolean) {
