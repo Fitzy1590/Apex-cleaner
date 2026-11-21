@@ -34,3 +34,14 @@ Repo held only a README: no existing app. Owner chose "build fresh here".
 ## Pending
 - [ ] Real-device test (cleaning, notifications, TV focus, Shizuku with the helper app running)
 - [ ] Known limits: cannot clear OTHER apps' private caches without system permission; deep clean needs "All files access"
+
+## Audit (2026-11-21): Apex Shield & Cleaner upgrade, Phase 1
+Already built: safe cleaner + PathGuard, WorkManager (charging + idle), no-kill battery saver, protected apps, Shizuku helper (clears other apps' caches), charging engine (heat warning at 38 C, limit alerts), phone + TV dashboards.
+Partly there: nightly clean exists but has no 3 AM time, no battery > 80%, no 30-minute idle check. Per-app cache breakdown (media / thumbnails / logs) not shown yet. Clock/alarm apps are protected but not listed by name. TV focus is 1.05x + 3dp border but no #7C3AED violet, no sound/haptic, no Quick Settings tile.
+Not built at all: local VPN, speed pacing (NetValve), ad/tracker DNS firewall, DoH, banking passthrough list, per-app network bypass, tab switching with no animation.
+Notes for the owner to confirm in Phase 2: heat alert is 38 C today; the brief asks for 42 C. Phase 2 must also reconcile the "no force-kill" rule (kept) and rule 4 "heavy work only when charging + idle" with the new 3 AM job (it fits).
+
+## Phase 1 vote: WAITING FOR OWNER
+- [ ] Option A: Complete Suite (NetValve + BlockAds DNS firewall + Shizuku cache breakdown + 3 AM idle maintenance + 284-domain banking & clock whitelist + thermal/unplug alarms + TV D-pad engine)
+- [ ] Option B: Storage & Battery only (no VPN)
+- [ ] Option C: Network VPN engine only (traffic shaper + DNS firewall)

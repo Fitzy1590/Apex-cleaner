@@ -28,3 +28,9 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 
 ### Where it lives
 `power/` package: ChargeMath (rules, tested), ChargeReader, ChargeSettings, ChargeEngine (+ PowerEventReceiver), ChargeNotifier, ChargeUi. Card: `ui/mobile/ChargingCard.kt`. Hooks into `PowerPolicy.chargeHold`, `TunerService`, `Workers`.
+
+## Apex Shield & Cleaner upgrade (2026-11-21): vote pending
+- [ ] Option A: Complete Suite (recommended): traffic pacing, ad/tracker DNS firewall, per-app cache breakdown, 3 AM idle maintenance, banking & clock protection list, heat/unplug alarms, TV remote ergonomics
+- [ ] Option B: Storage & Battery only (no VPN)
+- [ ] Option C: Network VPN engine only
+No code is written until the owner votes.
