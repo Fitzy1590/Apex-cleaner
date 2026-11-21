@@ -124,3 +124,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 
 ## Update stuck on "Opening the installer…" (2026-11-21)
 - [x] The installer reply is now addressed straight to the app (newer Android refuses vague replies), and the button frees itself after 20 seconds with a clear message instead of staying stuck. Not build-checked.
+
+## Ads in streaming, sport and game apps (2026-11-21, owner chose A)
+- [x] Those apps now join the ad shield but are never slowed. Banking, push, clock, launchers, notification/alarm apps and your whitelist stay outside. Not build-checked.
+- [ ] Owner to check: streams still start fast and the cricket banner is gone.
