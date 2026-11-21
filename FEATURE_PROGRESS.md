@@ -47,8 +47,8 @@ Notes for the owner to confirm in Phase 2: heat alert is 38 C today; the brief a
 - [ ] Option C: Network VPN engine only (traffic shaper + DNS firewall)
 
 ## Phase 2 build (Option A), started 2026-11-21
-Build check NOT run this session: the new cloud machine has no Android SDK, so the slices below are written but unverified. Run `./gradlew check` once the SDK is available.
-- [x] Slice 1 (written, unverified): heat alert 42 C, 3 AM nightly clean with 3 conditions (plugged, battery > 80%, screen off 30+ min) + tests, clock/system/Google push apps protected by name
+Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 on the cloud machine.
+- [x] Slice 1 (build passing): heat alert 42 C, 3 AM nightly clean with 3 conditions (plugged, battery > 80%, screen off 30+ min) + tests, clock/system/Google push apps protected by name
 - [ ] Slice 2: per-app cache breakdown (media / thumbnails / logs) via Shizuku, phone + TV
 - [ ] Slice 3: TV remote engine (violet #7C3AED border, 1.05x, sound/haptic, Quick Settings tile) + instant tab switching
 - [ ] Slice 4: NetValve VPN pacing engine (token bucket, DNS exempt, Wi-Fi/mobile/charging/foreground rules)
