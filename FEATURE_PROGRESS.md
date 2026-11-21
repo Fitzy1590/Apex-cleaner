@@ -109,3 +109,8 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Check for updates fixed (2026-11-21)
 - [x] Button now shows "Checking…", works even while other jobs run, names the version found, and says so when the update server cannot be reached (it used to say "latest version" on a failed check)
 - [x] Buttons can no longer get stuck greyed out after a job (build check below)
+
+## Update inside the app (2026-11-21)
+- [x] Update card downloads the new version inside the app (shows percent), then opens Android's install screen; no website. Phone and TV (build check below)
+- [ ] First time only: Android asks you to allow Apex Cleaner to install updates (one switch), then tap Update again
+- [ ] Android always asks you to tap Install; it cannot be silent

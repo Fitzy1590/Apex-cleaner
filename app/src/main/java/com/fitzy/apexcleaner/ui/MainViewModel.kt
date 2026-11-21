@@ -37,6 +37,7 @@ data class UiState(
     val message: String? = null,
     val busy: Boolean = false,
     val checking: Boolean = false,
+    val updateStatus: String? = null,
     val filesAccess: Boolean = true,
     val otherCacheBytes: Long = 0L,
     val missing: List<NeededPermission> = emptyList(),
@@ -92,6 +93,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiting.collect { r -> _state.update { it.copy(limiting = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
+        viewModelScope.launch { com.fitzy.apexcleaner.core.UpdateInstaller.status.collect { t -> _state.update { it.copy(updateStatus = t) } } }
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
     }
 

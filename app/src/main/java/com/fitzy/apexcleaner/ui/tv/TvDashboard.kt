@@ -106,9 +106,9 @@ fun TvDashboard(
                     }
                     state.update?.let { u ->
                         item {
-                            val uri = androidx.compose.ui.platform.LocalUriHandler.current
-                            Card(onClick = { uri.openUri(u.apkUrl) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
-                                Text("New version ready (${u.tag}): press to download", Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
+                            val appCtx = androidx.compose.ui.platform.LocalContext.current
+                            Card(onClick = { com.fitzy.apexcleaner.core.UpdateInstaller.start(appCtx, u) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                                Text(state.updateStatus ?: "New version ready (${u.tag}): press to install", Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }

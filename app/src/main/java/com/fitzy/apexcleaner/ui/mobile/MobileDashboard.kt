@@ -110,11 +110,12 @@ fun MobileDashboard(
                 item { Text("Apex Cleaner", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
                 state.update?.let { u ->
                     item {
-                        val uri = androidx.compose.ui.platform.LocalUriHandler.current
+                        val appCtx = androidx.compose.ui.platform.LocalContext.current
+                        val working = state.updateStatus?.let { it.startsWith("Downloading") || it.startsWith("Opening") } == true
                         Card(Modifier.fillMaxWidth()) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text("A new version of Apex Cleaner is ready (${u.tag}).", Modifier.weight(1f))
-                                Button(onClick = { uri.openUri(u.apkUrl) }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update") }
+                                Text(state.updateStatus ?: "A new version of Apex Cleaner is ready (${u.tag}).", Modifier.weight(1f))
+                                Button(onClick = { com.fitzy.apexcleaner.core.UpdateInstaller.start(appCtx, u) }, enabled = !working, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update") }
                             }
                         }
                     }
