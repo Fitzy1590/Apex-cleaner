@@ -35,9 +35,9 @@ class ChargeMathTest {
         assertEquals(120.0, ChargeMath.smooth(100.0, 200.0), 0.001)
     }
 
-    @Test fun warmAt38OrWhenPhoneSaysSo() {
-        assertFalse(ChargeMath.isTooWarm(37.9f, 0))
-        assertTrue(ChargeMath.isTooWarm(38f, null))
+    @Test fun warmAt40OrWhenPhoneSaysSo() {
+        assertFalse(ChargeMath.isTooWarm(39.9f, 0))
+        assertTrue(ChargeMath.isTooWarm(40f, null))
         assertTrue(ChargeMath.isTooWarm(30f, 2))
     }
 

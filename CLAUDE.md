@@ -14,7 +14,9 @@ Android system optimizer: safe storage cleaner, quiet background tuner, no-kill 
 - Build all backlog items without asking for confirmation. Stop only when done or ~80% context (then tell owner to run `/clear`).
 - Verification is automatic: `./gradlew check` (hook in `.claude/settings.json`). Fix failures yourself.
 - Delegate wide searches/audits to subagents. Don't re-scaffold; extend existing code.
-- Path-scoped rules: `.claude/rules/android-ui.md`, `.claude/rules/optimizer-engine.md`.
+- Path-scoped rules: `.claude/rules/` (android-ui, optimizer-engine, charging-engine, vpn-engine).
+- Squeeze output: run builds as `./gradlew check 2>&1 | head -50`. Subagents run on Haiku (settings env).
+- Edit minimally: read the file first, change few lines, add no wrapper layers, don't reformat.
 
 ## Layout (package com.fitzy.apexcleaner)
 - `core/` engine: PathGuard (delete gatekeeper), SafeCleaner, HealthMonitor, Whitelist/ProtectedApps,

@@ -9,7 +9,7 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 | Topic | Decision |
 |---|---|
 | Start | Automatically every time power is plugged in (`ACTION_POWER_CONNECTED`) |
-| Heat | Too warm at 38 C or when Android reports a thermal warning; UI warns and suggests removing the case |
+| Heat | Too warm at 40 C (tuned for Galaxy Z Fold 6) or when Android reports a thermal warning; UI warns and suggests removing the case |
 | Pauses | Apex's own syncs, checks and cleaning only. Alarms, widgets, media, launchers, whitelist untouched. Other apps never stopped |
 | Restore | Unplug (`ACTION_POWER_DISCONNECTED`) or 100% restores normal behaviour |
 | Wattage | Battery volts x amps, smoothed, shown as an estimate. Profile: 5W USB / 10W / 15W Fast / 30W Fast / 45W+ Super Fast |
@@ -30,5 +30,5 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 `power/` package: ChargeMath (rules, tested), ChargeReader, ChargeSettings, ChargeEngine (+ PowerEventReceiver), ChargeNotifier, ChargeUi. Card: `ui/mobile/ChargingCard.kt`. Hooks into `PowerPolicy.chargeHold`, `TunerService`, `Workers`.
 
 ## Unified App: Apex Shield & Cleaner (com.fitzy.apexshield), proposed
-Merge of AdShield-VPN into Apex Cleaner. Status: AWAITING OWNER VOTE (Phase 1).
-- [ ] **Option A [RECOMMENDED MERGED BUILD]**: Local VPN DNS ad firewall + safe storage cleaner + Shizuku cache breakdown + battery thermal monitor + dual phone and TV UI. One app, no duplicated background services.
+Merge of AdShield-VPN into Apex Cleaner. Status: APPROVED by owner 2026-11-21. Heat warning 40 C (Z Fold 6).
+- [x] **Option A [RECOMMENDED MERGED BUILD]**: Local VPN DNS ad firewall + safe storage cleaner + Shizuku cache breakdown + battery thermal monitor + dual phone and TV UI. One app, no duplicated background services.

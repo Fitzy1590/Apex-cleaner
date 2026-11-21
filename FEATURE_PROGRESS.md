@@ -46,6 +46,15 @@ Findings:
 - Name and ID change (apexcleaner -> apexshield) touches the package, manifest, Gradle and tests.
 - Governance gaps: no deny rules in settings.json, no subagent-model setting, no vpn-engine rules file. CLAUDE.md is lean (32 lines).
 
-## Merge Vote (PHASE 1): WAITING FOR OWNER
-- [ ] Option A [RECOMMENDED MERGED BUILD]: Unified Apex Shield & Cleaner
-Phase 2 does not start until this is ticked.
+## Merge Vote (PHASE 1): DECIDED 2026-11-21
+- [x] Option A [RECOMMENDED MERGED BUILD]: Unified Apex Shield & Cleaner
+- Heat warning: 40 C (owner asked for the recommended level for a Samsung Galaxy Z Fold 6). Replaces 38 C.
+- AdShield source not supplied: ad blocker is built fresh here.
+
+## Phase 2 steps
+- [x] A. Governance (settings deny rules, subagent model, vpn-engine rules)
+- [x] B. Heat 40 C (written; not yet compiled, no Android SDK on this machine)
+- [ ] C. Rename to com.fitzy.apexshield
+- [ ] D. VPN DNS engine (Trie, DoH, passthrough list, query log)
+- [ ] E. 3 AM nightly clean
+- [ ] F. Unified phone + TV screens
