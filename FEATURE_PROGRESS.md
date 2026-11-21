@@ -128,3 +128,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ads in streaming, sport and game apps (2026-11-21, owner chose A)
 - [x] Those apps now join the ad shield but are never slowed. Banking, push, clock, launchers, notification/alarm apps and your whitelist stay outside. Not build-checked.
 - [ ] Owner to check: streams still start fast and the cricket banner is gone.
+
+## Full build check (2026-11-21, build passing)
+- [x] Compile, lint, unit tests and the app file all pass with Android tools present. This covers everything marked "not build-checked" above (TV tabs, browser shield fixes, streaming/game ad filtering, installer fix).
+- [ ] Real-device test on a TV
