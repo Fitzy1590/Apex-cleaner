@@ -9,7 +9,7 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 | Topic | Decision |
 |---|---|
 | Start | Automatically every time power is plugged in (`ACTION_POWER_CONNECTED`) |
-| Heat | Too warm at 38 C or when Android reports a thermal warning; UI warns and suggests removing the case |
+| Heat | Too warm at 42 C or when Android reports a thermal warning; UI warns and suggests removing the case |
 | Pauses | Apex's own syncs, checks and cleaning only. Alarms, widgets, media, launchers, whitelist untouched. Other apps never stopped |
 | Restore | Unplug (`ACTION_POWER_DISCONNECTED`) or 100% restores normal behaviour |
 | Wattage | Battery volts x amps, smoothed, shown as an estimate. Profile: 5W USB / 10W / 15W Fast / 30W Fast / 45W+ Super Fast |
@@ -29,8 +29,8 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 ### Where it lives
 `power/` package: ChargeMath (rules, tested), ChargeReader, ChargeSettings, ChargeEngine (+ PowerEventReceiver), ChargeNotifier, ChargeUi. Card: `ui/mobile/ChargingCard.kt`. Hooks into `PowerPolicy.chargeHold`, `TunerService`, `Workers`.
 
-## Apex Shield & Cleaner upgrade (2026-11-21): vote pending
-- [ ] Option A: Complete Suite (recommended): traffic pacing, ad/tracker DNS firewall, per-app cache breakdown, 3 AM idle maintenance, banking & clock protection list, heat/unplug alarms, TV remote ergonomics
+## Apex Shield & Cleaner upgrade (2026-11-21): vote: Option A chosen
+- [x] Option A: Complete Suite (recommended): traffic pacing, ad/tracker DNS firewall, per-app cache breakdown, 3 AM idle maintenance, banking & clock protection list, heat/unplug alarms, TV remote ergonomics
 - [ ] Option B: Storage & Battery only (no VPN)
 - [ ] Option C: Network VPN engine only
-No code is written until the owner votes.
+Owner voted Option A. Phase 2 (build) started.

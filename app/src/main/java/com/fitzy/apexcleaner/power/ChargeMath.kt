@@ -20,7 +20,7 @@ enum class ChargeAlert { NONE, REACHED_LIMIT, FULL }
 
 /** Pure charging maths and rules. No Android calls, so it is fully unit-tested. */
 object ChargeMath {
-    const val HOT_C = 38f
+    const val HOT_C = 42f
     const val THERMAL_MODERATE = 2
     const val MAX_PLAUSIBLE_WATTS = 150f
     const val MIN_LIMIT = 50
@@ -60,7 +60,7 @@ object ChargeMath {
     fun smooth(previous: Double?, sample: Double, alpha: Double = 0.2): Double =
         if (previous == null) sample else previous + alpha * (sample - previous)
 
-    /** Phone counts as too warm at 38 C, or when Android itself says it is getting hot. */
+    /** Phone counts as too warm at 42 C, or when Android itself says it is getting hot. */
     fun isTooWarm(tempC: Float, thermalStatus: Int?): Boolean =
         tempC >= HOT_C || (thermalStatus != null && thermalStatus >= THERMAL_MODERATE)
 

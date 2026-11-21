@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit
  */
 object PowerPolicy {
     @Volatile var screenOn: Boolean = true
+    @Volatile var screenOffSince: Long = 0L
     private const val PREFS = "power"
 
     fun pauseTuningFor(ctx: Context, minutes: Long) {
@@ -51,6 +52,7 @@ object PowerPolicy {
     /** Deep clean: only while charging and the phone is idle, so it never causes lag or drain. */
     fun scheduleDeepClean(ctx: Context) {
         val req = PeriodicWorkRequestBuilder<DeepCleanWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(NightlyRules.delayToNextThreeAm(java.util.Calendar.getInstance()), TimeUnit.MILLISECONDS)
             .setConstraints(
                 Constraints.Builder()
                     .setRequiresCharging(true)
@@ -63,10 +65,12 @@ object PowerPolicy {
     }
 }
 
+
 /** Tracks screen on/off so the tuner can go quiet when the screen is off. */
 class ScreenStateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         PowerPolicy.screenOn = intent.action != Intent.ACTION_SCREEN_OFF
+        PowerPolicy.screenOffSince = if (PowerPolicy.screenOn) 0L else System.currentTimeMillis()
     }
 
     companion object {

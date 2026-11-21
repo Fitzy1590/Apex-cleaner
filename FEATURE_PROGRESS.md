@@ -41,7 +41,16 @@ Partly there: nightly clean exists but has no 3 AM time, no battery > 80%, no 30
 Not built at all: local VPN, speed pacing (NetValve), ad/tracker DNS firewall, DoH, banking passthrough list, per-app network bypass, tab switching with no animation.
 Notes for the owner to confirm in Phase 2: heat alert is 38 C today; the brief asks for 42 C. Phase 2 must also reconcile the "no force-kill" rule (kept) and rule 4 "heavy work only when charging + idle" with the new 3 AM job (it fits).
 
-## Phase 1 vote: WAITING FOR OWNER
-- [ ] Option A: Complete Suite (NetValve + BlockAds DNS firewall + Shizuku cache breakdown + 3 AM idle maintenance + 284-domain banking & clock whitelist + thermal/unplug alarms + TV D-pad engine)
+## Phase 1 vote: OPTION A chosen (2026-11-21)
+- [x] Option A: Complete Suite (NetValve + BlockAds DNS firewall + Shizuku cache breakdown + 3 AM idle maintenance + 284-domain banking & clock whitelist + thermal/unplug alarms + TV D-pad engine)
 - [ ] Option B: Storage & Battery only (no VPN)
 - [ ] Option C: Network VPN engine only (traffic shaper + DNS firewall)
+
+## Phase 2 build (Option A), started 2026-11-21
+Build check NOT run this session: the new cloud machine has no Android SDK, so the slices below are written but unverified. Run `./gradlew check` once the SDK is available.
+- [x] Slice 1 (written, unverified): heat alert 42 C, 3 AM nightly clean with 3 conditions (plugged, battery > 80%, screen off 30+ min) + tests, clock/system/Google push apps protected by name
+- [ ] Slice 2: per-app cache breakdown (media / thumbnails / logs) via Shizuku, phone + TV
+- [ ] Slice 3: TV remote engine (violet #7C3AED border, 1.05x, sound/haptic, Quick Settings tile) + instant tab switching
+- [ ] Slice 4: NetValve VPN pacing engine (token bucket, DNS exempt, Wi-Fi/mobile/charging/foreground rules)
+- [ ] Slice 5: DNS firewall (trie matching, filter lists, DoH) + 284-domain banking list + per-app bypass
+- [ ] Slice 6: Control Center screens (phone + TV) tying it together

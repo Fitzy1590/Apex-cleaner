@@ -58,8 +58,18 @@ class ProtectedApps(private val context: Context, private val store: WhitelistSt
                 0,
             ).forEach { out += it.packageName }
         }
+        out += ALWAYS_PROTECTED.filter { runCatching { pm.getPackageInfo(it, 0) }.isSuccess }
         return out
     }
 
     fun isProtected(pkg: String): Boolean = pkg in store.all() || pkg in automatic()
+
+    companion object {
+        /** Clock, system UI and Google push apps are never throttled or interrupted. */
+        val ALWAYS_PROTECTED = setOf(
+            "com.google.android.deskclock", "com.sec.android.app.clockpackage",
+            "com.android.deskclock", "com.android.systemui",
+            "com.google.android.gms", "com.google.android.gsf",
+        )
+    }
 }
