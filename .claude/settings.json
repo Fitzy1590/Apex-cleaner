@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v ./gradlew >/dev/null 2>&1 && { [ -n \"$ANDROID_HOME\" ] || [ -n \"$ANDROID_SDK_ROOT\" ] || [ -f local.properties ]; }; then { ./gradlew check --offline 2>&1 || ./gradlew check 2>&1; } | tail -50 >&2; [ \"${PIPESTATUS[0]}\" = 0 ] || exit 2; else exit 0; fi"
+            "command": "if command -v ./gradlew >/dev/null 2>&1 && { [ -n \"$ANDROID_HOME\" ] || [ -n \"$ANDROID_SDK_ROOT\" ] || [ -f local.properties ]; }; then (./gradlew check --offline || ./gradlew check) > /tmp/apex-check.log 2>&1; r=$?; tail -50 /tmp/apex-check.log >&2; [ $r -eq 0 ] || exit 2; else exit 0; fi"
           }
         ]
       }
