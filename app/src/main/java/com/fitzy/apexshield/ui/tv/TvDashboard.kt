@@ -43,9 +43,9 @@ import com.fitzy.apexshield.ui.theme.Accent
 import com.fitzy.apexshield.vpn.DohProvider
 
 /** Every focusable thing grows at least 5% AND gets a 3dp violet border (spec: >=1.03x or >=2dp). */
+private val FocusViolet = androidx.compose.ui.graphics.Color(0xFF8B5CF6)
 private val FocusBorder = Border(BorderStroke(3.dp, FocusViolet), shape = RoundedCornerShape(12.dp))
 private const val FocusScale = 1.05f
-private val FocusViolet = androidx.compose.ui.graphics.Color(0xFF8B5CF6)
 
 @Composable
 fun TvDashboard(
