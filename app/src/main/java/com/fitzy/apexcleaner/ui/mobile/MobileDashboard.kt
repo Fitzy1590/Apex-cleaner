@@ -135,6 +135,23 @@ fun MobileDashboard(
                         }
                     }
                 }
+                if (state.breakdown.isNotEmpty()) {
+                    item { Text("Biggest cache users", style = MaterialTheme.typography.titleMedium) }
+                    items(state.breakdown, key = { it.pkg }) { a ->
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(a.label, style = MaterialTheme.typography.titleSmall); Text(formatBytes(a.total))
+                                }
+                                a.bytesByKind.entries.sortedByDescending { it.value }.forEach { (k, b) ->
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(k.label, style = MaterialTheme.typography.bodySmall); Text(formatBytes(b), style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 item { OutlinedButton(onClick = onStorageSettings, modifier = Modifier.fillMaxWidth()) { Text("Free more space: see what uses storage") } }
                 state.scan?.let { s ->
                     item { Text("What can be cleaned", style = MaterialTheme.typography.titleMedium) }

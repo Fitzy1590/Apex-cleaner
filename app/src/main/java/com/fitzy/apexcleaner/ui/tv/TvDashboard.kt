@@ -21,6 +21,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.unit.dp
+import com.fitzy.apexcleaner.ui.focusFeedback
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.tv.material3.Border
@@ -39,10 +40,10 @@ import com.fitzy.apexcleaner.ui.mobile.helperButton
 import com.fitzy.apexcleaner.ui.mobile.helperExplain
 import com.fitzy.apexcleaner.core.formatBytes
 import com.fitzy.apexcleaner.ui.UiState
-import com.fitzy.apexcleaner.ui.theme.Accent
+import com.fitzy.apexcleaner.ui.theme.TvViolet
 
 /** Every focusable thing grows at least 5% AND gets a 3dp accent border (spec: >=1.03x or >=2dp). */
-private val FocusBorder = Border(BorderStroke(3.dp, Accent), shape = RoundedCornerShape(12.dp))
+private val FocusBorder = Border(BorderStroke(3.dp, TvViolet), shape = RoundedCornerShape(12.dp))
 private const val FocusScale = 1.05f
 
 @Composable
@@ -56,7 +57,7 @@ fun TvDashboard(
     onGrant: (NeededPermission) -> Unit,
     onHelper: () -> Unit,
 ) {
-    MaterialTheme(colorScheme = darkColorScheme(primary = Accent)) {
+    MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet)) {
         Surface(Modifier.fillMaxSize()) {
             val firstFocus = remember { FocusRequester() }
             LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
@@ -66,7 +67,7 @@ fun TvDashboard(
             ) {
                 item { Text("Apex Cleaner", style = MaterialTheme.typography.displaySmall) }
                 items(state.missing) { p ->
-                    Card(onClick = { onGrant(p) }, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                    Card(onClick = { onGrant(p) }, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                         Column(Modifier.padding(20.dp)) {
                             Text("Allow ${p.title} (press to set up)", style = MaterialTheme.typography.titleMedium)
                             Text(p.why, style = MaterialTheme.typography.bodyMedium)
@@ -75,7 +76,7 @@ fun TvDashboard(
                 }
                 if (state.helper != HelperState.Ready) {
                     item {
-                        Card(onClick = onHelper, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                        Card(onClick = onHelper, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                             Column(Modifier.padding(20.dp)) {
                                 Text("Deeper clean: ${helperButton(state.helper)} (press)", style = MaterialTheme.typography.titleMedium)
                                 Text(helperExplain(state.helper), style = MaterialTheme.typography.bodyMedium)
@@ -85,7 +86,7 @@ fun TvDashboard(
                 }
                 state.message?.let { m ->
                     item {
-                        Card(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                        Card(onClick = onDismiss, modifier = Modifier.fillMaxWidth().focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                             Text(m, Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
                         }
                     }
@@ -106,13 +107,31 @@ fun TvDashboard(
                         TvButton("Cool Down", onCool)
                     }
                 }
+                if (state.breakdown.isNotEmpty()) {
+                    item { Text("Biggest cache users", style = MaterialTheme.typography.titleLarge) }
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                            items(state.breakdown, key = { it.pkg }) { a ->
+                                Card(onClick = {}, modifier = Modifier.width(260.dp).focusFeedback(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(a.label, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                        Text(formatBytes(a.total), style = MaterialTheme.typography.headlineSmall)
+                                        a.bytesByKind.entries.sortedByDescending { it.value }.take(3).forEach { (k, b) ->
+                                            Text("${k.label}: ${formatBytes(b)}", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 item { Text("Protected apps (press to toggle)", style = MaterialTheme.typography.titleLarge) }
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
                         items(state.apps, key = { it.pkg }) { app ->
                             Card(
                                 onClick = { if (!app.automatic) onToggleApp(app.pkg) },
-                                modifier = Modifier.width(220.dp),
+                                modifier = Modifier.width(220.dp).focusFeedback(),
                                 scale = CardDefaults.scale(focusedScale = FocusScale),
                                 border = CardDefaults.border(focusedBorder = FocusBorder),
                             ) {
@@ -140,7 +159,7 @@ fun TvDashboard(
 private fun StatCard(title: String, value: String, sub: String, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier.width(240.dp),
+        modifier = Modifier.width(240.dp).focusFeedback(),
         scale = CardDefaults.scale(focusedScale = FocusScale),
         border = CardDefaults.border(focusedBorder = FocusBorder),
     ) {
@@ -156,7 +175,7 @@ private fun StatCard(title: String, value: String, sub: String, onClick: () -> U
 private fun TvButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.focusFeedback(),
         scale = ButtonDefaults.scale(focusedScale = FocusScale),
         border = ButtonDefaults.border(focusedBorder = FocusBorder),
     ) { Text(label) }

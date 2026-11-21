@@ -49,6 +49,15 @@
             android:multiprocess="false"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
+        <service
+            android:name=".core.ApexTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_apex"
+            android:label="Apex Clean"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+        </service>
+
         <receiver android:name=".core.ActionReceiver" android:exported="false" />
     </application>
 </manifest>

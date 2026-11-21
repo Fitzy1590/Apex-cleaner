@@ -41,6 +41,7 @@ data class UiState(
     val missing: List<NeededPermission> = emptyList(),
     val helper: HelperState = HelperState.NotInstalled,
     val charge: ChargeUi = ChargeUi(),
+    val breakdown: List<com.fitzy.apexcleaner.core.AppCache> = emptyList(),
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -67,7 +68,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         ChargeEngine.update(ctx, force = true)
         val health = HealthMonitor(ctx).read()
         val scan = SafeCleaner(ctx).scan()
-        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), otherCacheBytes = OtherAppCaches.clearableBytes(ctx), missing = Permissions.missing(ctx), helper = ShizukuBridge.state(ctx))
+        _state.value = _state.value.copy(health = health, scan = scan, apps = loadApps(), filesAccess = hasFilesAccess(), otherCacheBytes = OtherAppCaches.clearableBytes(ctx), missing = Permissions.missing(ctx), helper = ShizukuBridge.state(ctx), breakdown = com.fitzy.apexcleaner.core.CacheBreakdown.scan(ctx))
     }
 
     fun clean() = launchBusy {
