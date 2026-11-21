@@ -7,6 +7,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NetEngineTest {
+    @Test fun bankingListHasAtLeast284Names() = assertTrue(SafeLists.bankingDomains.size >= 284)
+
     @Test fun bucketPacesInsteadOfDropping() {
         var t = 0L
         val b = TokenBucket(1000, 1000) { t }

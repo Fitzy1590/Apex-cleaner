@@ -67,17 +67,19 @@ fun TvDashboard(
     onEncryptedDns: (Boolean) -> Unit,
     onCheckUpdate: () -> Unit,
     onLimiter: (Boolean) -> Unit,
+    onClearLog: () -> Unit = {},
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = TvViolet, background = TvObsidian, surface = TvObsidian)) {
         Surface(Modifier.fillMaxSize()) {
             val firstFocus = remember { FocusRequester() }
             var tab by rememberSaveable { mutableIntStateOf(0) }
+            var blockedOnly by rememberSaveable { androidx.compose.runtime.mutableStateOf(true) }
             LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
             Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 32.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text("Apex Cleaner", style = MaterialTheme.typography.displaySmall)
                 // Tabs switch instantly: plain conditional content, no animation (0 ms).
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
-                    listOf("Home", "Shield", "Storage", "Settings").forEachIndexed { i, name ->
+                    listOf("Home", "Shield", "Storage", "Logs", "Settings").forEachIndexed { i, name ->
                         TvButton(if (i == tab) "● $name" else name, { tab = i })
                     }
                 }
@@ -192,6 +194,30 @@ fun TvDashboard(
                     }
                 }
                 if (tab == 3) {
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
+                            item { StatCard("Show", if (blockedOnly) "Blocked only" else "Everything", "Press to switch", onClick = { blockedOnly = !blockedOnly }) }
+                            item { StatCard("Clear log", "${state.history.size}", "Names remembered. Press to clear", onClick = onClearLog) }
+                        }
+                    }
+                    item { Text("Press a name: normal, always allow, always block. Banking and push alerts stay protected.", style = MaterialTheme.typography.bodyLarge) }
+                    val rows = com.fitzy.apexcleaner.net.LogView.filter(state.history, "", blockedOnly, state.rules).take(40)
+                    if (rows.isEmpty()) item { Text(if (state.history.isEmpty()) "Nothing yet. Turn the shield on and use the TV." else "No blocked names yet.", style = MaterialTheme.typography.bodyLarge) }
+                    items(rows, key = { it.domain }) { d ->
+                        val rule = state.rules[d.domain]
+                        Card(
+                            onClick = { onRule(d.domain, when (rule) { null -> com.fitzy.apexcleaner.net.Rule.ALLOW; com.fitzy.apexcleaner.net.Rule.ALLOW -> com.fitzy.apexcleaner.net.Rule.DENY; com.fitzy.apexcleaner.net.Rule.DENY -> null }) },
+                            modifier = Modifier.fillMaxWidth().focusFeedback(),
+                            scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder),
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(d.domain, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                                Text(when (rule) { com.fitzy.apexcleaner.net.Rule.ALLOW -> "Always allowed by you"; com.fitzy.apexcleaner.net.Rule.DENY -> "Always blocked by you"; null -> if (d.blocked > 0) "Blocked (${com.fitzy.apexcleaner.net.LogView.category(d.domain)}) ${d.blocked}x" else "Allowed ${d.allowed}x" }, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+                if (tab == 4) {
                     item { Text("Settings (press to change)", style = MaterialTheme.typography.titleLarge) }
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.focusRestorer()) {
