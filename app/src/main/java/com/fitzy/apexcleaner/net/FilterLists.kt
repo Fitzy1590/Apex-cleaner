@@ -18,8 +18,11 @@ object FilterLists {
     val sources = mapOf(
         "stevenblack.txt" to "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
         "adguard.txt" to "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+        // Aggressive extras: Hagezi Pro++ (ads, trackers, telemetry) and Peter Lowe's ad servers.
+        "hagezi_pro_plus.txt" to "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/pro.plus.txt",
+        "peterlowe.txt" to "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext",
     )
-    private const val MAX_BYTES = 12L shl 20
+    private const val MAX_BYTES = 20L shl 20
 
     private fun dir(ctx: Context) = File(ctx.filesDir, "filters").apply { mkdirs() }
 
@@ -41,7 +44,7 @@ object FilterLists {
         return ok
     }
 
-    fun hasLists(ctx: Context): Boolean = dir(ctx).listFiles()?.any { it.length() > 1000 } == true
+    fun hasLists(ctx: Context): Boolean = sources.keys.all { File(dir(ctx), it).length() > 1000 }
 
     fun count(ctx: Context): Int = DomainTrie.fromList(load(ctx)).size
 

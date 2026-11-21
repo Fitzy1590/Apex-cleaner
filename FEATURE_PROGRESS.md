@@ -118,3 +118,6 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ads still showing in Chrome, second fix (2026-11-21)
 - [x] Cause: Chrome has home-screen widgets, so the "protected apps" check kept it out of the shield even after the first fix. Browsers are now never auto-protected (only if you whitelist one yourself).
 - [x] The big ad lists now download by themselves the first time the shield starts, instead of waiting for charging + idle + Wi-Fi (before, only a tiny starter list was active). Not build-checked: no Android tools on this cloud machine.
+
+## More aggressive ad lists (2026-11-21)
+- [x] Added Hagezi Pro++ and Peter Lowe lists beside StevenBlack and AdGuard. Lists download on first start (and again if a list is missing). Owner can Allow any wrongly blocked site from Network Logs. Not build-checked.
