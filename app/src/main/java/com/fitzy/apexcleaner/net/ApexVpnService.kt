@@ -44,6 +44,7 @@ class ApexVpnService : VpnService() {
     private val up = PaceGate()
     @Volatile private var flows: FlowTable? = null
     @Volatile private var priority: Set<String> = emptySet()
+    @Volatile private var visibleUids: Set<Int> = emptySet()
     private val tracker = ForegroundTracker()
     private var lastEvents = 0L
 
@@ -84,6 +85,13 @@ class ApexVpnService : VpnService() {
             override val down get() = this@ApexVpnService.down
             override val up get() = this@ApexVpnService.up
             override val pool get() = relayPool
+            override fun ownerUid(proto: Int, appIp: ByteArray, appPort: Int, serverIp: ByteArray, serverPort: Int): Int =
+                if (android.os.Build.VERSION.SDK_INT < 29) -1 else runCatching {
+                    val cm = getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                    cm.getConnectionOwnerUid(if (proto == 6) 6 else 17,
+                        java.net.InetSocketAddress(InetAddress.getByAddress(appIp), appPort), java.net.InetSocketAddress(InetAddress.getByAddress(serverIp), serverPort))
+                }.getOrDefault(-1)
+            override fun uidOnScreen(uid: Int) = uid >= 0 && uid in visibleUids
         }
         flows = FlowTable(host)
         priority = runCatching { StreamingApps.priorityApps(this) }.getOrDefault(emptySet())
@@ -93,7 +101,8 @@ class ApexVpnService : VpnService() {
             runCatching {
                 pollForeground()
                 val enabled = com.fitzy.apexcleaner.core.AppSettings.limiter(this)
-                val fg = tracker.current
+                val fg = tracker.visible.firstOrNull { it in priority || StreamingApps.looksLikeStreaming(it) } ?: tracker.current
+                visibleUids = tracker.visible.mapNotNull { runCatching { packageManager.getPackageUid(it, 0) }.getOrNull() }.toSet()
                 val isPri = { p: String -> p in priority || StreamingApps.looksLikeStreaming(p) }
                 down.setRate(LimiterPolicy.downRate(enabled, fg, isPri)); up.setRate(LimiterPolicy.upRate(enabled, fg, isPri))
                 ShieldStats.limiting.value = down.rate > 0

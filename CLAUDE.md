@@ -33,4 +33,5 @@ Android system optimizer: safe storage cleaner, quiet background tuner, no-kill 
 5. Charging: only pause this app's own work; never claim it can cut charger power.
 6. TV: focus must scale >= 1.03x or show >= 2dp accent border; list containers use `focusRestorer()`.
 7. Network: never drop packets (pace by suspending); banking, push, clock, system, streaming/media/game and whitelisted apps always bypass the limiter. Owner approved (2026-11-21): with Streaming Priority on, the tunnel carries ALL traffic of ordinary apps only; priority apps stay outside it.
+   The app on screen is never slowed, even in split-screen (owner rule, 2026-11-21).
    Web browsers (Chrome, Samsung Internet, Firefox, etc.) count as ordinary apps even when built in, so ads on web pages are filtered (added 2026-11-21; owner to confirm). With it off, the tunnel carries DNS only.

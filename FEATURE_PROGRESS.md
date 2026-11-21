@@ -101,3 +101,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Cause: Chrome and Samsung Internet are built-in apps, so the shield skipped them (log showed no Chrome lookups). Browsers now join the shield like ordinary apps (tests written, not yet build-checked: no Android tools on this cloud machine)
 - [ ] Owner to confirm: rule 7 now counts browsers as ordinary apps (they are slowed only while a streaming app is on screen)
 - [ ] Known limit: ads served from the same name as the page itself (e.g. Facebook feed ads) cannot be blocked by name
+
+## Never slow the app on screen (2026-11-21, build passing)
+- [x] Any app you are looking at, including both apps in split-screen, is never slowed, even if a video app is also on screen
+- [ ] Android 9 phones (below Android 10) cannot tell which app owns a connection, so the old behaviour applies there

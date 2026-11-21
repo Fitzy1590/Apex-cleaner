@@ -17,6 +17,16 @@ interface RelayHost {
     val down: PaceGate
     val up: PaceGate
     val pool: Executor
+    /** Which app (uid) owns this connection, or -1 if unknown. */
+    fun ownerUid(proto: Int, appIp: ByteArray, appPort: Int, serverIp: ByteArray, serverPort: Int): Int = -1
+    /** True while this app is on screen. Its traffic is never slowed. */
+    fun uidOnScreen(uid: Int): Boolean = false
+}
+
+/** Waits for the pacing gate unless the connection belongs to an app the user is looking at. */
+internal fun RelayHost.pace(gate: PaceGate, uid: Int, bytes: Int) {
+    if (uidOnScreen(uid)) return
+    val w = gate.waitMs(bytes); if (w > 0) Thread.sleep(w)
 }
 
 /**
@@ -30,6 +40,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     @Volatile private var st = St.NEW
     @Volatile var lastUse = System.currentTimeMillis(); private set
     private var sock: Socket? = null
+    @Volatile private var uid = -1
     private var clientIsn = 0L
     private var expected = 0L        // next app byte we want
     private var ourIsn = (System.nanoTime() and 0x7fffffffL)
@@ -74,6 +85,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
 
     private fun connect() {
         try {
+            uid = host.ownerUid(6, appIp, appPort, serverIp, serverPort)
             val s = Socket()
             host.keepOutside(s)
             s.tcpNoDelay = true
@@ -97,7 +109,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
             while (st != St.CLOSED) {
                 val chunk = out.take()
                 if (chunk === FIN_MARK) { runCatching { s.shutdownOutput() }; break }
-                val w = host.up.waitMs(chunk.size); if (w > 0) Thread.sleep(w)
+                host.pace(host.up, uid, chunk.size)
                 os.write(chunk); os.flush()
                 synchronized(this) { queued -= chunk.size }
             }
@@ -116,7 +128,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 if (st == St.CLOSED) return
                 val n = ins.read(buf)
                 if (n < 0) break
-                val w = host.down.waitMs(n); if (w > 0) Thread.sleep(w)
+                host.pace(host.down, uid, n)
                 synchronized(this) {
                     if (st == St.CLOSED) return
                     send(ourSeq, expected, Packets.ACK or Packets.PSH, buf, n)
@@ -153,6 +165,7 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     @Volatile var lastUse = System.currentTimeMillis(); private set
     @Volatile var closed = false; private set
     private val sock = DatagramSocket()
+    @Volatile private var uid = -1
 
     init {
         host.keepOutside(sock)
@@ -168,12 +181,13 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
 
     private fun receive() {
         val buf = ByteArray(65535)
+        uid = host.ownerUid(17, appIp, appPort, serverIp, serverPort)
         try {
             while (!closed && System.currentTimeMillis() - lastUse < IDLE_MS) {
                 val pk = DatagramPacket(buf, buf.size)
                 try { sock.receive(pk) } catch (_: java.net.SocketTimeoutException) { continue }
                 lastUse = System.currentTimeMillis()
-                if (serverPort != 53) { val w = host.down.waitMs(pk.length); if (w > 0) Thread.sleep(w) }
+                if (serverPort != 53) host.pace(host.down, uid, pk.length)
                 host.toApp(Packets.buildUdp(serverIp, appIp, serverPort, appPort, buf, pk.length))
             }
         } catch (_: Exception) { } finally { close() }

@@ -44,6 +44,26 @@ class LimiterTest {
         t.onEvent("b", 2); assertNull(t.current)
     }
 
+    @Test fun trackerKnowsEveryAppOnScreenForSplitScreen() {
+        val t = ForegroundTracker()
+        t.onEvent("video", 1); t.onEvent("chrome", 1)
+        assertEquals(setOf("video", "chrome"), t.visible)
+        t.onEvent("video", 2); assertEquals(setOf("chrome"), t.visible)
+    }
+
+    @Test fun appOnScreenIsNeverPaced() {
+        val g = PaceGate(); g.setRate(1000); g.waitMs(10)
+        val host = object : RelayHost {
+            override fun toApp(packet: ByteArray) {}
+            override fun keepOutside(s: Socket) = true
+            override fun keepOutside(s: DatagramSocket) = true
+            override val down = g; override val up = g; override val pool = Executors.newSingleThreadExecutor()
+            override fun uidOnScreen(uid: Int) = uid == 7
+        }
+        val t0 = System.nanoTime(); host.pace(g, 7, 500_000)
+        assertTrue((System.nanoTime() - t0) / 1_000_000 < 200)
+    }
+
     @Test fun gateWaitsInsteadOfDropping() {
         val g = PaceGate(); assertEquals(0L, g.waitMs(1_000_000))
         g.setRate(1000); assertEquals(0L, g.waitMs(10)); assertTrue(g.waitMs(200_000) > 1000)

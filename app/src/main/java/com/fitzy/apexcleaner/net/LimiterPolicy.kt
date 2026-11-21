@@ -3,10 +3,13 @@ package com.fitzy.apexcleaner.net
 /** Works out which app is on screen from Android's usage events (resumed = on screen, paused = left). Pure. */
 class ForegroundTracker {
     var current: String? = null; private set
+    /** Every app on screen right now (split-screen shows two). */
+    @Volatile var visible: Set<String> = emptySet(); private set
 
     /** [kind] 1 = app came to the screen, 2 = app left the screen (Android's own event codes). */
     fun onEvent(pkg: String, kind: Int) {
-        if (kind == 1) current = pkg else if (kind == 2 && current == pkg) current = null
+        if (kind == 1) { current = pkg; visible = visible + pkg }
+        else if (kind == 2) { if (current == pkg) current = null; visible = visible - pkg }
     }
 }
 
