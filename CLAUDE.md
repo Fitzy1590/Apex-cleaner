@@ -32,3 +32,4 @@ Android privacy + system optimizer (merged AdShield-VPN + Apex Cleaner): local V
 4. Heavy work only via WorkManager with charging + idle constraints.
 5. Charging: only pause this app's own work; never claim it can cut charger power.
 6. TV: focus must scale >= 1.03x or show >= 2dp accent border; list containers use `focusRestorer()`.
+7. VPN: local DNS filtering only; protected apps bypass it; banking/streaming passthrough never blocked; no query data leaves the phone (rules: `.claude/rules/vpn-engine.md`).

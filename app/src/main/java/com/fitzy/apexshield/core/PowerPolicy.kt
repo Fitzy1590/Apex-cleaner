@@ -48,9 +48,19 @@ object PowerPolicy {
             .enqueueUniquePeriodicWork("light_check", ExistingPeriodicWorkPolicy.KEEP, req)
     }
 
-    /** Deep clean: only while charging and the phone is idle, so it never causes lag or drain. */
+    /** Milliseconds from now until the next 3:00 AM (local time). */
+    internal fun millisUntil3Am(now: java.util.Calendar = java.util.Calendar.getInstance()): Long {
+        val t = now.clone() as java.util.Calendar
+        t.set(java.util.Calendar.HOUR_OF_DAY, 3)
+        t.set(java.util.Calendar.MINUTE, 0); t.set(java.util.Calendar.SECOND, 0); t.set(java.util.Calendar.MILLISECOND, 0)
+        if (!t.after(now)) t.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        return t.timeInMillis - now.timeInMillis
+    }
+
+    /** Deep clean: nightly from 3 AM, only while charging and the phone is idle, so it never causes lag or drain. */
     fun scheduleDeepClean(ctx: Context) {
         val req = PeriodicWorkRequestBuilder<DeepCleanWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(millisUntil3Am(), TimeUnit.MILLISECONDS)
             .setConstraints(
                 Constraints.Builder()
                     .setRequiresCharging(true)
@@ -59,7 +69,7 @@ object PowerPolicy {
             )
             .build()
         WorkManager.getInstance(ctx)
-            .enqueueUniquePeriodicWork("deep_clean", ExistingPeriodicWorkPolicy.KEEP, req)
+            .enqueueUniquePeriodicWork("deep_clean", ExistingPeriodicWorkPolicy.UPDATE, req)
     }
 }
 

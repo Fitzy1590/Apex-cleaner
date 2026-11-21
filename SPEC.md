@@ -32,3 +32,9 @@ Owner votes: 1A, 2A, 3A, 4A, 5A+B, 6A, 7B, plus a default charge limit.
 ## Unified App: Apex Shield & Cleaner (com.fitzy.apexshield), proposed
 Merge of AdShield-VPN into Apex Cleaner. Status: APPROVED by owner 2026-11-21. Heat warning 40 C (Z Fold 6).
 - [x] **Option A [RECOMMENDED MERGED BUILD]**: Local VPN DNS ad firewall + safe storage cleaner + Shizuku cache breakdown + battery thermal monitor + dual phone and TV UI. One app, no duplicated background services.
+
+### Built so far (2026-11-21)
+- DNS Firewall (`vpn/`): local VPN routes only DNS lookups to the app; blocked names get a 0.0.0.0 answer. Secure DNS (Cloudflare, Google, Quad9, AdGuard) with fallback to the network's DNS. Query log with search and 1-tap block/allow. Protected apps bypass the VPN.
+- Starter lists: 112 block rules, 181 passthrough domains. Not yet: bigger downloadable list, 284-domain passthrough.
+- Nightly clean at 3 AM when charging and idle. Heat warning 40 C.
+- Limits: Android's own "Private DNS" setting can bypass the shield; Shizuku cache breakdown by app is not yet shown per app.

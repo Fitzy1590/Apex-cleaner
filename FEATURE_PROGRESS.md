@@ -57,5 +57,5 @@ Findings:
 - [x] C. Rename to com.fitzy.apexshield (build passes; SDK reinstalled at /root/android-sdk)
 - [x] D. VPN DNS engine: Trie, DNS packet filter, DoH (Cloudflare, Google, Quad9, AdGuard) with plain-DNS fallback, query log with search + 1-tap block, phone card. Starter lists: 112 block rules, 181 passthrough domains (brief asked for 284; not reached). Written + unit tested; NOT yet tried on a real phone.
 - [ ] D2. Download bigger block list (e.g. StevenBlack), add the missing passthrough domains, TV shield screen
-- [ ] E. 3 AM nightly clean
-- [ ] F. Unified phone + TV screens
+- [x] E. 3 AM nightly clean (starts at next 3 AM, then daily, charging + idle; tested)
+- [x] F. Shield on phone (card + logs) and TV (on/off + secure DNS cards, violet 3dp focus border, 1.05x)

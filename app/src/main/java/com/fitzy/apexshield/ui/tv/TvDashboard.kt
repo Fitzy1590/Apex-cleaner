@@ -40,10 +40,12 @@ import com.fitzy.apexshield.ui.mobile.helperExplain
 import com.fitzy.apexshield.core.formatBytes
 import com.fitzy.apexshield.ui.UiState
 import com.fitzy.apexshield.ui.theme.Accent
+import com.fitzy.apexshield.vpn.DohProvider
 
-/** Every focusable thing grows at least 5% AND gets a 3dp accent border (spec: >=1.03x or >=2dp). */
-private val FocusBorder = Border(BorderStroke(3.dp, Accent), shape = RoundedCornerShape(12.dp))
+/** Every focusable thing grows at least 5% AND gets a 3dp violet border (spec: >=1.03x or >=2dp). */
+private val FocusBorder = Border(BorderStroke(3.dp, FocusViolet), shape = RoundedCornerShape(12.dp))
 private const val FocusScale = 1.05f
+private val FocusViolet = androidx.compose.ui.graphics.Color(0xFF8B5CF6)
 
 @Composable
 fun TvDashboard(
@@ -55,6 +57,8 @@ fun TvDashboard(
     onDismiss: () -> Unit,
     onGrant: (NeededPermission) -> Unit,
     onHelper: () -> Unit,
+    onShield: (Boolean) -> Unit,
+    onShieldProvider: (DohProvider) -> Unit,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = Accent)) {
         Surface(Modifier.fillMaxSize()) {
@@ -87,6 +91,23 @@ fun TvDashboard(
                     item {
                         Card(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                             Text(m, Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
+                item {
+                    val sh = state.shield
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Card(onClick = { onShield(!sh.running) }, modifier = Modifier.width(520.dp), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                            Column(Modifier.padding(20.dp)) {
+                                Text("DNS Firewall: ${if (sh.running) "Active (press to turn off)" else "Off (press to turn on)"}", style = MaterialTheme.typography.titleMedium)
+                                Text("${sh.blockedTotal} ads & trackers blocked of ${sh.queriesTotal} lookups", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                        Card(onClick = { onShieldProvider(DohProvider.values()[(sh.provider.ordinal + 1) % DohProvider.values().size]) }, modifier = Modifier.width(360.dp), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
+                            Column(Modifier.padding(20.dp)) {
+                                Text("Secure DNS (press to change)", style = MaterialTheme.typography.titleMedium)
+                                Text(sh.provider.label, style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                 }

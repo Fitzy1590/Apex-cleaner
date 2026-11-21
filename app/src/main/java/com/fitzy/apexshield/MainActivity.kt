@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 if (ShieldSettings(this@MainActivity).enabled && VpnService.prepare(this@MainActivity) == null) ShieldVpnService.start(this@MainActivity)
             }
             if (tv) {
-                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper)
+                TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper, setShield, vm::setShieldProvider)
             } else {
                 MobileDashboard(
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
