@@ -1,0 +1,183 @@
+<title>Apex Shield Voting Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: three option cards in a column; each shows phone (and TV) mock screens beside what you get; pick one, answer bar sticks to the bottom. */
+:root{
+  --bg:#f5f6fa; --card:#ffffff; --fg:#161a2b; --muted:#5a6078; --line:#dcdfeb;
+  --accent:#6d28d9; --accent-soft:#efe8fc; --on-accent:#ffffff; --good:#12805c; --off:#8a90a6;
+  --dev:#0e1020; --dev-card:#1a1d33; --dev-fg:#eef0fa; --dev-muted:#8e94b3; --dev-ok:#3ddc97; --dev-violet:#7c3aed; --dev-warn:#ffb43b;
+  --f-head:"Space Grotesk",system-ui,sans-serif; --f-body:Inter,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c0e1a; --card:#151829; --fg:#eceefa; --muted:#9aa0bd; --line:#282c45;
+  --accent:#a78bfa; --accent-soft:#251d44; --on-accent:#14092e; --good:#3ddc97; --off:#6d7391; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c0e1a; --card:#151829; --fg:#eceefa; --muted:#9aa0bd; --line:#282c45;
+  --accent:#a78bfa; --accent-soft:#251d44; --on-accent:#14092e; --good:#3ddc97; --off:#6d7391; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);margin:0;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 120px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.1}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lead{color:var(--muted);max-width:65ch;margin:8px 0 0}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:18px;cursor:pointer;min-width:0}
+.opt:hover{border-color:var(--muted)}
+.opt:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.oh{display:flex;gap:12px;align-items:flex-start}
+.oh input{width:22px;height:22px;margin-top:3px;accent-color:var(--accent);flex:none}
+.oh h2{font-size:20px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--on-accent);border-radius:6px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+.oh p{margin:4px 0 0;color:var(--muted)}
+.body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;align-items:start}
+@media(max-width:780px){.body{grid-template-columns:minmax(0,1fr)}}
+.screens{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;justify-content:center;min-width:0}
+ul.get{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
+ul.get li{padding-left:22px;position:relative}
+ul.get li::before{content:"+";position:absolute;left:4px;color:var(--good);font-weight:700}
+ul.get li.no{color:var(--muted)}
+ul.get li.no::before{content:"–";color:var(--off)}
+.cap{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+/* mock phone + TV */
+.fig{display:flex;flex-direction:column;align-items:center}
+.phone{width:210px;background:var(--dev);border:6px solid #2a2e4a;border-radius:26px;padding:12px 10px;color:var(--dev-fg);font-size:11px;display:flex;flex-direction:column;gap:7px;min-height:330px}
+.tv{width:330px;max-width:100%;background:var(--dev);border:6px solid #2a2e4a;border-radius:10px;padding:10px;color:var(--dev-fg);font-size:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tv .t{grid-column:1/-1;font:700 12px var(--f-head)}
+.ttl{font:700 13px var(--f-head)}
+.row{background:var(--dev-card);border-radius:9px;padding:8px 9px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.row small{color:var(--dev-muted);font-size:10px;display:block}
+.row .v{font-weight:600;text-align:right}
+.ok{color:var(--dev-ok)} .warn{color:var(--dev-warn)}
+.btn{background:var(--dev-violet);color:#fff;border-radius:8px;padding:6px 8px;text-align:center;font-weight:600;min-height:28px;display:grid;place-items:center}
+.btns{display:flex;gap:5px}.btns .btn{flex:1;font-size:10px;background:var(--dev-card);color:var(--dev-fg)}
+.bar{height:6px;border-radius:3px;background:#2c3050;overflow:hidden}.bar i{display:block;height:100%;background:var(--dev-violet)}
+.tile{background:var(--dev-card);border-radius:8px;padding:8px;min-height:62px;display:flex;flex-direction:column;justify-content:space-between}
+.tile.f{outline:3px solid var(--dev-violet);transform:scale(1.05)}
+.tile b{font:700 14px var(--f-head)}
+.spark{display:flex;align-items:flex-end;gap:2px;height:24px}.spark i{flex:1;background:var(--dev-violet);border-radius:2px 2px 0 0}
+.answer{position:fixed;left:0;right:0;bottom:0;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--card);border-top:1px solid var(--line);z-index:5}
+.answer div{max-width:1000px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.answer output{font-weight:600}
+.answer button{font:600 15px var(--f-body);background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:0 18px;min-height:44px;cursor:pointer}
+.answer button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.msg{font-size:13px;color:var(--muted);flex:1 1 240px}
+</style>
+<div class="wrap">
+  <div>
+    <div class="eyebrow">Apex Shield &amp; Cleaner</div>
+    <h1>Pick the build</h1>
+    <p class="lead">Mock-ups of what the app would look like for each choice. Tap a card, then send your pick back in the chat.</p>
+  </div>
+
+  <label class="opt" for="vA">
+    <div class="oh"><input type="radio" name="v" id="vA" value="A"><div>
+      <h2>Option A: Complete Suite<span class="tag">Recommended</span></h2>
+      <p>Cleaning, battery and network control in one app, on phone and TV, no root needed.</p></div></div>
+    <div class="body">
+      <ul class="get">
+        <li>Speed pacing per app (slows hungry apps instead of cutting them off)</li>
+        <li>Ad, tracker and smart-TV spying blocker</li>
+        <li>Per-app cache breakdown: media, thumbnails, temp logs</li>
+        <li>3 AM clean only when charging, over 80%, screen off 30+ min</li>
+        <li>Alarms, clocks and 284 banking domains never touched</li>
+        <li>Heat alert at 42°C and unplug alarm at 80% or 100%</li>
+        <li>TV remote: bigger focus, violet border, click feedback</li>
+      </ul>
+      <div class="screens">
+        <div class="fig"><div class="phone">
+          <div class="ttl">Control Center</div>
+          <div class="row"><span>DNS Firewall<small>1,840 blocked today</small></span><span class="v ok">Active</span></div>
+          <div class="row"><span>Traffic Shaper<small>Smart pacing</small></span><span class="v ok">On</span></div>
+          <div class="row"><span>Battery<small>Fast charging</small></span><span class="v">37°C · 18W</span></div>
+          <div class="row"><span>Junk cache<small>Cleanable</small></span><span class="v">240 MB</span></div>
+          <div class="btn">1-Tap Clean</div>
+          <div class="row"><span>Alarms &amp; Clock</span><span class="v ok">Protected</span></div>
+          <div class="row"><span>Banking &amp; Pay</span><span class="v">284 bypass</span></div>
+          <div class="btns"><span class="btn">Network</span><span class="btn">Clean</span><span class="btn">Settings</span></div>
+        </div><div class="cap">Phone</div></div>
+        <div class="fig"><div class="tv">
+          <div class="t">Apex Shield · TV</div>
+          <div class="tile f"><span>Ad Blocker</span><b class="ok">Active</b></div>
+          <div class="tile"><span>Cleaner</span><b>240 MB</b></div>
+          <div class="tile"><span>Speed Pacing</span><b>On</b></div>
+        </div><div class="cap">TV: focused tile grows with a violet border</div></div>
+      </div>
+    </div>
+  </label>
+
+  <label class="opt" for="vB">
+    <div class="oh"><input type="radio" name="v" id="vB" value="B"><div>
+      <h2>Option B: Storage &amp; Battery only</h2>
+      <p>No network tunnel. Lightest on battery and nothing changes how apps connect.</p></div></div>
+    <div class="body">
+      <ul class="get">
+        <li>Per-app cache breakdown and 3 AM idle clean</li>
+        <li>Alarm and clock protection</li>
+        <li>Heat alert at 42°C and unplug alarms</li>
+        <li>TV remote improvements</li>
+        <li class="no">No speed pacing</li>
+        <li class="no">No ad or tracker blocking</li>
+        <li class="no">No banking passthrough list (not needed without a tunnel)</li>
+      </ul>
+      <div class="screens"><div class="fig"><div class="phone">
+        <div class="ttl">Storage &amp; Battery</div>
+        <div class="row"><span>Junk cache<small>Cleanable</small></span><span class="v">240 MB</span></div>
+        <div class="btn">1-Tap Clean</div>
+        <div class="row"><span>Biggest caches<small>Media · Thumbnails · Logs</small></span><span class="v">3 apps</span></div>
+        <div class="bar"><i style="width:62%"></i></div>
+        <div class="row"><span>Battery<small>Fast charging</small></span><span class="v">37°C · 18W</span></div>
+        <div class="row"><span>Unplug alarm</span><span class="v">80%</span></div>
+        <div class="row"><span>Night clean</span><span class="v">3:00 AM</span></div>
+        <div class="row"><span>Alarms &amp; Clock</span><span class="v ok">Protected</span></div>
+      </div><div class="cap">Phone</div></div></div>
+    </div>
+  </label>
+
+  <label class="opt" for="vC">
+    <div class="oh"><input type="radio" name="v" id="vC" value="C"><div>
+      <h2>Option C: Network engine only</h2>
+      <p>Speed pacing and the ad blocker. The cleaner and charging screens stay as they are today.</p></div></div>
+    <div class="body">
+      <ul class="get">
+        <li>Per-app upload and download limits with smooth slowing</li>
+        <li>Wi-Fi vs mobile data, charging and foreground rules</li>
+        <li>Ad, tracker and TV telemetry blocker with encrypted DNS</li>
+        <li>284 banking domains and chosen apps bypass the tunnel</li>
+        <li class="no">No new cache breakdown or 3 AM job</li>
+        <li class="no">No heat 42°C update or TV remote upgrade</li>
+      </ul>
+      <div class="screens"><div class="fig"><div class="phone">
+        <div class="ttl">Network</div>
+        <div class="row"><span>DNS Firewall<small>1,840 blocked</small></span><span class="v ok">Active</span></div>
+        <div class="spark"><i style="height:40%"></i><i style="height:65%"></i><i style="height:30%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:95%"></i><i style="height:45%"></i></div>
+        <div class="row"><span>Video app<small>Background cap</small></span><span class="v">2 Mbps</span></div>
+        <div class="row"><span>Game<small>Never slowed</small></span><span class="v ok">Free</span></div>
+        <div class="row"><span>Banking apps<small>Bypass tunnel</small></span><span class="v">284</span></div>
+        <div class="row"><span>Wi-Fi / Mobile<small>Different rules</small></span><span class="v">Set</span></div>
+        <div class="btns"><span class="btn">Logs</span><span class="btn">Rules</span></div>
+      </div><div class="cap">Phone</div></div></div>
+    </div>
+  </label>
+</div>
+<div class="answer"><div>
+  <output id="out">No pick yet</output>
+  <span class="msg" id="msg">Your pick is remembered on this device. Tell me the letter in the chat to lock it in.</span>
+  <button type="button" id="copy">Copy my pick</button>
+</div></div>
+<script>
+(function(){
+  var out=document.getElementById('out'),msg=document.getElementById('msg'),radios=document.querySelectorAll('input[name=v]');
+  function show(v){out.textContent=v?'Your pick: Option '+v:'No pick yet';}
+  try{var s=localStorage.getItem('apex-vote');if(s){radios.forEach(function(r){r.checked=r.value===s});show(s);}}catch(e){}
+  radios.forEach(function(r){r.addEventListener('change',function(){show(r.value);try{localStorage.setItem('apex-vote',r.value)}catch(e){}})});
+  document.getElementById('copy').addEventListener('click',function(){
+    var c=document.querySelector('input[name=v]:checked');
+    if(!c){msg.textContent='Choose a card first.';return;}
+    var t='I vote Option '+c.value;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){msg.textContent='Copied. Paste it into the chat.'},function(){msg.textContent='Type this in the chat: '+t});
+  });
+})();
+</script>
