@@ -73,8 +73,12 @@ class ProtectedApps(private val context: Context, private val store: WhitelistSt
             .forEach { out += it.activityInfo.packageName }
         Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
             ?.split(':')?.mapNotNull { android.content.ComponentName.unflattenFromString(it)?.packageName }?.let { out += it }
+        // USE_EXACT_ALARM is only given to real alarm/calendar apps. SCHEDULE_EXACT_ALARM is pre-granted to almost any app
+        // (news, sport, fantasy, shopping...), so it only counts when the app also looks like an alarm or clock app.
         runCatching {
-            pm.getPackagesHoldingPermissions(arrayOf("android.permission.SCHEDULE_EXACT_ALARM", "android.permission.USE_EXACT_ALARM"), 0)
+            pm.getPackagesHoldingPermissions(arrayOf("android.permission.USE_EXACT_ALARM"), 0).forEach { out += it.packageName }
+            pm.getPackagesHoldingPermissions(arrayOf("android.permission.SCHEDULE_EXACT_ALARM"), 0)
+                .filter { looksLikeAlarmApp(it.packageName) || looksLikeAlarmApp(runCatching { it.applicationInfo?.loadLabel(pm)?.toString() }.getOrNull().orEmpty()) }
                 .forEach { out += it.packageName }
         }
         out += store.all() + ALWAYS_PROTECTED
@@ -84,6 +88,12 @@ class ProtectedApps(private val context: Context, private val store: WhitelistSt
     fun isProtected(pkg: String): Boolean = pkg in store.all() || pkg in automatic()
 
     companion object {
+        /** Pure name check: does this package name or app label belong to an alarm, clock or timer app? */
+        fun looksLikeAlarmApp(nameOrLabel: String): Boolean {
+            val s = nameOrLabel.lowercase()
+            return listOf("alarm", "clock", "timer", "wakeup", "wake up", "sleep as android").any { it in s }
+        }
+
         /** Clock, system UI and Google push apps are never throttled or interrupted. */
         val ALWAYS_PROTECTED = setOf(
             "com.google.android.deskclock", "com.sec.android.app.clockpackage",

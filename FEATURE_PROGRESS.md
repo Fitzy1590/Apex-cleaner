@@ -132,3 +132,11 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Full build check (2026-11-21, build passing)
 - [x] Compile, lint, unit tests and the app file all pass with Android tools present. This covers everything marked "not build-checked" above (TV tabs, browser shield fixes, streaming/game ad filtering, installer fix).
 - [ ] Real-device test on a TV
+
+## Ads still showing in Yahoo Fantasy, deeper fix (2026-11-21)
+- [x] Cause 1: any app holding the "exact alarm" permission (Android hands it to almost every app, Yahoo Fantasy included) was kept outside the shield as an "alarm app". Now only real alarm and clock apps stay outside.
+- [x] Cause 2: ad servers hiding behind harmless names (alias tricks) slipped through. Answers that point to a blocked name are now blocked too (banking, push and your Allow choices still win).
+- [x] Cause 3: apps that ask a public DNS server directly (like 8.8.8.8) skipped the filter. Those lookups are now filtered too.
+- [x] Cause 4: if the big lists could not download at first start, only the tiny starter list worked. It now retries every 2 minutes (missing lists only) and the starter list gained the Yahoo and AOL ad servers and more ad exchanges.
+- [ ] Not build-checked (no Android tools on this cloud machine); tests added for aliases, alarm names and Yahoo servers.
+- [ ] Owner to check: Android "Private DNS" set to a provider name skips any ad blocker; turn it off or to Automatic. An empty grey box can remain where an ad was blocked: that space belongs to the app.

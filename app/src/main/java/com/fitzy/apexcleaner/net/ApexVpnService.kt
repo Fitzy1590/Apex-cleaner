@@ -77,8 +77,13 @@ class ApexVpnService : VpnService() {
         ShieldRules.apply(this, engine); ShieldRules.live = engine
         if (full) startLimiter()
         // First run: fetch the big ad lists now instead of waiting for a charging, idle, Wi-Fi window.
+        // If the phone has no internet yet (e.g. shield started at boot), keep trying every 2 minutes, a few times.
         if (!FilterLists.hasLists(this)) Thread({
-            runCatching { if (FilterLists.update(this) > 0) ShieldRules.reloadLists(this) }
+            var tries = 0
+            while (running && !FilterLists.hasLists(this) && tries++ < 8) {
+                runCatching { if (FilterLists.update(this, onlyMissing = true) > 0) ShieldRules.reloadLists(this) }
+                if (!FilterLists.hasLists(this)) runCatching { Thread.sleep(120_000) }
+            }
         }, "apex-lists").start()
         Thread({ loop(engine, full) }, "apex-dns").start()
     }
@@ -142,7 +147,8 @@ class ApexVpnService : VpnService() {
                 if (n <= 0) continue
                 val pkt = buf.copyOf(n)
                 val h = if (full) Packets.header(pkt) else null
-                val isDns = h != null && h.proto == Packets.UDP && n >= h.ihl + 4 && Packets.u16(pkt, h.ihl + 2) == 53 && h.dst.contentEquals(FAKE_DNS_BYTES)
+                // Any plain DNS question is filtered, even from apps that ignore the phone's DNS and ask 8.8.8.8 or 1.1.1.1 directly.
+                val isDns = h != null && h.proto == Packets.UDP && n >= h.ihl + 4 && Packets.u16(pkt, h.ihl + 2) == 53
                 if (h == null || isDns) pool.execute { handle(pkt, engine, output) } else flows?.onPacket(pkt, h)
             }
         } catch (_: Exception) { /* tunnel closed */ } finally { stop() }
@@ -155,13 +161,17 @@ class ApexVpnService : VpnService() {
         if (dport != 53 || p.size < ihl + 8) return
         val dns = p.copyOfRange(ihl + 8, p.size)
         val q = DnsPacket.parseQuestion(dns) ?: return
-        val verdict = engine.decide(q.name)
+        var verdict = engine.decide(q.name)
+        var answer: ByteArray? = if (verdict == FilterEngine.Verdict.BLOCK) null else resolve(dns)
+        // An ad server hiding behind a harmless-looking name (CNAME cloaking) is caught by its alias.
+        if (answer != null && verdict == FilterEngine.Verdict.ALLOW &&
+            engine.decideChain(q.name, DnsPacket.cnameTargets(answer)) == FilterEngine.Verdict.BLOCK) verdict = FilterEngine.Verdict.BLOCK
         ShieldRules.record(this, q.name, verdict == FilterEngine.Verdict.BLOCK)
-        val answer = when (verdict) {
-            FilterEngine.Verdict.BLOCK -> { ShieldStats.blocked.value++; ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40); DnsPacket.blockedResponse(dns, dns.size, q) }
-            else -> resolve(dns)
-        } ?: return
-        synchronized(out) { out.write(wrap(p, ihl, answer)) }
+        if (verdict == FilterEngine.Verdict.BLOCK) {
+            ShieldStats.blocked.value++; ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
+            answer = DnsPacket.blockedResponse(dns, dns.size, q)
+        }
+        synchronized(out) { out.write(wrap(p, ihl, answer ?: return)) }
     }
 
     /** Encrypted lookup first; plain UDP only if the encrypted one fails. */

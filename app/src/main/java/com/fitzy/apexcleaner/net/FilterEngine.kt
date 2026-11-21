@@ -16,6 +16,16 @@ class FilterEngine(@Volatile var blocks: DomainTrie, private val safe: DomainTri
         else -> Verdict.ALLOW
     }
 
+    /**
+     * Like [decide], but also looks at the alias names the answer pointed to. An ad network hiding behind a harmless-looking
+     * name is blocked; banking/push names and names you allowed yourself are never touched.
+     */
+    fun decideChain(domain: String, aliases: List<String>): Verdict {
+        val first = decide(domain)
+        if (first != Verdict.ALLOW || userAllow.matches(domain)) return first
+        return if (aliases.any { decide(it) == Verdict.BLOCK }) Verdict.BLOCK else Verdict.ALLOW
+    }
+
     companion object {
         /** Starter list plus any downloaded lists. */
         fun buildBlocks(extra: Sequence<String>): DomainTrie = DomainTrie.fromList(extra).also { t -> SafeLists.starterBlocks.forEach(t::add) }

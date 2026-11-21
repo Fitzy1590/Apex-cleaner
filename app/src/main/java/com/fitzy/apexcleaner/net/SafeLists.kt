@@ -65,7 +65,12 @@ adsrvr.org adnxs.com scorecardresearch.com taboola.com outbrain.com criteo.com c
 amazon-adsystem.com advertising.com rubiconproject.com pubmatic.com openx.net casalemedia.com
 unityads.unity3d.com applovin.com ads.mopub.com mopub.com inmobi.com chartboost.com vungle.com ironsrc.com
 ads.tiktok.com analytics.tiktok.com ads.twitter.com analytics.twitter.com ads.linkedin.com
-ads.yahoo.com adtechus.com 2mdn.net serving-sys.com quantserve.com hotjar.com mixpanel.com
+ads.yahoo.com adserver.yahoo.com gemini.yahoo.com beap.gemini.yahoo.com beap-bc.yahoo.com ybp.yahoo.com
+analytics.yahoo.com ads.yap.yahoo.com adtech.com adsonar.com ads.aol.com
+smaato.net smaato.com adcolony.com pangleglobal.com bidswitch.net smartadserver.com 3lift.com sharethrough.com
+indexww.com lijit.com sovrn.com media.net teads.tv 33across.com contextweb.com yieldmo.com gumgum.com triplelift.com
+adsafeprotected.com doubleverify.com bidr.io rlcdn.com krxd.net bluekai.com demdex.net everesttech.net agkn.com tapad.com
+adtechus.com 2mdn.net serving-sys.com quantserve.com hotjar.com mixpanel.com
 branch.io app.adjust.com adjust.com appsflyer.com kochava.com flurry.com crashlytics.com
 samsungacr.com samsungads.com ad.samsungads.com log-config.samsungacr.com
 lgsmartad.com ad.lgsmartad.com lgtvsdp.com tvinteractive.tv

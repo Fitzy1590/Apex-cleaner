@@ -31,9 +31,10 @@ object FilterLists {
         dir(ctx).listFiles()?.asSequence()?.flatMap { it.useLines { l -> l.toList() }.asSequence() } ?: emptySequence()
 
     /** Downloads each list to a temp file, then swaps it in. A failed download keeps the old list. Returns lists updated. */
-    fun update(ctx: Context): Int {
+    fun update(ctx: Context, onlyMissing: Boolean = false): Int {
         var ok = 0
         for ((name, url) in sources) runCatching {
+            if (onlyMissing && File(dir(ctx), name).length() > 1000) return@runCatching
             val c = URL(url).openConnection() as HttpsURLConnection
             c.connectTimeout = 10_000; c.readTimeout = 20_000
             if (c.responseCode != 200) return@runCatching

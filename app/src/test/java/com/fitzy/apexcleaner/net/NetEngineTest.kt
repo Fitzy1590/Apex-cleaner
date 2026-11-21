@@ -90,4 +90,38 @@ class NetEngineTest {
         assertEquals(200_000L, NetPolicy.capFor(caps, true, AppState.BACKGROUND, Link.WIFI, true, false, false))
         assertEquals(0L, NetPolicy.capFor(caps, false, AppState.FOREGROUND, Link.WIFI, false, false, false))
     }
+
+    private fun name(vararg labels: String) = labels.flatMap { l -> listOf(l.length.toByte()) + l.map { it.code.toByte() } }.toByteArray() + byteArrayOf(0)
+
+    /** A reply to "www.news.test A" that answers with CNAME ads.tracker.test, then an address. */
+    private fun cloakedReply(): ByteArray {
+        val q = name("www", "news", "test") + byteArrayOf(0, 1, 0, 1)
+        val cname = name("ads", "tracker", "test")
+        val head = byteArrayOf(0x12, 0x34, 0x81.toByte(), 0x80.toByte(), 0, 1, 0, 2, 0, 0, 0, 0)
+        val a1 = byteArrayOf(0xC0.toByte(), 12, 0, 5, 0, 1, 0, 0, 0, 60, 0, cname.size.toByte()) + cname
+        val a2 = byteArrayOf(0xC0.toByte(), 12, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4, 1, 2, 3, 4)
+        return head + q + a1 + a2
+    }
+
+    @Test fun findsAliasNamesInAnAnswer() {
+        assertEquals(listOf("ads.tracker.test"), DnsPacket.cnameTargets(cloakedReply()))
+        assertTrue(DnsPacket.cnameTargets(ByteArray(5)).isEmpty())
+        assertTrue(DnsPacket.cnameTargets(cloakedReply().copyOf(30)).size <= 1) // cut-off answers never crash
+    }
+
+    @Test fun aliasOfAnAdNetworkIsBlockedButBankingAndYourAllowStay() {
+        val e = FilterEngine.withDefaults(sequenceOf("tracker.test"))
+        assertEquals(FilterEngine.Verdict.BLOCK, e.decideChain("www.news.test", listOf("ads.tracker.test")))
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decideChain("www.news.test", listOf("cdn.fine.test")))
+        assertEquals(FilterEngine.Verdict.SAFE_PASSTHROUGH, e.decideChain("secure.chase.com", listOf("ads.tracker.test")))
+        e.userAllow = DomainTrie().apply { add("www.news.test") }
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decideChain("www.news.test", listOf("ads.tracker.test")))
+    }
+
+    @Test fun yahooAdServersAreInTheStarterList() {
+        val e = FilterEngine.withDefaults()
+        assertEquals(FilterEngine.Verdict.BLOCK, e.decide("beap.gemini.yahoo.com"))
+        assertEquals(FilterEngine.Verdict.BLOCK, e.decide("adserver.yahoo.com"))
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decide("sports.yahoo.com"))
+    }
 }
