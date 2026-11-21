@@ -64,7 +64,7 @@ fun TvDashboard(
                 Modifier.fillMaxSize().padding(48.dp).focusRestorer(),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                item { Text("Apex Cleaner", style = MaterialTheme.typography.displaySmall) }
+                item { Text("Apex Shield & Cleaner", style = MaterialTheme.typography.displaySmall) }
                 items(state.missing) { p ->
                     Card(onClick = { onGrant(p) }, modifier = Modifier.fillMaxWidth(), scale = CardDefaults.scale(focusedScale = FocusScale), border = CardDefaults.border(focusedBorder = FocusBorder)) {
                         Column(Modifier.padding(20.dp)) {

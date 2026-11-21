@@ -43,6 +43,7 @@ import com.fitzy.apexshield.ui.theme.Accent
 import com.fitzy.apexshield.ui.theme.ApexTheme
 import com.fitzy.apexshield.ui.theme.Bad
 import com.fitzy.apexshield.ui.theme.Warn
+import com.fitzy.apexshield.vpn.DohProvider
 
 @Composable
 fun MobileDashboard(
@@ -58,6 +59,10 @@ fun MobileDashboard(
     onHelper: () -> Unit,
     onChargeLimit: (Int) -> Unit,
     onFastCharge: (Boolean) -> Unit,
+    onShield: (Boolean) -> Unit,
+    onShieldProvider: (DohProvider) -> Unit,
+    onToggleDomain: (String) -> Unit,
+    onClearLog: () -> Unit,
 ) {
     ApexTheme {
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -76,7 +81,7 @@ fun MobileDashboard(
                 Modifier.fillMaxSize().padding(pad).padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                item { Text("Apex Cleaner", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
+                item { Text("Apex Shield & Cleaner", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp)) }
                 state.message?.let { m ->
                     item {
                         Card(Modifier.fillMaxWidth()) {
@@ -102,6 +107,7 @@ fun MobileDashboard(
                         )
                     }
                 }
+                item { ShieldCard(state.shield, onShield, onShieldProvider, onToggleDomain, onClearLog) }
                 item { ChargingCard(state.charge, onChargeLimit, onFastCharge) }
                 item {
                     Button(onClick = onClean, enabled = !state.busy, modifier = Modifier.fillMaxWidth().height(56.dp)) {
@@ -120,7 +126,7 @@ fun MobileDashboard(
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("Why does it say 0 B?", style = MaterialTheme.typography.titleMedium)
-                                Text("Without file access, Apex Cleaner can only check its own tiny cache. Turn on deep clean to find leftover installers, thumbnails, logs and empty folders. Your photos, documents, logins and settings are never touched.")
+                                Text("Without file access, Apex Shield & Cleaner can only check its own tiny cache. Turn on deep clean to find leftover installers, thumbnails, logs and empty folders. Your photos, documents, logins and settings are never touched.")
                                 Button(onClick = onGrantFiles, modifier = Modifier.fillMaxWidth()) { Text("Turn on deep clean") }
                             }
                         }
@@ -188,9 +194,9 @@ fun Gauge(label: String, percent: Int) {
 }
 
 internal fun helperExplain(h: HelperState) = when (h) {
-    HelperState.NotInstalled -> "Android 13 hides other apps' cache folders from normal apps. The free Shizuku helper app lets Apex Cleaner clear them safely, like SD Maid does on a rooted phone. It only ever removes cache files, never logins, settings or your photos."
+    HelperState.NotInstalled -> "Android 13 hides other apps' cache folders from normal apps. The free Shizuku helper app lets Apex Shield & Cleaner clear them safely, like SD Maid does on a rooted phone. It only ever removes cache files, never logins, settings or your photos."
     HelperState.NotRunning -> "Shizuku is installed but not started. Open it and tap Start, then come back here."
-    HelperState.NeedsPermission -> "Shizuku is running. Tap below to let Apex Cleaner use it for deeper cache cleaning."
+    HelperState.NeedsPermission -> "Shizuku is running. Tap below to let Apex Shield & Cleaner use it for deeper cache cleaning."
     HelperState.Ready -> "Deeper clean is on. Safe Clean now also clears other apps' cache folders."
 }
 

@@ -5,6 +5,7 @@ import android.app.UiModeManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -25,6 +26,8 @@ import com.fitzy.apexshield.core.TunerService
 import com.fitzy.apexshield.ui.MainViewModel
 import com.fitzy.apexshield.ui.mobile.MobileDashboard
 import com.fitzy.apexshield.ui.tv.TvDashboard
+import com.fitzy.apexshield.vpn.ShieldSettings
+import com.fitzy.apexshield.vpn.ShieldVpnService
 import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
@@ -49,6 +52,13 @@ class MainActivity : ComponentActivity() {
             val notifPermission = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission(),
             ) { TunerService.start(this); vm.refresh() }
+            val vpnConsent = rememberLauncherForActivityResult(
+                ActivityResultContracts.StartActivityForResult(),
+            ) { if (it.resultCode == RESULT_OK) ShieldVpnService.start(this) }
+            val setShield: (Boolean) -> Unit = { on ->
+                if (!on) ShieldVpnService.stop(this)
+                else VpnService.prepare(this)?.let { vpnConsent.launch(it) } ?: ShieldVpnService.start(this)
+            }
             val grant: (NeededPermission) -> Unit = { p ->
                 when (p) {
                     NeededPermission.Notifications ->
@@ -60,6 +70,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 vm.refresh()
                 TunerService.start(this@MainActivity)
+                if (ShieldSettings(this@MainActivity).enabled && VpnService.prepare(this@MainActivity) == null) ShieldVpnService.start(this@MainActivity)
             }
             if (tv) {
                 TvDashboard(state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected, vm::dismissMessage, grant, ::setUpHelper)
@@ -68,6 +79,7 @@ class MainActivity : ComponentActivity() {
                     state, vm::clean, vm::boost, vm::coolDown, vm::toggleProtected,
                     vm::dismissMessage, ::openAllFilesAccess, ::openStorageSettings, grant, ::setUpHelper,
                     vm::setChargeLimit, vm::setFastCharge,
+                    setShield, vm::setShieldProvider, vm::toggleDomain, vm::clearShieldLog,
                 )
             }
         }

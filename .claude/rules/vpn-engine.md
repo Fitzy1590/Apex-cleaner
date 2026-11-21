@@ -7,5 +7,5 @@ paths: ["app/src/main/java/**/vpn/**/*.kt"]
 - Whitelisted and passthrough-list apps bypass the VPN (`addDisallowedApplication`). Banking/streaming never filtered.
 - Block by answering NXDOMAIN/0.0.0.0 only; never drop or inspect non-DNS traffic.
 - DoH provider is the owner's choice; fall back to system DNS if DoH fails (no broken internet).
-- One foreground service shared with `TunerService`; no second background service.
+- `ShieldVpnService` is the only extra service (Android requires it to be its own). It runs only while the owner has the shield on; no other new background work.
 - Query log stays on device, capped in size, and clearable in one tap.

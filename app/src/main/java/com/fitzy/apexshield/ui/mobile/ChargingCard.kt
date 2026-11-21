@@ -40,7 +40,7 @@ fun ChargingCard(c: ChargeUi, onLimit: (Int) -> Unit, onFast: (Boolean) -> Unit)
                 if (c.fastActive) Text("Fast-Charge Active", color = Accent, style = MaterialTheme.typography.labelLarge)
             }
             if (!c.pluggedIn) {
-                Text("Not plugged in. Plug in a charger and Apex Cleaner switches on fast-charge care by itself.")
+                Text("Not plugged in. Plug in a charger and Apex Shield & Cleaner switches on fast-charge care by itself.")
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     WattDial(c.watts, scaleMax)
@@ -84,7 +84,7 @@ fun ChargingCard(c: ChargeUi, onLimit: (Int) -> Unit, onFast: (Boolean) -> Unit)
             }
             Text(
                 (if (c.limitPct >= 100) "You get an alert when the phone is fully charged." else "You get an alert at ${c.limitPct}% and again at 100%.") +
-                    " Most phones do not let apps cut the charger power, so Apex Cleaner tells you the moment to unplug and ends fast-charge care at 100%.",
+                    " Most phones do not let apps cut the charger power, so Apex Shield & Cleaner tells you the moment to unplug and ends fast-charge care at 100%.",
                 style = MaterialTheme.typography.bodySmall,
             )
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -92,7 +92,7 @@ fun ChargingCard(c: ChargeUi, onLimit: (Int) -> Unit, onFast: (Boolean) -> Unit)
                 Switch(checked = c.fastEnabled, onCheckedChange = onFast)
             }
             Text(
-                "While on, Apex Cleaner pauses only its own background work. Alarms, widgets, music and your protected apps are never touched.",
+                "While on, Apex Shield & Cleaner pauses only its own background work. Alarms, widgets, music and your protected apps are never touched.",
                 style = MaterialTheme.typography.bodySmall,
             )
         }

@@ -21,6 +21,9 @@ import com.fitzy.apexshield.power.ChargeEngine
 import com.fitzy.apexshield.power.ChargeMath
 import com.fitzy.apexshield.power.ChargeSettings
 import com.fitzy.apexshield.power.ChargeUi
+import com.fitzy.apexshield.vpn.DohProvider
+import com.fitzy.apexshield.vpn.ShieldEngine
+import com.fitzy.apexshield.vpn.ShieldUi
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +44,7 @@ data class UiState(
     val missing: List<NeededPermission> = emptyList(),
     val helper: HelperState = HelperState.NotInstalled,
     val charge: ChargeUi = ChargeUi(),
+    val shield: ShieldUi = ShieldUi(),
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -51,7 +55,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
+        ShieldEngine.load(ctx)
+        viewModelScope.launch { ShieldEngine.ui.collect { s -> _state.update { it.copy(shield = s) } } }
     }
+
+    fun setShieldProvider(p: DohProvider) = ShieldEngine.setProvider(ctx, p)
+    fun toggleDomain(domain: String) = ShieldEngine.toggleDomain(ctx, domain)
+    fun clearShieldLog() = ShieldEngine.clearLog()
 
     fun setChargeLimit(pct: Int) {
         ChargeSettings(ctx).limitPct = ChargeMath.clampLimit(pct)
