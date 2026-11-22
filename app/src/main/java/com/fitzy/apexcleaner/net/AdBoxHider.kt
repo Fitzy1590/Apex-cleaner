@@ -51,6 +51,10 @@ object AdBoxRules {
         return w >= screenW * 0.6 && h >= 40 && h <= screenH * 0.18 && bottom >= screenH * 0.9 && top >= screenH * 0.7
     }
 
+    /** Sofascore only: its in-feed promo banner is a wide, short web view anywhere on screen, with page background on both sides. */
+    fun sofascoreBanner(pkg: String, className: String?, w: Int, h: Int, screenW: Int, screenH: Int): Boolean =
+        pkg.contains("sofascore") && className?.contains("WebView") == true && w >= screenW * 0.5 && h >= 40 && h <= screenH * 0.18
+
     fun isEnabled(ctx: Context): Boolean {
         val me = android.content.ComponentName(ctx, AdBoxHider::class.java)
         val list = Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
@@ -136,12 +140,18 @@ class AdBoxHider : AccessibilityService() {
         if (AppSettings.hideAdNotices(this) && AdNoticeRules.isBrowser(pkg)) handleNotice(root, dm) else clearNotice()
         if (!AppSettings.hideAdBoxes(this)) return
         val found = mutableListOf<Rect>()
+        val outside = mutableSetOf<Rect>()
         var visited = 0
         fun walk(n: AccessibilityNodeInfo, parent: AccessibilityNodeInfo?) {
             if (visited++ > 600 || found.size >= 4) return
             if (n.isVisibleToUser && !n.isEditable) {
                 val br = Rect(); n.getBoundsInScreen(br)
                 if (AdBoxRules.bottomBanner(n.className?.toString(), br.left, br.top, br.right, br.bottom, dm.widthPixels, dm.heightPixels) && br.left >= 0 && br.bottom <= dm.heightPixels) { found += br; return }
+            }
+            if (n.isVisibleToUser && !n.isEditable) {
+                val br = Rect(); n.getBoundsInScreen(br)
+                if (AdBoxRules.sofascoreBanner(pkg, n.className?.toString(), br.width(), br.height(), dm.widthPixels, dm.heightPixels) &&
+                    br.left >= 10 && br.top >= 0 && br.right <= dm.widthPixels - 10 && br.bottom <= dm.heightPixels) { found += br; outside += br; return }
             }
             if (n.isVisibleToUser && !n.isEditable && AdBoxRules.looksLikeAd(n.viewIdResourceName, n.className?.toString(), n.contentDescription?.toString())) {
                 val r = Rect()
@@ -160,12 +170,12 @@ class AdBoxHider : AccessibilityService() {
         clear(keepKey = true, notices = false)
         if (found.isEmpty()) return
         if (android.os.Build.VERSION.SDK_INT < 30) return  // no way to match the app background, so never cover
-        shoot(found)
+        shoot(found, outside)
     }
 
     /** Match the app's own background: look at one pixel inside each box corner (kept in memory only, never stored). */
     @androidx.annotation.RequiresApi(30)
-    private fun shoot(found: List<Rect>) {
+    private fun shoot(found: List<Rect>, outside: Set<Rect> = emptySet()) {
         handler.postDelayed({
             runCatching {
                 takeScreenshot(android.view.Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
@@ -176,6 +186,14 @@ class AdBoxHider : AccessibilityService() {
                         }.getOrNull()
                         found.forEach { r ->
                             val b = shot ?: return@forEach
+                            if (r in outside) {
+                                // Picture banner: copy the page colour from just outside both sides; cover only if they match.
+                                val y = ((r.top + r.bottom) / 2).coerceIn(0, b.height - 1)
+                                val l = runCatching { b.getPixel((r.left - 8).coerceIn(0, b.width - 1), y) }.getOrNull()
+                                val rt = runCatching { b.getPixel((r.right + 8).coerceIn(0, b.width - 1), y) }.getOrNull()
+                                if (l != null && l == rt) show(r, l)
+                                return@forEach
+                            }
                             // Cover only if all four corners are the same flat colour; a photo or product tile is left alone.
                             val pts = listOf(r.left + 12 to r.bottom - 12, r.right - 12 to r.bottom - 12, r.right - 12 to r.top + 12, (r.left + r.right) / 2 to r.bottom - 12)
                             val cols = pts.mapNotNull { (x, y) -> runCatching { b.getPixel(x.coerceIn(0, b.width - 1), y.coerceIn(0, b.height - 1)) }.getOrNull() }

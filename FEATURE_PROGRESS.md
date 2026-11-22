@@ -205,3 +205,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Torneo banner at the bottom of the box-score screen (2026-11-22)
 - [x] The Meta banner is gone; a different ad ("Discover Torneo", marked Ad) took its place. Added more Google ad-network and ad-quality names (adtrafficquality.google, admob.com, ads.google.com, googleads.com, app-measurement.com) to the built-in list. Not build-checked (no Android tools here).
 - [ ] If it still shows: open Logs right after seeing it and tell me which names show as allowed; the ad may come from a name shared with the app itself.
+
+## Sofascore in-feed Torneo banner (2026-11-22, owner said yes)
+- [x] The optional "Hide leftover ad boxes" helper now also covers Sofascore's own wide, short promo banner anywhere in the feed, using the page colour from both sides. Only Sofascore; only when both side colours match; comes down while scrolling like the others. Test added. Not build-checked (no Android tools here).
+- [ ] Real-device check: switch on "Hide leftover ad boxes" and Accessibility helper, open Sofascore. If the banner is not a web view, it will not be found and I will need the Logs/layout detail.

@@ -115,6 +115,14 @@ class AdBoxAndReplyTest {
         assertTrue(!AdBoxRules.sensibleSize(10, 10, 1080, 2400))
     }
 
+    @Test fun sofascoreFeedBannerOnlyInSofascore() {
+        val wv = "android.webkit.WebView"
+        assertTrue(AdBoxRules.sofascoreBanner("com.sofascore.results", wv, 760, 120, 1080, 2400))
+        assertTrue(!AdBoxRules.sofascoreBanner("com.other.app", wv, 760, 120, 1080, 2400))
+        assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", "android.widget.TextView", 760, 120, 1080, 2400))
+        assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", wv, 1080, 2000, 1080, 2400))
+    }
+
     @Test fun nameErrorReplyKeepsQuestionAndSetsErrorCode() {
         val q = byteArrayOf(0x12, 0x34, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 'a'.code.toByte(), 'b'.code.toByte(), 'c'.code.toByte(), 0, 0, 1, 0, 1)
         val parsed = DnsPacket.parseQuestion(q)!!
