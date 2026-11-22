@@ -12,6 +12,14 @@ object AppSettings {
     fun encryptedDns(ctx: Context) = p(ctx).getBoolean("doh", true)
     fun setEncryptedDns(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("doh", on).apply()
 
+    /** Blocked names answered "this site does not exist" (most ad kits then report "no ad" and collapse the slot). On by default. */
+    fun nxdomainReply(ctx: Context) = p(ctx).getBoolean("nxdomain", true)
+    fun setNxdomainReply(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("nxdomain", on).apply()
+
+    /** Cover leftover empty ad boxes (needs the Accessibility service switched on). Off by default. */
+    fun hideAdBoxes(ctx: Context) = p(ctx).getBoolean("hide_ad_boxes", false)
+    fun setHideAdBoxes(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("hide_ad_boxes", on).apply()
+
     /** Streaming priority (speed limiter for other apps while a video, music or game app is on screen). On by default. */
     fun limiter(ctx: Context) = p(ctx).getBoolean("limiter", true)
     fun setLimiter(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("limiter", on).apply()

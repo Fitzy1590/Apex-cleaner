@@ -176,7 +176,7 @@ class ApexVpnService : VpnService() {
         val answer = if (block) {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
             ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
-            DnsPacket.blockedResponse(dns, dns.size, q)
+            if (com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(this)) DnsPacket.nxdomainResponse(dns, q) else DnsPacket.blockedResponse(dns, dns.size, q)
         } else resolve(dns)
         answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }

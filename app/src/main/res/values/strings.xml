@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Apex Cleaner</string>
+    <string name="ad_box_hider_description">Covers empty ad boxes left behind by blocked ads with a plain panel. It only looks at the screen for boxes labelled as ads, never reads or stores what you type or see, and skips banking and protected apps.</string>
 </resources>

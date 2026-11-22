@@ -159,3 +159,9 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ads-blocked count dropped (2026-11-22)
 - [x] Logs screen now shows how many names the ad lists hold and how many lookups were seen, so a low count can be traced to 'lists not loaded' versus 'apps not asking'. Not build-checked.
 - [ ] Owner chose both ad-box options: tighten blocking (+ test reply style) and a 'Hide leftover boxes' switch (Accessibility). Not built yet.
+
+## Ad boxes: collapse and hide (2026-11-22, owner chose both)
+- [x] "Collapse blocked ads" (Settings, on by default): blocked ad names are answered "this site does not exist" so most apps drop the slot instead of leaving an empty frame. Can be switched off if an app misbehaves.
+- [x] "Hide leftover ad boxes" (Settings, off by default, phone only): optional Accessibility helper that covers empty boxes labelled as ads with a plain dark/white panel. Reads only item labels and sizes, never text; skips banking, protected, whitelisted, launcher, keyboard and this app. Space stays, box is hidden.
+- [x] Unit tests added for the label matcher, size guard and the new reply. Not build-checked (no Android tools here).
+- [ ] Real-device check: turn on both switches, enable "Apex Ad Box Hider" in Android Accessibility, open Yahoo Fantasy.

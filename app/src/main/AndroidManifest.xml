@@ -61,6 +61,15 @@
         </service>
 
         <service
+            android:name=".net.AdBoxHider"
+            android:exported="false"
+            android:label="Apex Ad Box Hider"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/ad_box_hider" />
+        </service>
+
+        <service
             android:name=".core.ApexTileService"
             android:exported="true"
             android:icon="@drawable/ic_stat_apex"
