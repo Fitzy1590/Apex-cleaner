@@ -44,6 +44,13 @@ object AdBoxRules {
     fun sensibleSize(w: Int, h: Int, screenW: Int, screenH: Int): Boolean =
         w >= 48 && h >= 32 && h <= screenH * 0.45 && w <= screenW
 
+    /** A thin, wide web view docked at the very bottom of the screen is a banner ad frame (e.g. Sofascore). Real web pages are far taller. */
+    fun bottomBanner(className: String?, left: Int, top: Int, right: Int, bottom: Int, screenW: Int, screenH: Int): Boolean {
+        if (className?.contains("WebView") != true) return false
+        val w = right - left; val h = bottom - top
+        return w >= screenW * 0.6 && h >= 40 && h <= screenH * 0.18 && bottom >= screenH * 0.9 && top >= screenH * 0.7
+    }
+
     fun isEnabled(ctx: Context): Boolean {
         val me = android.content.ComponentName(ctx, AdBoxHider::class.java)
         val list = Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
@@ -99,6 +106,10 @@ class AdBoxHider : AccessibilityService() {
         var visited = 0
         fun walk(n: AccessibilityNodeInfo, parent: AccessibilityNodeInfo?) {
             if (visited++ > 600 || found.size >= 4) return
+            if (n.isVisibleToUser && !n.isEditable) {
+                val br = Rect(); n.getBoundsInScreen(br)
+                if (AdBoxRules.bottomBanner(n.className?.toString(), br.left, br.top, br.right, br.bottom, dm.widthPixels, dm.heightPixels) && br.left >= 0 && br.bottom <= dm.heightPixels) { found += br; return }
+            }
             if (n.isVisibleToUser && !n.isEditable && AdBoxRules.looksLikeAd(n.viewIdResourceName, n.className?.toString(), n.contentDescription?.toString())) {
                 val r = Rect()
                 // An "AdChoices" icon sits inside the ad box, so cover its parent box instead of the tiny icon.
@@ -133,7 +144,7 @@ class AdBoxHider : AccessibilityService() {
                         found.forEach { r ->
                             val b = shot ?: return@forEach
                             // Cover only if all four corners are the same flat colour; a photo or product tile is left alone.
-                            val pts = listOf(r.left + 6 to r.top + 6, r.right - 6 to r.top + 6, r.left + 6 to r.bottom - 6, r.right - 6 to r.bottom - 6)
+                            val pts = listOf(r.left + 12 to r.bottom - 12, r.right - 12 to r.bottom - 12, r.right - 12 to r.top + 12, (r.left + r.right) / 2 to r.bottom - 12)
                             val cols = pts.mapNotNull { (x, y) -> runCatching { b.getPixel(x.coerceIn(0, b.width - 1), y.coerceIn(0, b.height - 1)) }.getOrNull() }
                             if (cols.size == 4 && cols.all { it == cols[0] }) show(r, cols[0])
                         }

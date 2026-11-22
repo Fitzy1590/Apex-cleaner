@@ -106,6 +106,9 @@ class AdBoxAndReplyTest {
     }
 
     @Test fun adBoxSizeIsSensible() {
+        assertTrue(AdBoxRules.bottomBanner("android.webkit.WebView", 0, 2250, 1080, 2380, 1080, 2400))
+        assertTrue(!AdBoxRules.bottomBanner("android.webkit.WebView", 0, 0, 1080, 2300, 1080, 2400))
+        assertTrue(!AdBoxRules.bottomBanner("android.widget.TextView", 0, 2250, 1080, 2380, 1080, 2400))
         assertTrue(AdBoxRules.sensibleSize(1080, 250, 1080, 2400))
         assertTrue(!AdBoxRules.sensibleSize(1080, 2000, 1080, 2400))
         assertTrue(!AdBoxRules.sensibleSize(10, 10, 1080, 2400))

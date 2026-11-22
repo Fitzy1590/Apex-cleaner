@@ -173,3 +173,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Black and white bars still on Amazon (2026-11-22)
 - [x] Cause: Amazon marks real product tiles "Sponsored", and the box hider covered them with a flat panel. "Sponsored" no longer counts as an ad label, shopping apps (Amazon, eBay, Walmart, Temu etc.) are skipped, and a box is covered only if all four corners are one flat colour (photos and product tiles are left alone). If the app's colour can't be read, nothing is covered instead of using plain black or white. Build passing.
 - [ ] Real-device check on Amazon. If bars remain, the next step is removing the box hider altogether.
+
+## Empty banner left at the bottom of Sofascore (2026-11-22)
+- [x] The hider now also recognises a thin, wide web view docked at the very bottom of the screen (banner ad frame) and covers it with the app's own flat background colour. Tall web pages are never touched; it still skips banking, shopping, protected and whitelisted apps. Test added. Build passing.
+- [ ] Real-device check on Sofascore. If it covers real content anywhere, that app gets excluded.
