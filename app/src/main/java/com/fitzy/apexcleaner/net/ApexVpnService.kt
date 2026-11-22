@@ -19,6 +19,8 @@ import javax.net.ssl.HttpsURLConnection
 /** Live numbers for the screens. */
 object ShieldStats {
     val running = MutableStateFlow(false)
+    /** Set when the shield could not start, so the screen can say so instead of the switch silently staying off. */
+    val failure = MutableStateFlow<String?>(null)
     val blocked = MutableStateFlow(0)
     /** Newest blocked names first, for the network log. */
     val recent = MutableStateFlow<List<String>>(emptyList())
@@ -59,7 +61,7 @@ class ApexVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) { stop(); return START_NOT_STICKY }
-        runCatching { starter.execute { synchronized(life) { if (!running) runCatching { start() }.onFailure { stop() } } } }
+        runCatching { starter.execute { synchronized(life) { if (!running) runCatching { start() }.onFailure { ShieldStats.failure.value = FAIL_TEXT; stop() } } } }
         return START_STICKY
     }
 
@@ -77,7 +79,8 @@ class ApexVpnService : VpnService() {
             b.addRoute(FAKE_DNS, 32)
             bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
         }
-        tun = b.establish() ?: return
+        ShieldStats.failure.value = null
+        tun = b.establish() ?: run { ShieldStats.failure.value = FAIL_TEXT; stopSelf(); return }
         tunOut = FileOutputStream(tun!!.fileDescriptor)
         running = true; ShieldStats.running.value = true; ShieldStats.limiterOn.value = full
         ShieldRules.ensureLoaded(this)
@@ -231,6 +234,7 @@ class ApexVpnService : VpnService() {
     override fun onDestroy() { running = false; ShieldStats.running.value = false; pool.shutdownNow(); relayPool.shutdownNow(); timer.shutdownNow(); starter.shutdownNow(); super.onDestroy() }
 
     companion object {
+        const val FAIL_TEXT = "The ad shield could not start. Android may have switched its VPN permission to another app. Turn the shield on again and accept the permission."
         const val ACTION_STOP = "com.fitzy.apexcleaner.STOP_SHIELD"
         private const val LOCAL_ADDR = "10.111.222.1"
         private const val FAKE_DNS = "10.111.222.2"

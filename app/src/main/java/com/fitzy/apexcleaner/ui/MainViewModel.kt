@@ -92,6 +92,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiterOn.collect { r -> _state.update { it.copy(limiterOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiting.collect { r -> _state.update { it.copy(limiting = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
+        viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.failure.collect { f -> if (f != null) _state.update { it.copy(message = f) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.core.UpdateInstaller.status.collect { t -> _state.update { it.copy(updateStatus = t) } } }
         viewModelScope.launch { ChargeEngine.ui.collect { c -> _state.update { it.copy(charge = c) } } }
