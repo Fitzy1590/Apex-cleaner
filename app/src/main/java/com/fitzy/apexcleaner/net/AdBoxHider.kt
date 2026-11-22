@@ -93,6 +93,8 @@ class AdBoxHider : AccessibilityService() {
     private val covers = mutableListOf<View>()
     private val noticeCovers = mutableListOf<View>()
     private var lastClick = 0L
+    private var noticeTries = 0
+    private var noticeSince = 0L
     private var lastRun = 0L
     private var lastKey = ""
     private var lastPkg = ""
@@ -197,7 +199,7 @@ class AdBoxHider : AccessibilityService() {
             for (i in 0 until n.childCount) { val c = n.getChild(i) ?: continue; walk(c) }
         }
         walk(root)
-        val node = hit ?: return clearNotice()
+        val node = hit ?: run { noticeTries = 0; noticeSince = 0L; return clearNotice() }
         // Climb to the pop-up box, stopping before the full-screen dimmed layer or the page itself.
         var box = node
         var up = 0
@@ -210,14 +212,16 @@ class AdBoxHider : AccessibilityService() {
         val br = Rect(); box.getBoundsInScreen(br)
         if (br.width() <= 0 || br.height() <= 0) return
         val now = System.currentTimeMillis()
-        if (now - lastClick > 4000) {
+        if (noticeSince == 0L) noticeSince = now
+        // Try the close button first, retrying about once a second; the pop-up may still be sliding in.
+        if (noticeTries < 4 && now - lastClick > 900) {
             val close = findClose(box, br, (64 * dm.density).toInt())
-            if (close != null) {
-                lastClick = now
-                if (close.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
-            }
+            lastClick = now
+            noticeTries++
+            if (close != null && close.performAction(AccessibilityNodeInfo.ACTION_CLICK)) { clearNotice(); return }
         }
-        // No close button worked: cover the pop-up with black (never a full-screen or very tall box).
+        // Black panel only as a last resort: every close attempt failed and the pop-up has stayed for over 3 seconds.
+        if (noticeTries < 4 || now - noticeSince < 3000) return
         if (br.height() > dm.heightPixels * 0.8 || noticeCovers.isNotEmpty()) return
         val cover = Rect(br.left.coerceAtLeast(0), br.top.coerceAtLeast(0), br.right.coerceAtMost(dm.widthPixels), br.bottom.coerceAtMost(dm.heightPixels))
         show(cover, 0xFF000000.toInt(), noticeCovers)
