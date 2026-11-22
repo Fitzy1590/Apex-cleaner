@@ -187,8 +187,13 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] New Settings switch "Hide 'ads aren't displayed' notices" (off by default, phone only, web browsers only). Uses the same Accessibility helper as the leftover-box hider. When a pop-up like XDA's appears it taps the pop-up's close button; if it has none, or tapping fails, the pop-up is covered with a plain black panel. Only checks for a few warning phrases and keeps nothing; skips banking, shopping, protected and whitelisted apps. Tests added.
 - [ ] Real-device check on xda-developers.com in Chrome. Note: the page underneath may stay dimmed or locked if the site uses a lock-scroll trick; tell me and I will look at the next step.
 
-## Phase 1 re-vote (2026-11-22): AWAITING OWNER VOTE
+## Phase 1 re-vote (2026-11-22): VOTED 1 and 1
 - [x] Audit done: most of the brief is already built (see Phase 2 build above). Missing: Samsung time server + video-licence names on the skip list; compiled engine; real-device tests.
 - [x] Voting card written: VOTING_CARD.html (root) and .claude/VOTING_CARD.md
-- [ ] Q1: Option A (complete update) / Option B (storage only)
-- [ ] Q2: keep current engine / switch to compiled Rust engine
+- [x] Q1: Option A (complete update) / Option B (storage only)
+- [x] Q2: keep current engine / switch to compiled Rust engine
+
+## Clock and video-licence names skip the shield (2026-11-22)
+- [x] Samsung time server, other phone clock servers (Windows, Apple, Cloudflare) and video-licence servers (Widevine, PlayReady) now always skip the shield, so video playback and the phone clock are never disturbed. Test added. Not build-checked: no Android tools on this cloud machine.
+- [x] Engine decision: keeping the current engine. Next: measure battery and memory on a real device before tuning anything.
+- [ ] Real-device tests on phone and TV (shield, speed pacing, TV focus, Samsung clock, streaming playback)

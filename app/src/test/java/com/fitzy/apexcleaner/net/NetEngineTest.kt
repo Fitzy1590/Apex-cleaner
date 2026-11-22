@@ -8,6 +8,7 @@ import org.junit.Test
 
 class NetEngineTest {
     @Test fun bankingListHasAtLeast284Names() = assertTrue(SafeLists.bankingDomains.size >= 284)
+    @Test fun clockAndLicenceNamesAreEssential() = assertTrue(SafeLists.essentialDomains.containsAll(listOf("time.samsungcloudsolution.com", "license.widevine.com")))
 
     @Test fun bucketPacesInsteadOfDropping() {
         var t = 0L

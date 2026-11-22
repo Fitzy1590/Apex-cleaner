@@ -65,6 +65,8 @@ connectivitycheck.gstatic.com connectivitycheck.android.com clients3.google.com 
 time.android.com time.google.com ntp.org pool.ntp.org
 gstatic.com googleapis.com accounts.google.com
 push.apple.com apple.com
+time.samsungcloudsolution.com time.windows.com time.apple.com time.cloudflare.com
+widevine.com license.widevine.com playready.microsoft.com
 """
 
     /** Small built-in starter blocklist of well-known ad, tracker and smart-TV telemetry names. */
