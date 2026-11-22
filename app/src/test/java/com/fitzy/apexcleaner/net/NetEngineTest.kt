@@ -123,3 +123,25 @@ class AdBoxAndReplyTest {
         assertEquals(0x12, r[0].toInt()); assertEquals(q.size, r.size)
     }
 }
+
+class AdNoticeTest {
+    @Test fun recognisesAdBlockerNotices() {
+        assertTrue(AdNoticeRules.looksLikeNotice("We noticed that ads aren't being displayed."))
+        assertTrue(AdNoticeRules.looksLikeNotice("We noticed that ads aren\u2019t being displayed."))
+        assertTrue(AdNoticeRules.looksLikeNotice("How to Allow Ads on This Site"))
+        assertTrue(!AdNoticeRules.looksLikeNotice("Ads help keep content available for free"))
+        assertTrue(!AdNoticeRules.looksLikeNotice("x".repeat(300) + " using an ad blocker"))
+        assertTrue(!AdNoticeRules.looksLikeNotice(null))
+    }
+
+    @Test fun browsersAndCloseButtons() {
+        assertTrue(AdNoticeRules.isBrowser("com.android.chrome"))
+        assertTrue(!AdNoticeRules.isBrowser("com.yahoo.mobile.client.android.fantasyfootball"))
+        assertTrue(AdNoticeRules.looksLikeClose("Close", false, 300, 60, 0, 700, 170))
+        assertTrue(AdNoticeRules.looksLikeClose(null, true, 60, 60, 10, 700, 170))
+        assertTrue(!AdNoticeRules.looksLikeClose("How to Allow Ads on This Site", true, 600, 120, 500, 700, 170))
+        assertTrue(!AdNoticeRules.looksLikeClose(null, true, 60, 60, 600, 700, 170))
+        assertTrue(AdNoticeRules.fullScreen(1080, 2300, 1080, 2400))
+        assertTrue(!AdNoticeRules.fullScreen(1000, 900, 1080, 2400))
+    }
+}

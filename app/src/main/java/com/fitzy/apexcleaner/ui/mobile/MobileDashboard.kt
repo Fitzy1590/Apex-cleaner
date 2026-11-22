@@ -270,6 +270,16 @@ fun MobileDashboard(
                         }
                     }
                     item {
+                        val c = androidx.compose.ui.platform.LocalContext.current
+                        var hideN by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.hideAdNotices(c)) }
+                        SettingRow("Hide \"ads aren't displayed\" notices", "In web browsers, taps the close button on pop-ups that ask you to turn off your ad blocker (like the one on XDA). If a pop-up has no close button it is covered with a black panel. Uses the same Accessibility switch as above. It only checks for those few warning phrases, never stores or sends anything, and skips banking and protected apps.", hideN) {
+                            hideN = it; com.fitzy.apexcleaner.core.AppSettings.setHideAdNotices(c, it)
+                            if (it && !com.fitzy.apexcleaner.net.AdBoxHider.isEnabled(c)) runCatching {
+                                c.startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                            }
+                        }
+                    }
+                    item {
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("Heat warning at ${"%.0f".format(state.hotC)}°C", style = MaterialTheme.typography.titleMedium)

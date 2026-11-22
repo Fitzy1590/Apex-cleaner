@@ -20,6 +20,10 @@ object AppSettings {
     fun hideAdBoxes(ctx: Context) = p(ctx).getBoolean("hide_ad_boxes", false)
     fun setHideAdBoxes(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("hide_ad_boxes", on).apply()
 
+    /** Close or black out "we noticed ads aren't being displayed" notices in web browsers (needs the Accessibility service). Off by default. */
+    fun hideAdNotices(ctx: Context) = p(ctx).getBoolean("hide_ad_notices", false)
+    fun setHideAdNotices(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("hide_ad_notices", on).apply()
+
     /** Streaming priority (speed limiter for other apps while a video, music or game app is on screen). On by default. */
     fun limiter(ctx: Context) = p(ctx).getBoolean("limiter", true)
     fun setLimiter(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("limiter", on).apply()

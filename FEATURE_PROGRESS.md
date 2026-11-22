@@ -182,3 +182,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Cause: when Android refused to open the tunnel (VPN permission moved to another VPN app) or a quick off/on crossed, the shield failed silently and the switch just stayed off. Now it says why on screen ("could not start... accept the permission") and retries once by itself after 2.5 seconds. Build passing.
 - [x] Explained: Android only shows the VPN permission box when this app does not currently hold the VPN permission (first time, or another VPN/app took it). Otherwise it starts silently. That is Android's rule, not something the app can force.
 - [ ] Real-device check: switch on/off quickly several times; turn on another VPN then back.
+
+## Hide "ads aren't being displayed" notices (2026-11-22)
+- [x] New Settings switch "Hide 'ads aren't displayed' notices" (off by default, phone only, web browsers only). Uses the same Accessibility helper as the leftover-box hider. When a pop-up like XDA's appears it taps the pop-up's close button; if it has none, or tapping fails, the pop-up is covered with a plain black panel. Only checks for a few warning phrases and keeps nothing; skips banking, shopping, protected and whitelisted apps. Tests added.
+- [ ] Real-device check on xda-developers.com in Chrome. Note: the page underneath may stay dimmed or locked if the site uses a lock-scroll trick; tell me and I will look at the next step.

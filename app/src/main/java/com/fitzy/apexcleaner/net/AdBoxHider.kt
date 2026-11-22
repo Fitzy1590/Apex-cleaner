@@ -58,12 +58,41 @@ object AdBoxRules {
     }
 }
 
+/** Spots "turn off your ad blocker" pop-ups in web browsers. Pure, so it is unit-tested. Strict phrases and short text only, so an article that merely talks about ad blockers is left alone. */
+object AdNoticeRules {
+    private val PHRASES = listOf(
+        "ads aren't being displayed", "ads are not being displayed", "we noticed you're using an ad blocker", "we noticed you are using an ad blocker",
+        "please disable your ad blocker", "please turn off your ad blocker", "disable your ad blocker", "turn off your ad blocker",
+        "allow ads on this site", "ad blocker detected", "adblock detected", "ad blocker is on", "using an ad blocker", "whitelist our site",
+    )
+    private val BROWSERS = listOf("chrome", "browser", "firefox", "opera", "brave", "msedge", "edge", "duckduckgo", "vivaldi", "sbrowser")
+    private val CLOSE_LABELS = setOf("close", "dismiss", "x", "\u00d7", "\u2715", "\u2716", "close dialog", "close popup", "close pop-up", "close modal", "close message")
+
+    fun looksLikeNotice(text: String?): Boolean {
+        val t = text?.replace('\u2019', '\'')?.trim()?.lowercase() ?: return false
+        if (t.length < 12 || t.length > 200) return false
+        return PHRASES.any { it in t }
+    }
+
+    fun isBrowser(pkg: String) = BROWSERS.any { pkg.contains(it) }
+
+    fun fullScreen(w: Int, h: Int, screenW: Int, screenH: Int) = w >= screenW * 0.95 && h >= screenH * 0.85
+
+    /** A close control is labelled "close"/"x", or is a small clickable item in the top part of the pop-up (an icon-only X). */
+    fun looksLikeClose(label: String?, clickable: Boolean, w: Int, h: Int, topOffset: Int, boxH: Int, smallPx: Int): Boolean {
+        if (label?.trim()?.lowercase() in CLOSE_LABELS) return true
+        return clickable && w in 1..smallPx && h in 1..smallPx && topOffset <= boxH * 0.25
+    }
+}
+
 /**
  * Optional helper: covers empty ad boxes left on screen by blocked ads with a plain panel. It only reads item labels (ids,
  * class names, descriptions) and sizes, never text, and stores nothing. Banking, protected, whitelisted and system screens are skipped.
  */
 class AdBoxHider : AccessibilityService() {
     private val covers = mutableListOf<View>()
+    private val noticeCovers = mutableListOf<View>()
+    private var lastClick = 0L
     private var lastRun = 0L
     private var lastKey = ""
     private var lastPkg = ""
@@ -75,7 +104,7 @@ class AdBoxHider : AccessibilityService() {
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         e ?: return
         val pkg = e.packageName?.toString() ?: return
-        if (!AppSettings.hideAdBoxes(this) || skip(pkg)) { clear(); return }
+        if ((!AppSettings.hideAdBoxes(this) && !AppSettings.hideAdNotices(this)) || skip(pkg)) { clear(); return }
         if (pkg != lastPkg) { clear(); lastPkg = pkg }
         // While the page is moving a fixed cover would slide off its box and sit on real content, so take it down
         // at once and put it back only after scrolling has stopped.
@@ -102,6 +131,8 @@ class AdBoxHider : AccessibilityService() {
         val root = rootInActiveWindow ?: return clear()
         if (root.packageName?.toString() != pkg) return
         val dm = resources.displayMetrics
+        if (AppSettings.hideAdNotices(this) && AdNoticeRules.isBrowser(pkg)) handleNotice(root, dm) else clearNotice()
+        if (!AppSettings.hideAdBoxes(this)) return
         val found = mutableListOf<Rect>()
         var visited = 0
         fun walk(n: AccessibilityNodeInfo, parent: AccessibilityNodeInfo?) {
@@ -124,7 +155,7 @@ class AdBoxHider : AccessibilityService() {
         val key = found.joinToString("|") { it.flattenToString() }
         if (key == lastKey) return
         lastKey = key
-        clear(keepKey = true)
+        clear(keepKey = true, notices = false)
         if (found.isEmpty()) return
         if (android.os.Build.VERSION.SDK_INT < 30) return  // no way to match the app background, so never cover
         shoot(found)
@@ -156,18 +187,78 @@ class AdBoxHider : AccessibilityService() {
         }, 80)
     }
 
-    private fun show(r: Rect, sampled: Int?) {
+    /** Looks for an "ads aren't being displayed" pop-up. Only phrase matches are checked; no text is kept. */
+    private fun handleNotice(root: AccessibilityNodeInfo, dm: android.util.DisplayMetrics) {
+        var hit: AccessibilityNodeInfo? = null
+        var visited = 0
+        fun walk(n: AccessibilityNodeInfo) {
+            if (hit != null || visited++ > 2500) return
+            if (n.isVisibleToUser && !n.isEditable && (AdNoticeRules.looksLikeNotice(n.text?.toString()) || AdNoticeRules.looksLikeNotice(n.contentDescription?.toString()))) { hit = n; return }
+            for (i in 0 until n.childCount) { val c = n.getChild(i) ?: continue; walk(c) }
+        }
+        walk(root)
+        val node = hit ?: return clearNotice()
+        // Climb to the pop-up box, stopping before the full-screen dimmed layer or the page itself.
+        var box = node
+        var up = 0
+        while (up++ < 10) {
+            val p = box.parent ?: break
+            val pr = Rect(); p.getBoundsInScreen(pr)
+            if (AdNoticeRules.fullScreen(pr.width(), pr.height(), dm.widthPixels, dm.heightPixels)) break
+            box = p
+        }
+        val br = Rect(); box.getBoundsInScreen(br)
+        if (br.width() <= 0 || br.height() <= 0) return
+        val now = System.currentTimeMillis()
+        if (now - lastClick > 4000) {
+            val close = findClose(box, br, (64 * dm.density).toInt())
+            if (close != null) {
+                lastClick = now
+                if (close.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
+            }
+        }
+        // No close button worked: cover the pop-up with black (never a full-screen or very tall box).
+        if (br.height() > dm.heightPixels * 0.8 || noticeCovers.isNotEmpty()) return
+        val cover = Rect(br.left.coerceAtLeast(0), br.top.coerceAtLeast(0), br.right.coerceAtMost(dm.widthPixels), br.bottom.coerceAtMost(dm.heightPixels))
+        show(cover, 0xFF000000.toInt(), noticeCovers)
+    }
+
+    private fun findClose(box: AccessibilityNodeInfo, br: Rect, smallPx: Int): AccessibilityNodeInfo? {
+        var found: AccessibilityNodeInfo? = null
+        var visited = 0
+        fun walk(n: AccessibilityNodeInfo) {
+            if (found != null || visited++ > 300) return
+            if (n.isVisibleToUser) {
+                val r = Rect(); n.getBoundsInScreen(r)
+                val label = n.text?.toString() ?: n.contentDescription?.toString()
+                if (AdNoticeRules.looksLikeClose(label, n.isClickable, r.width(), r.height(), r.top - br.top, br.height(), smallPx)) { found = n; return }
+            }
+            for (i in 0 until n.childCount) { val c = n.getChild(i) ?: continue; walk(c) }
+        }
+        walk(box)
+        return found
+    }
+
+    private fun clearNotice() {
+        if (noticeCovers.isEmpty()) return
+        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        noticeCovers.forEach { runCatching { wm.removeView(it) } }
+        noticeCovers.clear()
+    }
+
+    private fun show(r: Rect, sampled: Int?, into: MutableList<View> = covers) {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val night = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         val v = View(this).apply { setBackgroundColor(sampled?.let { it or 0xFF000000.toInt() } ?: if (night) 0xFF101114.toInt() else 0xFFFFFFFF.toInt()) }
         val lp = WindowManager.LayoutParams(r.width(), r.height(), WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.OPAQUE).apply { gravity = Gravity.TOP or Gravity.START; x = r.left; y = r.top }
-        runCatching { wm.addView(v, lp); covers += v }
+        runCatching { wm.addView(v, lp); into += v }
     }
 
-    private fun clear(keepKey: Boolean = false) {
+    private fun clear(keepKey: Boolean = false, notices: Boolean = true) {
         if (!keepKey) lastKey = ""
+        if (notices) clearNotice()
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         covers.forEach { runCatching { wm.removeView(it) } }
         covers.clear()
