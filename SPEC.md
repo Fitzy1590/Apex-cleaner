@@ -43,3 +43,13 @@ Owner voted 1.
 
 ## TV finish build (2026-11-21): owner voted 1 (carry on, decide small things alone, ask only on critical changes)
 - [x] Banking list 284+ names; TV Logs tab. Open: per-app banking screen, real-device tests.
+
+## Phase 1 re-vote (2026-11-22): AWAITING VOTE
+Brief repeated the Apex Shield & Cleaner upgrade. Most is built; card covers the gaps. See VOTING_CARD.html and .claude/VOTING_CARD.md.
+Q1 update:
+- [ ] 1. Option A: complete update (gaps: Samsung time server + video-licence names on the skip list; real-device checks)
+- [ ] 2. Option B: storage and tuner only (removes network shield)
+Q2 engine under the shield (major architecture swap, needs a vote):
+- [ ] 1. Keep current engine, measure first
+- [ ] 2. Switch to compiled Rust engine
+Kept as is: existing Stop hook (the shorter one in the brief would hide failed builds).
