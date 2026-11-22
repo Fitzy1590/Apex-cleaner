@@ -201,3 +201,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ads served by Meta (2026-11-22)
 - [x] Added Meta's Audience Network ad names (an.facebook.com, audiencenetwork.com, pixel.facebook.com) to the built-in block list, so banners marked "Ads served by Meta" (seen in a sports box-score screen) are blocked. Facebook login and messaging names are left alone.
 - [ ] Not build-checked yet. Real-device check: open the same box-score screen. The banner should be gone or collapsed.
+
+## Torneo banner at the bottom of the box-score screen (2026-11-22)
+- [x] The Meta banner is gone; a different ad ("Discover Torneo", marked Ad) took its place. Added more Google ad-network and ad-quality names (adtrafficquality.google, admob.com, ads.google.com, googleads.com, app-measurement.com) to the built-in list. Not build-checked (no Android tools here).
+- [ ] If it still shows: open Logs right after seeing it and tell me which names show as allowed; the ad may come from a name shared with the app itself.
