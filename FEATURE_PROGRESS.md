@@ -169,3 +169,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Black bars from Hide leftover ad boxes (2026-11-22)
 - [x] Cause: the cover stayed fixed while the page scrolled, so it slid over real content (seen on Amazon). Covers now come down the moment you scroll and return only after scrolling stops, only cover boxes fully on screen, and take the app's own background colour instead of fixed black/white. Switching the option off in Settings removes them at once.
 - [ ] Real-device check on Amazon and Yahoo Fantasy. If covers still hit real content in some app, that app gets excluded.
+
+## Black and white bars still on Amazon (2026-11-22)
+- [x] Cause: Amazon marks real product tiles "Sponsored", and the box hider covered them with a flat panel. "Sponsored" no longer counts as an ad label, shopping apps (Amazon, eBay, Walmart, Temu etc.) are skipped, and a box is covered only if all four corners are one flat colour (photos and product tiles are left alone). If the app's colour can't be read, nothing is covered instead of using plain black or white. Build passing.
+- [ ] Real-device check on Amazon. If bars remain, the next step is removing the box hider altogether.
