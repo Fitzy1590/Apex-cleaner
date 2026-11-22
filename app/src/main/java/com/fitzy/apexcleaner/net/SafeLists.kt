@@ -88,6 +88,7 @@ media.net bidswitch.net contextweb.com smartadserver.com tapad.com krxd.net demd
 triplelift.com gumgum.com omnitagjs.com adsafeprotected.com doubleverify.com flashtalking.com moatpixel.com
 tpc.googlesyndication.com googleads.g.doubleclick.net securepubads.g.doubleclick.net pubads.g.doubleclick.net
 adcolony.net fyber.com tapjoy.com digitalturbine.com liftoff.io pangleglobal.com pangle.io bytedance.com ads.facebook.com
+an.facebook.com audiencenetwork.com pixel.facebook.com
 """
 
     private fun words(s: String) = s.split(Regex("\\s+")).filter { it.contains('.') }

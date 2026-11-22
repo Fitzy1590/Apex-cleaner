@@ -197,3 +197,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Samsung time server, other phone clock servers (Windows, Apple, Cloudflare) and video-licence servers (Widevine, PlayReady) now always skip the shield, so video playback and the phone clock are never disturbed. Test added. Not build-checked: no Android tools on this cloud machine.
 - [x] Engine decision: keeping the current engine. Next: measure battery and memory on a real device before tuning anything.
 - [ ] Real-device tests on phone and TV (shield, speed pacing, TV focus, Samsung clock, streaming playback)
+
+## Ads served by Meta (2026-11-22)
+- [x] Added Meta's Audience Network ad names (an.facebook.com, audiencenetwork.com, pixel.facebook.com) to the built-in block list, so banners marked "Ads served by Meta" (seen in a sports box-score screen) are blocked. Facebook login and messaging names are left alone.
+- [ ] Not build-checked yet. Real-device check: open the same box-score screen. The banner should be gone or collapsed.
