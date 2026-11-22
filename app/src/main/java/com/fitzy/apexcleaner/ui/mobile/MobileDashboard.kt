@@ -255,6 +255,21 @@ fun MobileDashboard(
                     item { SettingRow("Streaming priority", "While a video, music or game app is on screen, other apps share a small slice of the connection so the stream stays smooth. Streaming apps, banking and your protected apps are never slowed. Needs Usage Access and the shield switched on. Apps outside the limiter skip the ad shield.", state.limiter, onLimiter) }
                     item { SettingRow("Encrypted DNS", "The shield looks up websites over a private connection. Turn off if a network blocks it.", state.encryptedDns, onEncryptedDns) }
                     item {
+                        val c = androidx.compose.ui.platform.LocalContext.current
+                        var nx by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(c)) }
+                        SettingRow("Collapse blocked ads", "Blocked ad names are answered \"this site does not exist\", so most apps drop the ad slot instead of showing an empty frame. Turn off if an app misbehaves.", nx) { nx = it; com.fitzy.apexcleaner.core.AppSettings.setNxdomainReply(c, it) }
+                    }
+                    item {
+                        val c = androidx.compose.ui.platform.LocalContext.current
+                        var hide by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.hideAdBoxes(c)) }
+                        SettingRow("Hide leftover ad boxes", "Covers empty boxes that apps label as ads with a plain panel. Needs the Apex Ad Box Hider switched on in Android's Accessibility settings. It never reads or stores what is on screen, and skips banking and protected apps. The space stays, only the box is hidden.", hide) {
+                            hide = it; com.fitzy.apexcleaner.core.AppSettings.setHideAdBoxes(c, it)
+                            if (it && !com.fitzy.apexcleaner.net.AdBoxHider.isEnabled(c)) runCatching {
+                                c.startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                            }
+                        }
+                    }
+                    item {
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("Heat warning at ${"%.0f".format(state.hotC)}°C", style = MaterialTheme.typography.titleMedium)

@@ -24,6 +24,17 @@ object DnsPacket {
         return Question(sb.toString().lowercase(), type, i + 4)
     }
 
+    /** "This name does not exist" (rcode 3): ad kits treat it as a failed ad request and usually collapse the slot. */
+    fun nxdomainResponse(query: ByteArray, q: Question): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        out.write(query, 0, 2)
+        out.write(0x81); out.write(0x83)                         // response, recursion available, name error
+        out.write(query, 4, 2)
+        out.write(0); out.write(0); out.write(0); out.write(0); out.write(0); out.write(0)
+        out.write(query, 12, q.endOffset - 12)
+        return out.toByteArray()
+    }
+
     /** Answers 0.0.0.0 (A) or :: (AAAA) with a short lifetime; other types get an empty answer. */
     fun blockedResponse(query: ByteArray, len: Int, q: Question): ByteArray {
         val addr = when (q.type) { 1 -> ByteArray(4); 28 -> ByteArray(16); else -> null }

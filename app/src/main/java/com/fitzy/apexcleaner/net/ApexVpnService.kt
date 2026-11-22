@@ -26,6 +26,9 @@ object ShieldStats {
     val limiterOn = MutableStateFlow(false)
     /** True while a priority app is on screen and other apps are being slowed. */
     val limiting = MutableStateFlow(false)
+    /** How many names the loaded ad lists hold (0 until they finish loading) and how many lookups were seen since start. */
+    val listNames = MutableStateFlow(0)
+    val lookups = MutableStateFlow(0)
 }
 
 /**
@@ -40,6 +43,10 @@ class ApexVpnService : VpnService() {
     private val pool = Executors.newFixedThreadPool(4)
     private val relayPool = Executors.newCachedThreadPool()
     private val timer = Executors.newSingleThreadScheduledExecutor()
+    /** Starting the shield (reading the app list, ad lists, opening the tunnel) never runs on the screen thread. */
+    private val starter = Executors.newSingleThreadExecutor()
+    private val life = Any()
+    @Volatile private var tunOut: FileOutputStream? = null
     private val down = PaceGate()
     private val up = PaceGate()
     @Volatile private var flows: FlowTable? = null
@@ -52,7 +59,7 @@ class ApexVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) { stop(); return START_NOT_STICKY }
-        if (!running) start()
+        runCatching { starter.execute { synchronized(life) { if (!running) runCatching { start() }.onFailure { stop() } } } }
         return START_STICKY
     }
 
@@ -71,25 +78,28 @@ class ApexVpnService : VpnService() {
             bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
         }
         tun = b.establish() ?: return
+        tunOut = FileOutputStream(tun!!.fileDescriptor)
         running = true; ShieldStats.running.value = true; ShieldStats.limiterOn.value = full
         ShieldRules.ensureLoaded(this)
-        val engine = FilterEngine.withDefaults(FilterLists.load(this))
+        // Start with the small built-in list so lookups work at once; the big lists are swapped in below.
+        val engine = FilterEngine.withDefaults()
         ShieldRules.apply(this, engine); ShieldRules.live = engine
         AdBlock.ensureLoaded(this)
         com.fitzy.apexcleaner.core.Notifier.refresh(this, force = true)
         // Keeps the "ads blocked today" card up to date and shows when a pause ends.
         timer.scheduleWithFixedDelay({ runCatching { com.fitzy.apexcleaner.core.Notifier.refresh(this) } }, 15, 15, java.util.concurrent.TimeUnit.SECONDS)
         if (full) startLimiter()
-        // First run: fetch the big ad lists now instead of waiting for a charging, idle, Wi-Fi window.
-        if (!FilterLists.hasLists(this)) Thread({
-            runCatching { if (FilterLists.update(this) > 0) ShieldRules.reloadLists(this) }
+        // Big ad lists load in the background (and download first if this is the first run).
+        Thread({
+            runCatching { if (!FilterLists.hasLists(this)) FilterLists.update(this) }
+            runCatching { ShieldRules.reloadLists(this); ShieldRules.apply(this, ShieldRules.live); ShieldStats.listNames.value = ShieldRules.live?.blocks?.size ?: 0 }
         }, "apex-lists").start()
         Thread({ loop(engine, full) }, "apex-dns").start()
     }
 
     private fun startLimiter() {
         val host = object : RelayHost {
-            override fun toApp(packet: ByteArray) { tun?.let { synchronized(this@ApexVpnService) { runCatching { FileOutputStream(it.fileDescriptor).write(packet) } } } }
+            override fun toApp(packet: ByteArray) { tunOut?.let { o -> synchronized(o) { runCatching { o.write(packet) } } } }
             override fun keepOutside(s: java.net.Socket) = protect(s)
             override fun keepOutside(s: DatagramSocket) = protect(s)
             override val down get() = this@ApexVpnService.down
@@ -138,7 +148,7 @@ class ApexVpnService : VpnService() {
     private fun loop(engine: FilterEngine, full: Boolean) {
         val fd = tun ?: return
         val input = FileInputStream(fd.fileDescriptor)
-        val output = FileOutputStream(fd.fileDescriptor)
+        val output = tunOut ?: FileOutputStream(fd.fileDescriptor)
         val buf = ByteArray(32767)
         try {
             while (running) {
@@ -147,9 +157,10 @@ class ApexVpnService : VpnService() {
                 val pkt = buf.copyOf(n)
                 val h = if (full) Packets.header(pkt) else null
                 val isDns = h != null && h.proto == Packets.UDP && n >= h.ihl + 4 && Packets.u16(pkt, h.ihl + 2) == 53 && h.dst.contentEquals(FAKE_DNS_BYTES)
-                if (h == null || isDns) pool.execute { handle(pkt, engine, output) } else flows?.onPacket(pkt, h)
+                // A bad packet or a full thread pool must never end the loop or the app.
+                runCatching { if (h == null || isDns) pool.execute { runCatching { handle(pkt, engine, output) } } else flows?.onPacket(pkt, h) }
             }
-        } catch (_: Exception) { /* tunnel closed */ } finally { stop() }
+        } catch (_: Throwable) { /* tunnel closed */ } finally { stop() }
     }
 
     private fun handle(p: ByteArray, engine: FilterEngine, out: FileOutputStream) {
@@ -161,11 +172,11 @@ class ApexVpnService : VpnService() {
         val q = DnsPacket.parseQuestion(dns) ?: return
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
         val block = engine.decide(q.name) == FilterEngine.Verdict.BLOCK && !AdBlock.isPaused()
-        ShieldRules.record(this, q.name, block)
+        ShieldRules.record(this, q.name, block); ShieldStats.lookups.value++
         val answer = if (block) {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
             ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
-            DnsPacket.blockedResponse(dns, dns.size, q)
+            if (com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(this)) DnsPacket.nxdomainResponse(dns, q) else DnsPacket.blockedResponse(dns, dns.size, q)
         } else resolve(dns)
         answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }
@@ -208,7 +219,8 @@ class ApexVpnService : VpnService() {
     }
 
     private fun stop() {
-        running = false; ShieldStats.running.value = false; ShieldStats.limiterOn.value = false; ShieldStats.limiting.value = false
+        runCatching { tunOut = null }
+        running = false; ShieldStats.running.value = false; ShieldStats.limiterOn.value = false; ShieldStats.limiting.value = false; ShieldStats.listNames.value = 0
         ShieldRules.live = null; ShieldRules.save(this); AdBlock.save(this); flows?.closeAll(); flows = null
         runCatching { tun?.close() }; tun = null
         com.fitzy.apexcleaner.core.Notifier.refresh(this, force = true)
@@ -216,7 +228,7 @@ class ApexVpnService : VpnService() {
     }
 
     override fun onRevoke() { stop() }
-    override fun onDestroy() { running = false; ShieldStats.running.value = false; pool.shutdownNow(); relayPool.shutdownNow(); timer.shutdownNow(); super.onDestroy() }
+    override fun onDestroy() { running = false; ShieldStats.running.value = false; pool.shutdownNow(); relayPool.shutdownNow(); timer.shutdownNow(); starter.shutdownNow(); super.onDestroy() }
 
     companion object {
         const val ACTION_STOP = "com.fitzy.apexcleaner.STOP_SHIELD"

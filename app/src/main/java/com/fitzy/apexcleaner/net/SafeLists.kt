@@ -79,6 +79,13 @@ ads.yahoo.com adtechus.com 2mdn.net serving-sys.com quantserve.com hotjar.com mi
 branch.io app.adjust.com adjust.com appsflyer.com kochava.com flurry.com crashlytics.com
 samsungacr.com samsungads.com ad.samsungads.com log-config.samsungacr.com
 lgsmartad.com ad.lgsmartad.com lgtvsdp.com tvinteractive.tv
+adserver.yahoo.com gemini.yahoo.com beap.gemini.yahoo.com beap-bc.yahoo.com ads.yap.yahoo.com analytics.yahoo.com
+sp.analytics.yahoo.com udcm.yahoo.com comet.yahoo.com pr.comet.yahoo.com adtech.yahooinc.com advertising.yahooinc.com
+adcolony.com smaato.net smaato.com adform.net 33across.com sharethrough.com indexww.com lijit.com sovrn.com teads.tv
+media.net bidswitch.net contextweb.com smartadserver.com tapad.com krxd.net demdex.net everesttech.net yieldmo.com
+triplelift.com gumgum.com omnitagjs.com adsafeprotected.com doubleverify.com flashtalking.com moatpixel.com
+tpc.googlesyndication.com googleads.g.doubleclick.net securepubads.g.doubleclick.net pubads.g.doubleclick.net
+adcolony.net fyber.com tapjoy.com digitalturbine.com liftoff.io pangleglobal.com pangle.io bytedance.com ads.facebook.com
 """
 
     private fun words(s: String) = s.split(Regex("\\s+")).filter { it.contains('.') }

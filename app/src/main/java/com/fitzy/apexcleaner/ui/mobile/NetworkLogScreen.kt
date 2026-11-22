@@ -20,6 +20,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -52,6 +53,9 @@ fun NetworkLogScreen(state: UiState, onRule: (String, Rule?) -> Unit, onClear: (
             Switch(checked = blockedOnly, onCheckedChange = { blockedOnly = it })
             Text("Show blocked only")
         }
+        val names by com.fitzy.apexcleaner.net.ShieldStats.listNames.collectAsState()
+        val seen by com.fitzy.apexcleaner.net.ShieldStats.lookups.collectAsState()
+        Text(if (names > 0) "Ad lists loaded: $names names · $seen lookups seen since the shield started" else "Ad lists still loading (or the shield is off) · $seen lookups seen", style = MaterialTheme.typography.bodySmall)
         Text("Tap Allow to let a website through, or Block to stop it. Banking and push-alert sites are always protected.", style = MaterialTheme.typography.bodySmall)
         LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (rows.isEmpty()) item { Text(if (state.history.isEmpty()) "Nothing yet. Turn the shield on and use your phone." else "No websites match.", style = MaterialTheme.typography.bodyMedium) }

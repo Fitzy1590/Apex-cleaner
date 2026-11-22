@@ -145,3 +145,23 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Buttons on it: Pause 15 min (comes back on by itself) / Resume, and Turn off / Turn on. Paused = ads load normally; banking and other protections are unchanged
 - [x] Build passing (compile, lint, tests)
 - [ ] Real-device check of the buttons (Turn on needs the one-time VPN permission already given in the app)
+
+## TV closing and freezing with the shield on (2026-11-22)
+- [x] Cause 1: the shield start-up (reading every ad list into memory) ran on the screen thread and used far too much memory for a TV, so the app froze and then closed. Ad lists now take about a fiftieth of the memory, are read line by line, and load in the background; ad blocking works instantly from the small built-in list and the big lists join a moment later.
+- [x] Cause 2: turning the shield off or restarting it while lookups were in flight could crash the whole app. Those background jobs are now fenced so they can never take the app down.
+- [x] Cause 3: unlimited open connections piled up threads on a TV. The shield now caps open connections and closes the quietest first (nothing is dropped from a connection that is in use).
+- [ ] Not build-checked: no Android tools on this cloud machine. Real-device test on the TV needed.
+
+## Empty ad boxes still showing (2026-11-22)
+- [x] Added the ad-request names used by Yahoo's own ad system (Fantasy/Sports apps) and about 40 more big ad networks to the built-in list, so the app is told 'no ad' up front and can collapse the empty box. Not build-checked.
+- [ ] Owner: if a box remains, open Logs right after seeing it and tell me which names are shown as allowed.
+
+## Ads-blocked count dropped (2026-11-22)
+- [x] Logs screen now shows how many names the ad lists hold and how many lookups were seen, so a low count can be traced to 'lists not loaded' versus 'apps not asking'. Not build-checked.
+- [ ] Owner chose both ad-box options: tighten blocking (+ test reply style) and a 'Hide leftover boxes' switch (Accessibility). Not built yet.
+
+## Ad boxes: collapse and hide (2026-11-22, owner chose both)
+- [x] "Collapse blocked ads" (Settings, on by default): blocked ad names are answered "this site does not exist" so most apps drop the slot instead of leaving an empty frame. Can be switched off if an app misbehaves.
+- [x] "Hide leftover ad boxes" (Settings, off by default, phone only): optional Accessibility helper that covers empty boxes labelled as ads with a plain dark/white panel. Reads only item labels and sizes, never text; skips banking, protected, whitelisted, launcher, keyboard and this app. Space stays, box is hidden.
+- [x] Unit tests added for the label matcher, size guard and the new reply. Not build-checked (no Android tools here).
+- [ ] Real-device check: turn on both switches, enable "Apex Ad Box Hider" in Android Accessibility, open Yahoo Fantasy.

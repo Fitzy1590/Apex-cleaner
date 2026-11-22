@@ -146,7 +146,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     private fun send(seq: Long, ack: Long, flags: Int, data: ByteArray? = null, len: Int = 0, mss: Int = 0) =
         host.toApp(Packets.buildTcp(serverIp, appIp, serverPort, appPort, seq, ack, flags, 65535, data, 0, len, mss))
 
-    private fun scheduleClose() { host.pool.execute { Thread.sleep(2000); close() } }
+    private fun scheduleClose() { host.pool.execute { try { Thread.sleep(2000) } catch (_: InterruptedException) { }; close() } }
 
     @Synchronized fun close() {
         if (st == St.CLOSED) return
@@ -201,6 +201,17 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
 class FlowTable(private val host: RelayHost) {
     private val tcp = ConcurrentHashMap<String, TcpFlow>()
     private val udp = ConcurrentHashMap<String, UdpFlow>()
+    private val maxFlows = 300
+
+    /** Too many open conversations use up threads and memory on a TV; the quietest ones are closed first. */
+    private fun makeRoom() {
+        if (tcp.size + udp.size < maxFlows) return
+        tcp.entries.filter { it.value.closed }.forEach { tcp.remove(it.key) }
+        udp.entries.filter { it.value.closed }.forEach { udp.remove(it.key) }
+        if (tcp.size + udp.size < maxFlows) return
+        udp.entries.sortedBy { it.value.lastUse }.take(maxFlows / 4).forEach { it.value.close(); udp.remove(it.key) }
+        tcp.entries.sortedBy { it.value.lastUse }.take(maxFlows / 4).forEach { it.value.close(); tcp.remove(it.key) }
+    }
 
     private fun key(proto: Int, port: Int, dst: ByteArray, dport: Int) = "$proto:$port:${dst.joinToString(".") { (it.toInt() and 0xff).toString() }}:$dport"
 
@@ -209,6 +220,7 @@ class FlowTable(private val host: RelayHost) {
             Packets.TCP -> {
                 val t = Packets.tcp(p, h) ?: return
                 val k = key(6, t.srcPort, h.dst, t.dstPort)
+                makeRoom()
                 val f = tcp[k]?.takeIf { !it.closed } ?: if (t.flags and Packets.SYN != 0 && t.flags and Packets.ACK == 0) TcpFlow(host, h.src, h.dst, t.srcPort, t.dstPort).also { tcp[k] = it } else return
                 f.onSegment(p, h, t)
             }
@@ -216,6 +228,7 @@ class FlowTable(private val host: RelayHost) {
                 if (h.total < h.ihl + 8) return
                 val sp = Packets.u16(p, h.ihl); val dp = Packets.u16(p, h.ihl + 2)
                 val k = key(17, sp, h.dst, dp)
+                makeRoom()
                 val f = udp[k]?.takeIf { !it.closed } ?: UdpFlow(host, h.src, h.dst, sp, dp).also { udp[k] = it }
                 f.toServer(p.copyOfRange(h.ihl + 8, h.total))
             }

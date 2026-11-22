@@ -93,3 +93,30 @@ class NetEngineTest {
         assertEquals(0L, NetPolicy.capFor(caps, false, AppState.FOREGROUND, Link.WIFI, false, false, false))
     }
 }
+
+class AdBoxAndReplyTest {
+    @Test fun adBoxLabelsAreStrict() {
+        assertTrue(AdBoxRules.looksLikeAd("com.x:id/ad_container", null, null))
+        assertTrue(AdBoxRules.looksLikeAd("com.x:id/nativeAdView", null, null))
+        assertTrue(AdBoxRules.looksLikeAd(null, "com.google.android.gms.ads.AdView", null))
+        assertTrue(AdBoxRules.looksLikeAd(null, null, "Advertisement"))
+        assertTrue(!AdBoxRules.looksLikeAd("com.x:id/download_button", null, null))
+        assertTrue(!AdBoxRules.looksLikeAd("com.x:id/address_line", null, null))
+        assertTrue(!AdBoxRules.looksLikeAd("com.x:id/header", null, "Loading"))
+    }
+
+    @Test fun adBoxSizeIsSensible() {
+        assertTrue(AdBoxRules.sensibleSize(1080, 250, 1080, 2400))
+        assertTrue(!AdBoxRules.sensibleSize(1080, 2000, 1080, 2400))
+        assertTrue(!AdBoxRules.sensibleSize(10, 10, 1080, 2400))
+    }
+
+    @Test fun nameErrorReplyKeepsQuestionAndSetsErrorCode() {
+        val q = byteArrayOf(0x12, 0x34, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 'a'.code.toByte(), 'b'.code.toByte(), 'c'.code.toByte(), 0, 0, 1, 0, 1)
+        val parsed = DnsPacket.parseQuestion(q)!!
+        val r = DnsPacket.nxdomainResponse(q, parsed)
+        assertEquals(3, r[3].toInt() and 0x0f)
+        assertEquals(0, r[7].toInt())
+        assertEquals(0x12, r[0].toInt()); assertEquals(q.size, r.size)
+    }
+}
