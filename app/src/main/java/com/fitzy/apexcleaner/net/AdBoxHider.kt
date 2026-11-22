@@ -19,10 +19,10 @@ import com.fitzy.apexcleaner.core.WhitelistStore
 object AdBoxRules {
     private val ID_TOKENS = setOf(
         "ad", "ads", "adview", "adviews", "admob", "advert", "advertisement", "adcontainer", "adframe", "adslot", "adbanner",
-        "bannerad", "nativead", "adplaceholder", "adchoices", "sponsored",
+        "bannerad", "nativead", "adplaceholder", "adchoices",
     )
     private val CLASS_HINTS = listOf("adview", "admanageradview", "nativeadview", "bannerview.ad", "unifiednativeadview", "mrecview")
-    private val DESCRIPTIONS = setOf("advertisement", "ad", "ads", "sponsored", "adchoices", "ad choices")
+    private val DESCRIPTIONS = setOf("advertisement", "adchoices", "ad choices")
 
     /** "com.x.app:id/native_adContainer" becomes the words native, ad, container, so "ad" counts but "download" and "address" do not. */
     fun idWords(id: String?): List<String> {
@@ -89,7 +89,7 @@ class AdBoxHider : AccessibilityService() {
     private fun skip(pkg: String): Boolean =
         pkg == packageName || pkg == "com.android.systemui" || pkg in SafeLists.bankingBypassPackages ||
             pkg in com.fitzy.apexcleaner.core.ProtectedApps.ALWAYS_PROTECTED || pkg in WhitelistStore(this).all() ||
-            pkg.contains("launcher") || pkg.contains("inputmethod") || pkg.contains("keyboard")
+            SHOPPING_HINTS.any { pkg.contains(it) } || pkg.contains("launcher") || pkg.contains("inputmethod") || pkg.contains("keyboard")
 
     private fun refresh(pkg: String) {
         val root = rootInActiveWindow ?: return clear()
@@ -115,7 +115,7 @@ class AdBoxHider : AccessibilityService() {
         lastKey = key
         clear(keepKey = true)
         if (found.isEmpty()) return
-        if (android.os.Build.VERSION.SDK_INT < 30) { found.forEach { show(it, null) }; return }
+        if (android.os.Build.VERSION.SDK_INT < 30) return  // no way to match the app background, so never cover
         shoot(found)
     }
 
@@ -131,14 +131,17 @@ class AdBoxHider : AccessibilityService() {
                             Bitmap.wrapHardwareBuffer(hb, result.colorSpace)?.copy(Bitmap.Config.ARGB_8888, false).also { hb.close() }
                         }.getOrNull()
                         found.forEach { r ->
-                            val c = shot?.let { b -> runCatching { b.getPixel((r.left + 6).coerceIn(0, b.width - 1), (r.top + 6).coerceIn(0, b.height - 1)) }.getOrNull() }
-                            show(r, c)
+                            val b = shot ?: return@forEach
+                            // Cover only if all four corners are the same flat colour; a photo or product tile is left alone.
+                            val pts = listOf(r.left + 6 to r.top + 6, r.right - 6 to r.top + 6, r.left + 6 to r.bottom - 6, r.right - 6 to r.bottom - 6)
+                            val cols = pts.mapNotNull { (x, y) -> runCatching { b.getPixel(x.coerceIn(0, b.width - 1), y.coerceIn(0, b.height - 1)) }.getOrNull() }
+                            if (cols.size == 4 && cols.all { it == cols[0] }) show(r, cols[0])
                         }
                         shot?.recycle()
                     }
-                    override fun onFailure(errorCode: Int) { found.forEach { show(it, null) } }
+                    override fun onFailure(errorCode: Int) { }
                 })
-            }.onFailure { found.forEach { show(it, null) } }
+            }
         }, 80)
     }
 
@@ -162,5 +165,7 @@ class AdBoxHider : AccessibilityService() {
     override fun onInterrupt() { clear() }
     override fun onDestroy() { handler.removeCallbacksAndMessages(null); clear(); super.onDestroy() }
 
-    companion object { fun isEnabled(ctx: Context) = AdBoxRules.isEnabled(ctx) }
+    companion object {
+        private val SHOPPING_HINTS = listOf("amazon", "shop", "ebay", "walmart", "target", "aliexpress", "etsy", "temu", "argos", "currys", "tesco", "asda", "sainsbury", "bestbuy", "costco")
+        fun isEnabled(ctx: Context) = AdBoxRules.isEnabled(ctx) }
 }
