@@ -1,28 +1,67 @@
 package com.fitzy.apexcleaner.net
 
-/** In-memory trie over reversed domain labels. "ads.example.com" is stored as com > example > ads. */
+/**
+ * Compact domain set. Each name is stored as one 64-bit fingerprint in a sorted array (about 8 bytes per name),
+ * so even the big ad lists fit comfortably on a low-memory TV. A name matches if it, or any parent domain of it, was added
+ * ("ads.example.com" matches "x.ads.example.com"). Name kept for the existing callers.
+ */
 class DomainTrie {
-    private class Node { val kids = HashMap<String, Node>(); var end = false }
-    private val root = Node()
-    var size = 0; private set
+    private var pending = LongArray(16)
+    private var pendingCount = 0
+    @Volatile private var sorted = LongArray(0)
+    @Volatile private var dirty = false
 
-    fun add(domain: String) {
-        var n = root
-        for (label in labels(domain)) n = n.kids.getOrPut(label) { Node() }
-        if (!n.end) { n.end = true; size++ }
+    val size: Int get() { freeze(); return sorted.size }
+
+    @Synchronized fun add(domain: String) {
+        val n = normalize(domain)
+        if (n.isEmpty()) return
+        if (pendingCount == pending.size) pending = pending.copyOf(pending.size * 2)
+        pending[pendingCount++] = hash(n, 0)
+        dirty = true
     }
 
     /** True if the domain, or any parent domain of it, was added. */
     fun matches(domain: String): Boolean {
-        var n = root
-        for (label in labels(domain)) {
-            n = n.kids[label] ?: return false
-            if (n.end) return true
+        if (dirty) freeze()
+        val s = sorted
+        if (s.isEmpty()) return false
+        val n = normalize(domain)
+        var start = 0
+        while (start < n.length) {
+            if (java.util.Arrays.binarySearch(s, hash(n, start)) >= 0) return true
+            val dot = n.indexOf('.', start)
+            if (dot < 0) break
+            start = dot + 1
         }
         return false
     }
 
-    private fun labels(d: String) = d.trim().trimEnd('.').lowercase().split('.').filter { it.isNotEmpty() }.asReversed()
+    @Synchronized private fun freeze() {
+        if (!dirty) return
+        val merged = LongArray(sorted.size + pendingCount)
+        System.arraycopy(sorted, 0, merged, 0, sorted.size)
+        System.arraycopy(pending, 0, merged, sorted.size, pendingCount)
+        merged.sort()
+        var w = 0
+        for (i in merged.indices) if (i == 0 || merged[i] != merged[i - 1]) merged[w++] = merged[i]
+        sorted = merged.copyOf(w)
+        pending = LongArray(16); pendingCount = 0
+        dirty = false
+    }
+
+    /** Lower-case, no spaces, no trailing dot, no empty labels. */
+    private fun normalize(d: String): String {
+        val t = d.trim().trimEnd('.').lowercase()
+        return if (t.contains("..") || t.startsWith(".")) t.split('.').filter { it.isNotEmpty() }.joinToString(".") else t
+    }
+
+    /** 64-bit FNV-1a of the text from [from] to the end. */
+    private fun hash(s: String, from: Int): Long {
+        var h = -3750763034362895579L
+        for (i in from until s.length) { h = h xor s[i].code.toLong(); h *= 1099511628211L }
+        return h
+    }
 
     companion object {
         /** Reads a hosts-style or plain list ("0.0.0.0 ads.example.com", "ads.example.com", "# comment"). */
@@ -34,7 +73,8 @@ class DomainTrie {
                     if (line.any { it == '$' || it == '*' || it == '/' }) continue
                     line = line.removePrefix("||").removeSuffix("^")
                 }
-                val parts = line.split(Regex("\\s+"))
+                val parts = line.split(' ', '\t').filter { it.isNotEmpty() }
+                if (parts.isEmpty()) continue
                 val host = if (parts.size >= 2 && (parts[0] == "0.0.0.0" || parts[0] == "127.0.0.1")) parts[1] else parts[0]
                 if (host.contains('.') && host != "0.0.0.0" && host != "localhost") add(host)
             }

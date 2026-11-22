@@ -28,7 +28,8 @@ object FilterLists {
 
     /** Lines of every downloaded list (empty until the first update). */
     fun load(ctx: Context): Sequence<String> =
-        dir(ctx).listFiles()?.asSequence()?.flatMap { it.useLines { l -> l.toList() }.asSequence() } ?: emptySequence()
+        dir(ctx).listFiles()?.asSequence()?.filter { it.name.endsWith(".txt") }
+            ?.flatMap { f -> sequence { f.bufferedReader().use { r -> yieldAll(r.lineSequence()) } } } ?: emptySequence()
 
     /** Downloads each list to a temp file, then swaps it in. A failed download keeps the old list. Returns lists updated. */
     fun update(ctx: Context): Int {

@@ -145,3 +145,9 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Buttons on it: Pause 15 min (comes back on by itself) / Resume, and Turn off / Turn on. Paused = ads load normally; banking and other protections are unchanged
 - [x] Build passing (compile, lint, tests)
 - [ ] Real-device check of the buttons (Turn on needs the one-time VPN permission already given in the app)
+
+## TV closing and freezing with the shield on (2026-11-22)
+- [x] Cause 1: the shield start-up (reading every ad list into memory) ran on the screen thread and used far too much memory for a TV, so the app froze and then closed. Ad lists now take about a fiftieth of the memory, are read line by line, and load in the background; ad blocking works instantly from the small built-in list and the big lists join a moment later.
+- [x] Cause 2: turning the shield off or restarting it while lookups were in flight could crash the whole app. Those background jobs are now fenced so they can never take the app down.
+- [x] Cause 3: unlimited open connections piled up threads on a TV. The shield now caps open connections and closes the quietest first (nothing is dropped from a connection that is in use).
+- [ ] Not build-checked: no Android tools on this cloud machine. Real-device test on the TV needed.
