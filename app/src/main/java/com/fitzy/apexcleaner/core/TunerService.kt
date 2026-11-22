@@ -48,6 +48,7 @@ class TunerService : Service() {
         } else {
             startForeground(Notifier.ID_SERVICE, n)
         }
+        running = true
         ScreenStateReceiver.register(this, screenReceiver)
         PowerEventReceiver.register(this, powerReceiver)
         handler.post(tick)
@@ -57,6 +58,7 @@ class TunerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
 
     override fun onDestroy() {
+        running = false
         handler.removeCallbacks(tick)
         handler.removeCallbacks(chargeTick)
         runCatching { unregisterReceiver(powerReceiver) }
@@ -67,6 +69,9 @@ class TunerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        /** True while the always-on card is showing. */
+        @Volatile var running = false
+
         fun start(ctx: Context) {
             ctx.startForegroundService(Intent(ctx, TunerService::class.java))
         }

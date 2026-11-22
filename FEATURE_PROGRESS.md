@@ -139,3 +139,9 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Notes corrected: the speed-pacing relay (waits, never drops), the TV tabs and the remote-key shortcuts (red = clean, yellow = boost) are already in the code
 - [x] Apps list (phone and TV) now marks known banking apps "Banking app: skips the shield" (locked on); any other bank app can be added with the existing protect switch (build passing)
 - [ ] Still open: real-device tests (speed pacing on a phone and TV, shield on TVs, quick-settings tile, TV sound and buzz), dark look check on a real TV
+
+## Always-on card shows ads blocked today (2026-11-21)
+- [x] The permanent notification now reads "N ads blocked today" (restarts from zero each day) and says whether ad blocking is on, paused or off
+- [x] Buttons on it: Pause 15 min (comes back on by itself) / Resume, and Turn off / Turn on. Paused = ads load normally; banking and other protections are unchanged
+- [x] Build passing (compile, lint, tests)
+- [ ] Real-device check of the buttons (Turn on needs the one-time VPN permission already given in the app)

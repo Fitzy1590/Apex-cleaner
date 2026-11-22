@@ -75,6 +75,10 @@ class ApexVpnService : VpnService() {
         ShieldRules.ensureLoaded(this)
         val engine = FilterEngine.withDefaults(FilterLists.load(this))
         ShieldRules.apply(this, engine); ShieldRules.live = engine
+        AdBlock.ensureLoaded(this)
+        com.fitzy.apexcleaner.core.Notifier.refresh(this, force = true)
+        // Keeps the "ads blocked today" card up to date and shows when a pause ends.
+        timer.scheduleWithFixedDelay({ runCatching { com.fitzy.apexcleaner.core.Notifier.refresh(this) } }, 15, 15, java.util.concurrent.TimeUnit.SECONDS)
         if (full) startLimiter()
         // First run: fetch the big ad lists now instead of waiting for a charging, idle, Wi-Fi window.
         if (!FilterLists.hasLists(this)) Thread({
@@ -155,12 +159,15 @@ class ApexVpnService : VpnService() {
         if (dport != 53 || p.size < ihl + 8) return
         val dns = p.copyOfRange(ihl + 8, p.size)
         val q = DnsPacket.parseQuestion(dns) ?: return
-        val verdict = engine.decide(q.name)
-        ShieldRules.record(this, q.name, verdict == FilterEngine.Verdict.BLOCK)
-        val answer = when (verdict) {
-            FilterEngine.Verdict.BLOCK -> { ShieldStats.blocked.value++; ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40); DnsPacket.blockedResponse(dns, dns.size, q) }
-            else -> resolve(dns)
-        } ?: return
+        // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
+        val block = engine.decide(q.name) == FilterEngine.Verdict.BLOCK && !AdBlock.isPaused()
+        ShieldRules.record(this, q.name, block)
+        val answer = if (block) {
+            AdBlock.recordBlocked(this); ShieldStats.blocked.value++
+            ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
+            DnsPacket.blockedResponse(dns, dns.size, q)
+        } else resolve(dns)
+        answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }
     }
 
@@ -202,8 +209,9 @@ class ApexVpnService : VpnService() {
 
     private fun stop() {
         running = false; ShieldStats.running.value = false; ShieldStats.limiterOn.value = false; ShieldStats.limiting.value = false
-        ShieldRules.live = null; ShieldRules.save(this); flows?.closeAll(); flows = null
+        ShieldRules.live = null; ShieldRules.save(this); AdBlock.save(this); flows?.closeAll(); flows = null
         runCatching { tun?.close() }; tun = null
+        com.fitzy.apexcleaner.core.Notifier.refresh(this, force = true)
         stopSelf()
     }
 
