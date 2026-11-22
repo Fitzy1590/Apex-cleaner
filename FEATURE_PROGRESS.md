@@ -177,3 +177,8 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Empty banner left at the bottom of Sofascore (2026-11-22)
 - [x] The hider now also recognises a thin, wide web view docked at the very bottom of the screen (banner ad frame) and covers it with the app's own flat background colour. Tall web pages are never touched; it still skips banking, shopping, protected and whitelisted apps. Test added. Build passing.
 - [ ] Real-device check on Sofascore. If it covers real content anywhere, that app gets excluded.
+
+## Shield switch sometimes not turning on (2026-11-22)
+- [x] Cause: when Android refused to open the tunnel (VPN permission moved to another VPN app) or a quick off/on crossed, the shield failed silently and the switch just stayed off. Now it says why on screen ("could not start... accept the permission") and retries once by itself after 2.5 seconds. Build passing.
+- [x] Explained: Android only shows the VPN permission box when this app does not currently hold the VPN permission (first time, or another VPN/app took it). Otherwise it starts silently. That is Android's rule, not something the app can force.
+- [ ] Real-device check: switch on/off quickly several times; turn on another VPN then back.

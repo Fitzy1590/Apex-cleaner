@@ -37,6 +37,15 @@ class MainActivity : ComponentActivity() {
     private val helperListener = Shizuku.OnRequestPermissionResultListener { _, _ -> vm.refresh() }
     private val helperBinderListener = Shizuku.OnBinderReceivedListener { vm.refresh() }
 
+    /** Starts the shield and, if it is still not running after a moment (a stop and start crossing), tries once more. */
+    private fun startShieldWithRetry() {
+        com.fitzy.apexcleaner.net.ApexVpnService.start(this)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            if (!com.fitzy.apexcleaner.net.ShieldStats.running.value && com.fitzy.apexcleaner.net.ShieldStats.failure.value == null &&
+                android.net.VpnService.prepare(this) == null) com.fitzy.apexcleaner.net.ApexVpnService.start(this)
+        }, 2500)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Shizuku.addRequestPermissionResultListener(helperListener)
@@ -51,12 +60,12 @@ class MainActivity : ComponentActivity() {
                 ActivityResultContracts.RequestPermission(),
             ) { TunerService.start(this); vm.refresh() }
             val vpnConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                if (it.resultCode == RESULT_OK) com.fitzy.apexcleaner.net.ApexVpnService.start(this)
+                if (it.resultCode == RESULT_OK) startShieldWithRetry()
             }
             val shield: (Boolean) -> Unit = { on ->
                 if (!on) com.fitzy.apexcleaner.net.ApexVpnService.stop(this)
                 else android.net.VpnService.prepare(this)?.let { vpnConsent.launch(it) }
-                    ?: com.fitzy.apexcleaner.net.ApexVpnService.start(this)
+                    ?: startShieldWithRetry()
             }
             val grant: (NeededPermission) -> Unit = { p ->
                 when (p) {
