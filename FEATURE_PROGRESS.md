@@ -165,3 +165,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] "Hide leftover ad boxes" (Settings, off by default, phone only): optional Accessibility helper that covers empty boxes labelled as ads with a plain dark/white panel. Reads only item labels and sizes, never text; skips banking, protected, whitelisted, launcher, keyboard and this app. Space stays, box is hidden.
 - [x] Unit tests added for the label matcher, size guard and the new reply. Not build-checked (no Android tools here).
 - [ ] Real-device check: turn on both switches, enable "Apex Ad Box Hider" in Android Accessibility, open Yahoo Fantasy.
+
+## Black bars from Hide leftover ad boxes (2026-11-22)
+- [x] Cause: the cover stayed fixed while the page scrolled, so it slid over real content (seen on Amazon). Covers now come down the moment you scroll and return only after scrolling stops, only cover boxes fully on screen, and take the app's own background colour instead of fixed black/white. Switching the option off in Settings removes them at once.
+- [ ] Real-device check on Amazon and Yahoo Fantasy. If covers still hit real content in some app, that app gets excluded.
