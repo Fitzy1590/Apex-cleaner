@@ -26,6 +26,9 @@ object ShieldStats {
     val limiterOn = MutableStateFlow(false)
     /** True while a priority app is on screen and other apps are being slowed. */
     val limiting = MutableStateFlow(false)
+    /** How many names the loaded ad lists hold (0 until they finish loading) and how many lookups were seen since start. */
+    val listNames = MutableStateFlow(0)
+    val lookups = MutableStateFlow(0)
 }
 
 /**
@@ -89,7 +92,7 @@ class ApexVpnService : VpnService() {
         // Big ad lists load in the background (and download first if this is the first run).
         Thread({
             runCatching { if (!FilterLists.hasLists(this)) FilterLists.update(this) }
-            runCatching { ShieldRules.reloadLists(this); ShieldRules.apply(this, ShieldRules.live) }
+            runCatching { ShieldRules.reloadLists(this); ShieldRules.apply(this, ShieldRules.live); ShieldStats.listNames.value = ShieldRules.live?.blocks?.size ?: 0 }
         }, "apex-lists").start()
         Thread({ loop(engine, full) }, "apex-dns").start()
     }
@@ -169,7 +172,7 @@ class ApexVpnService : VpnService() {
         val q = DnsPacket.parseQuestion(dns) ?: return
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
         val block = engine.decide(q.name) == FilterEngine.Verdict.BLOCK && !AdBlock.isPaused()
-        ShieldRules.record(this, q.name, block)
+        ShieldRules.record(this, q.name, block); ShieldStats.lookups.value++
         val answer = if (block) {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
             ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
@@ -217,7 +220,7 @@ class ApexVpnService : VpnService() {
 
     private fun stop() {
         runCatching { tunOut = null }
-        running = false; ShieldStats.running.value = false; ShieldStats.limiterOn.value = false; ShieldStats.limiting.value = false
+        running = false; ShieldStats.running.value = false; ShieldStats.limiterOn.value = false; ShieldStats.limiting.value = false; ShieldStats.listNames.value = 0
         ShieldRules.live = null; ShieldRules.save(this); AdBlock.save(this); flows?.closeAll(); flows = null
         runCatching { tun?.close() }; tun = null
         com.fitzy.apexcleaner.core.Notifier.refresh(this, force = true)

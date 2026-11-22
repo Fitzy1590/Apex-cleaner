@@ -155,3 +155,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Empty ad boxes still showing (2026-11-22)
 - [x] Added the ad-request names used by Yahoo's own ad system (Fantasy/Sports apps) and about 40 more big ad networks to the built-in list, so the app is told 'no ad' up front and can collapse the empty box. Not build-checked.
 - [ ] Owner: if a box remains, open Logs right after seeing it and tell me which names are shown as allowed.
+
+## Ads-blocked count dropped (2026-11-22)
+- [x] Logs screen now shows how many names the ad lists hold and how many lookups were seen, so a low count can be traced to 'lists not loaded' versus 'apps not asking'. Not build-checked.
+- [ ] Owner chose both ad-box options: tighten blocking (+ test reply style) and a 'Hide leftover boxes' switch (Accessibility). Not built yet.
