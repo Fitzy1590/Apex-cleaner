@@ -3,6 +3,7 @@ package com.fitzy.apexcleaner.net
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.provider.Settings
@@ -59,12 +60,25 @@ class AdBoxHider : AccessibilityService() {
     private var lastRun = 0L
     private var lastKey = ""
     private var lastPkg = ""
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var settlePkg = ""
+    private val settle = Runnable { lastRun = System.currentTimeMillis(); runCatching { refresh(settlePkg) }.onFailure { clear() } }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         e ?: return
         val pkg = e.packageName?.toString() ?: return
         if (!AppSettings.hideAdBoxes(this) || skip(pkg)) { clear(); return }
         if (pkg != lastPkg) { clear(); lastPkg = pkg }
+        // While the page is moving a fixed cover would slide off its box and sit on real content, so take it down
+        // at once and put it back only after scrolling has stopped.
+        if (e.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            clear()
+            handler.removeCallbacks(settle)
+            settlePkg = pkg
+            handler.postDelayed(settle, 700)
+            return
+        }
+        if (handler.hasCallbacks(settle)) return
         val now = System.currentTimeMillis()
         if (now - lastRun < 400) return
         lastRun = now
@@ -88,7 +102,9 @@ class AdBoxHider : AccessibilityService() {
                 val r = Rect()
                 // An "AdChoices" icon sits inside the ad box, so cover its parent box instead of the tiny icon.
                 (if (n.contentDescription?.toString()?.lowercase()?.contains("adchoices") == true && parent != null) parent else n).getBoundsInScreen(r)
-                if (AdBoxRules.sensibleSize(r.width(), r.height(), dm.widthPixels, dm.heightPixels)) { found += r; return }
+                // Only boxes fully on screen: a half-scrolled-in box would put a cover over neighbouring content.
+                val whole = r.top >= 0 && r.left >= 0 && r.bottom <= dm.heightPixels && r.right <= dm.widthPixels
+                if (whole && AdBoxRules.sensibleSize(r.width(), r.height(), dm.widthPixels, dm.heightPixels)) { found += r; return }
             }
             for (i in 0 until n.childCount) { val c = n.getChild(i) ?: continue; walk(c, n) }
         }
@@ -97,13 +113,33 @@ class AdBoxHider : AccessibilityService() {
         if (key == lastKey) return
         lastKey = key
         clear(keepKey = true)
-        found.forEach { show(it) }
+        if (found.isEmpty()) return
+        if (android.os.Build.VERSION.SDK_INT < 30) { found.forEach { show(it, null) }; return }
+        // Match the app's own background: look at one pixel inside each box corner (kept in memory only, never stored).
+        handler.postDelayed({
+            runCatching {
+                takeScreenshot(android.view.Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
+                    override fun onSuccess(result: ScreenshotResult) {
+                        val shot = runCatching {
+                            val hb = result.hardwareBuffer
+                            Bitmap.wrapHardwareBuffer(hb, result.colorSpace)?.copy(Bitmap.Config.ARGB_8888, false).also { hb.close() }
+                        }.getOrNull()
+                        found.forEach { r ->
+                            val c = shot?.let { b -> runCatching { b.getPixel((r.left + 6).coerceIn(0, b.width - 1), (r.top + 6).coerceIn(0, b.height - 1)) }.getOrNull() }
+                            show(r, c)
+                        }
+                        shot?.recycle()
+                    }
+                    override fun onFailure(errorCode: Int) { found.forEach { show(it, null) } }
+                })
+            }.onFailure { found.forEach { show(it, null) } }
+        }, 80)
     }
 
-    private fun show(r: Rect) {
+    private fun show(r: Rect, sampled: Int?) {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val night = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-        val v = View(this).apply { setBackgroundColor(if (night) 0xFF101114.toInt() else 0xFFFFFFFF.toInt()) }
+        val v = View(this).apply { setBackgroundColor(sampled?.let { it or 0xFF000000.toInt() } ?: if (night) 0xFF101114.toInt() else 0xFFFFFFFF.toInt()) }
         val lp = WindowManager.LayoutParams(r.width(), r.height(), WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.OPAQUE).apply { gravity = Gravity.TOP or Gravity.START; x = r.left; y = r.top }
@@ -118,7 +154,7 @@ class AdBoxHider : AccessibilityService() {
     }
 
     override fun onInterrupt() { clear() }
-    override fun onDestroy() { clear(); super.onDestroy() }
+    override fun onDestroy() { handler.removeCallbacksAndMessages(null); clear(); super.onDestroy() }
 
     companion object { fun isEnabled(ctx: Context) = AdBoxRules.isEnabled(ctx) }
 }
