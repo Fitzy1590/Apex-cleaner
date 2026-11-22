@@ -151,3 +151,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Cause 2: turning the shield off or restarting it while lookups were in flight could crash the whole app. Those background jobs are now fenced so they can never take the app down.
 - [x] Cause 3: unlimited open connections piled up threads on a TV. The shield now caps open connections and closes the quietest first (nothing is dropped from a connection that is in use).
 - [ ] Not build-checked: no Android tools on this cloud machine. Real-device test on the TV needed.
+
+## Empty ad boxes still showing (2026-11-22)
+- [x] Added the ad-request names used by Yahoo's own ad system (Fantasy/Sports apps) and about 40 more big ad networks to the built-in list, so the app is told 'no ad' up front and can collapse the empty box. Not build-checked.
+- [ ] Owner: if a box remains, open Logs right after seeing it and tell me which names are shown as allowed.
