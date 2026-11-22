@@ -62,7 +62,8 @@ class AdBoxHider : AccessibilityService() {
     private var lastPkg = ""
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private var settlePkg = ""
-    private val settle = Runnable { lastRun = System.currentTimeMillis(); runCatching { refresh(settlePkg) }.onFailure { clear() } }
+    private var settling = false
+    private val settle = Runnable { settling = false; lastRun = System.currentTimeMillis(); runCatching { refresh(settlePkg) }.onFailure { clear() } }
 
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         e ?: return
@@ -74,11 +75,11 @@ class AdBoxHider : AccessibilityService() {
         if (e.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
             clear()
             handler.removeCallbacks(settle)
-            settlePkg = pkg
+            settlePkg = pkg; settling = true
             handler.postDelayed(settle, 700)
             return
         }
-        if (handler.hasCallbacks(settle)) return
+        if (settling) return
         val now = System.currentTimeMillis()
         if (now - lastRun < 400) return
         lastRun = now
@@ -115,7 +116,12 @@ class AdBoxHider : AccessibilityService() {
         clear(keepKey = true)
         if (found.isEmpty()) return
         if (android.os.Build.VERSION.SDK_INT < 30) { found.forEach { show(it, null) }; return }
-        // Match the app's own background: look at one pixel inside each box corner (kept in memory only, never stored).
+        shoot(found)
+    }
+
+    /** Match the app's own background: look at one pixel inside each box corner (kept in memory only, never stored). */
+    @androidx.annotation.RequiresApi(30)
+    private fun shoot(found: List<Rect>) {
         handler.postDelayed({
             runCatching {
                 takeScreenshot(android.view.Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
