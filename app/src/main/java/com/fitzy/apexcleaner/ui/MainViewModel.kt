@@ -44,6 +44,7 @@ data class UiState(
     val helper: HelperState = HelperState.NotInstalled,
     val charge: ChargeUi = ChargeUi(),
     val shieldOn: Boolean = false,
+    val shieldPausedUntil: Long = 0L,
     val blockedCount: Int = 0,
     val bankingDomains: Int = 0,
     val recentBlocked: List<String> = emptyList(),
@@ -92,6 +93,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiterOn.collect { r -> _state.update { it.copy(limiterOn = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.limiting.collect { r -> _state.update { it.copy(limiting = r) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.running.collect { r -> _state.update { it.copy(shieldOn = r) } } }
+        com.fitzy.apexcleaner.net.AdBlock.ensureLoaded(ctx)
+        viewModelScope.launch { com.fitzy.apexcleaner.net.AdBlock.pausedFlow.collect { t -> _state.update { it.copy(shieldPausedUntil = t) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.failure.collect { f -> if (f != null) _state.update { it.copy(message = f) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.net.ShieldStats.blocked.collect { n -> _state.update { it.copy(blockedCount = n) } } }
         viewModelScope.launch { com.fitzy.apexcleaner.core.UpdateInstaller.status.collect { t -> _state.update { it.copy(updateStatus = t) } } }

@@ -213,3 +213,5 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Meta banners inside other apps (2026-11-23)
 - [x] The "Ads served by Meta" banner in Sofascore came back because it loads through names Facebook itself uses (graph.facebook.com and the "xx" picture servers), which were allowed. Now those names are blocked only when an ordinary app (not Facebook, Instagram, Messenger, WhatsApp or a web browser) asks for them. Your Allow tap in Logs still wins. Test added. Not build-checked (no Android tools here).
 - [ ] Real-device check: open the same box-score screen. Side effect to watch: "Log in with Facebook" inside other apps may stop working; tap Allow on graph.facebook.com in Logs if so.
+
+- Shield screen now shows "Paused until <time>" when the 15-minute pause is started from the notification (was still showing On). Not build-checked: no Android SDK in this cloud session.

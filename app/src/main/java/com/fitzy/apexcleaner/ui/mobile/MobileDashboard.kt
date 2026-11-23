@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -149,12 +150,17 @@ fun MobileDashboard(
                 }
                 if (tab == 1) {
                 item {
+                    val nowMs by produceState(System.currentTimeMillis(), state.shieldPausedUntil) {
+                        while (true) { value = System.currentTimeMillis(); kotlinx.coroutines.delay(5_000) }
+                    }
+                    val shieldPaused = state.shieldOn && nowMs < state.shieldPausedUntil
                     Card(Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Ad & tracker shield", style = MaterialTheme.typography.titleMedium)
                                 Text(
-                                    if (state.shieldOn) "On: ${state.blockedCount} ads and trackers blocked. Banking, alarms and push alerts are never touched (${state.bankingDomains} banking sites pass straight through)."
+                                    if (shieldPaused) "Paused until ${java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(state.shieldPausedUntil))}. Ads are not being blocked right now. Tap Resume in the notification to turn blocking back on."
+                                    else if (state.shieldOn) "On: ${state.blockedCount} ads and trackers blocked. Banking, alarms and push alerts are never touched (${state.bankingDomains} banking sites pass straight through)."
                                     else "Off. Blocks ad, tracker and smart-TV spying lookups on this device, using a private on-device filter.",
                                     style = MaterialTheme.typography.bodySmall,
                                 )

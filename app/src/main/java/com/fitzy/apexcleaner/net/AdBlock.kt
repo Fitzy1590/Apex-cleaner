@@ -1,6 +1,8 @@
 package com.fitzy.apexcleaner.net
 
 import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -21,6 +23,9 @@ object AdBlock {
     @Volatile var pausedUntil = 0L
         private set
     private var sinceSave = 0
+    private val _pausedFlow = MutableStateFlow(0L)
+    /** Lets the screen follow the pause started from the notification. */
+    val pausedFlow: StateFlow<Long> = _pausedFlow
 
     private fun key(now: Long) = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now))
 
@@ -31,6 +36,7 @@ object AdBlock {
         daily.day = p.getString("day", "").orEmpty()
         daily.count = p.getInt("count", 0)
         pausedUntil = p.getLong("paused_until", 0L)
+        _pausedFlow.value = pausedUntil
     }
 
     fun recordBlocked(ctx: Context, now: Long = System.currentTimeMillis()) {
@@ -49,12 +55,14 @@ object AdBlock {
     fun pause(ctx: Context, now: Long = System.currentTimeMillis()) {
         ensureLoaded(ctx)
         pausedUntil = now + PAUSE_MINUTES * 60_000L
+        _pausedFlow.value = pausedUntil
         save(ctx)
     }
 
     fun resume(ctx: Context) {
         ensureLoaded(ctx)
         pausedUntil = 0L
+        _pausedFlow.value = 0L
         save(ctx)
     }
 
