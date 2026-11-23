@@ -154,3 +154,14 @@ class AdNoticeTest {
         assertTrue(!AdNoticeRules.fullScreen(1000, 900, 1080, 2400))
     }
 }
+
+class MetaAdsTest {
+    @org.junit.Test fun blocksForThirdPartyAppsOnly() {
+        val no: (String) -> Boolean = { false }
+        org.junit.Assert.assertTrue(MetaAds.shouldBlockFor("graph.facebook.com", listOf("com.sofascore.results"), no))
+        org.junit.Assert.assertFalse(MetaAds.shouldBlockFor("graph.facebook.com", listOf("com.facebook.katana"), no))
+        org.junit.Assert.assertFalse(MetaAds.shouldBlockFor("graph.facebook.com", listOf("com.android.chrome"), { it.contains("chrome") }))
+        org.junit.Assert.assertFalse(MetaAds.shouldBlockFor("graph.facebook.com", emptyList(), no))
+        org.junit.Assert.assertFalse(MetaAds.shouldBlockFor("www.facebook.com", listOf("com.sofascore.results"), no))
+    }
+}

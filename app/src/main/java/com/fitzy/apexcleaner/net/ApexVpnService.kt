@@ -174,7 +174,9 @@ class ApexVpnService : VpnService() {
         val dns = p.copyOfRange(ihl + 8, p.size)
         val q = DnsPacket.parseQuestion(dns) ?: return
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
-        val block = engine.decide(q.name) == FilterEngine.Verdict.BLOCK && !AdBlock.isPaused()
+        val verdict = engine.decide(q.name)
+        val block = !AdBlock.isPaused() && (verdict == FilterEngine.Verdict.BLOCK ||
+            (verdict == FilterEngine.Verdict.ALLOW && MetaAds.isMetaAdName(q.name) && metaAdAsker(p, ihl)))
         ShieldRules.record(this, q.name, block); ShieldStats.lookups.value++
         val answer = if (block) {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
@@ -184,6 +186,17 @@ class ApexVpnService : VpnService() {
         answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }
     }
+
+    /** True when the app asking is an ordinary non-Meta, non-browser app, so Meta ad names can be blocked for it. */
+    private fun metaAdAsker(p: ByteArray, ihl: Int): Boolean = runCatching {
+        if (android.os.Build.VERSION.SDK_INT < 29) return false
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val sport = (p[ihl].toInt() and 0xff shl 8) or (p[ihl + 1].toInt() and 0xff)
+        val uid = cm.getConnectionOwnerUid(17, java.net.InetSocketAddress(InetAddress.getByAddress(p.copyOfRange(12, 16)), sport),
+            java.net.InetSocketAddress(InetAddress.getByAddress(FAKE_DNS_BYTES), 53))
+        val pkgs = packageManager.getPackagesForUid(uid)?.toList().orEmpty()
+        MetaAds.shouldBlockFor("graph.facebook.com", pkgs) { AdNoticeRules.isBrowser(it) }
+    }.getOrDefault(false)
 
     /** Encrypted lookup first; plain UDP only if the encrypted one fails. */
     private fun resolve(query: ByteArray): ByteArray? =

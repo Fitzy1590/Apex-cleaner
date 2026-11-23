@@ -209,3 +209,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Sofascore in-feed Torneo banner (2026-11-22, owner said yes)
 - [x] The optional "Hide leftover ad boxes" helper now also covers Sofascore's own wide, short promo banner anywhere in the feed, using the page colour from both sides. Only Sofascore; only when both side colours match; comes down while scrolling like the others. Test added. Not build-checked (no Android tools here).
 - [ ] Real-device check: switch on "Hide leftover ad boxes" and Accessibility helper, open Sofascore. If the banner is not a web view, it will not be found and I will need the Logs/layout detail.
+
+## Meta banners inside other apps (2026-11-23)
+- [x] The "Ads served by Meta" banner in Sofascore came back because it loads through names Facebook itself uses (graph.facebook.com and the "xx" picture servers), which were allowed. Now those names are blocked only when an ordinary app (not Facebook, Instagram, Messenger, WhatsApp or a web browser) asks for them. Your Allow tap in Logs still wins. Test added. Not build-checked (no Android tools here).
+- [ ] Real-device check: open the same box-score screen. Side effect to watch: "Log in with Facebook" inside other apps may stop working; tap Allow on graph.facebook.com in Logs if so.
