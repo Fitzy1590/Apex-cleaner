@@ -227,3 +227,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Sofascore Torneo banner, picture version (2026-11-24)
 - [x] The Torneo promo is Sofascore's own banner (not an ad network), so only the optional "Hide leftover ad boxes" helper can cover it. It now also covers it when it is a plain picture docked at the very bottom (narrower than the screen, so never the navigation bar), not only a web view. Test added.
 - [ ] Real-device check: Hide leftover ad boxes + Accessibility helper both on, open the box score. If still visible, the banner may be hidden from the accessibility tree; tell me.
+
+## Sofascore Torneo banner, "Ad" tag version (2026-11-24)
+- [x] Owner confirmed new version + helper on, banner still shown. The helper now also finds the banner by its small "Ad" tag near the bottom (Sofascore only) and covers the strip around it, matching the page colour. Test added.
+- [ ] Real-device check. If it still shows, Sofascore hides the banner completely from Android; only a position-based cover or the paid ad-free option is left.

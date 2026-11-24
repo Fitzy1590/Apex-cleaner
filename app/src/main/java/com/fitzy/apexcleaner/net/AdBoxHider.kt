@@ -60,6 +60,19 @@ object AdBoxRules {
         return w <= screenW * 0.9 && bottom >= screenH * 0.9
     }
 
+    /**
+     * Sofascore only: the promo banner carries a small "Ad" tag in its top-right corner. If that tag is on screen near the
+     * bottom edge, the banner is the strip around it (about 70% of the screen width, centred). Returns left, top, right, bottom, or null.
+     */
+    fun sofascoreAdTagBox(pkg: String, label: String?, tagTop: Int, tagBottom: Int, screenW: Int, screenH: Int): IntArray? {
+        if (!pkg.contains("sofascore") || label?.trim() != "Ad") return null
+        val h = tagBottom - tagTop
+        if (h < 10 || h > screenH * 0.04 || tagTop < screenH * 0.85 || tagBottom > screenH) return null
+        val top = (tagTop - screenH * 0.004).toInt()
+        val bottom = minOf(screenH, (tagTop + screenH * 0.0395).toInt())
+        return intArrayOf((screenW * 0.152).toInt(), top, (screenW * 0.847).toInt(), bottom)
+    }
+
     fun isEnabled(ctx: Context): Boolean {
         val me = android.content.ComponentName(ctx, AdBoxHider::class.java)
         val list = Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
@@ -157,6 +170,11 @@ class AdBoxHider : AccessibilityService() {
                 val br = Rect(); n.getBoundsInScreen(br)
                 if (AdBoxRules.sofascoreBanner(pkg, n.className?.toString(), br.width(), br.height(), dm.widthPixels, dm.heightPixels, br.bottom) &&
                     br.left >= 10 && br.top >= 0 && br.right <= dm.widthPixels - 10 && br.bottom <= dm.heightPixels) { found += br; outside += br; return }
+            }
+            if (n.isVisibleToUser && !n.isEditable) {
+                val tr = Rect(); n.getBoundsInScreen(tr)
+                val box = AdBoxRules.sofascoreAdTagBox(pkg, n.text?.toString() ?: n.contentDescription?.toString(), tr.top, tr.bottom, dm.widthPixels, dm.heightPixels)
+                if (box != null) { val r = Rect(box[0], box[1], box[2], box[3]); found += r; outside += r; return }
             }
             if (n.isVisibleToUser && !n.isEditable && AdBoxRules.looksLikeAd(n.viewIdResourceName, n.className?.toString(), n.contentDescription?.toString())) {
                 val r = Rect()

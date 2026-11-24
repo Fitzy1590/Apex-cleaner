@@ -124,6 +124,12 @@ class AdBoxAndReplyTest {
         assertTrue(AdBoxRules.sofascoreBanner("com.sofascore.results", "android.view.View", 760, 120, 1080, 2400, 2380))
         assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", "android.view.View", 1080, 120, 1080, 2400, 2400))
         assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", "android.view.View", 760, 120, 1080, 2400, 1200))
+        // The small "Ad" tag near the bottom locates the promo strip; other apps, other words and mid-screen tags are ignored.
+        val box = AdBoxRules.sofascoreAdTagBox("com.sofascore.results", "Ad", 2268, 2300, 1080, 2400)!!
+        assertTrue(box[0] > 100 && box[2] < 1000 && box[3] <= 2400 && box[1] < 2268)
+        assertNull(AdBoxRules.sofascoreAdTagBox("com.other.app", "Ad", 2268, 2300, 1080, 2400))
+        assertNull(AdBoxRules.sofascoreAdTagBox("com.sofascore.results", "Add", 2268, 2300, 1080, 2400))
+        assertNull(AdBoxRules.sofascoreAdTagBox("com.sofascore.results", "Ad", 1000, 1032, 1080, 2400))
         assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", wv, 1080, 2000, 1080, 2400))
     }
 
