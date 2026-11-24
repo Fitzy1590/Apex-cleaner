@@ -202,7 +202,11 @@ class ApexVpnService : VpnService() {
             return
         }
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
-        val verdict = engine.decide(q.name)
+        val rawVerdict = engine.decide(q.name)
+        // Ad-blocker detection scripts may load (so sites show the page, not "please allow ads"); your own Block choice still wins.
+        val letThrough = rawVerdict == FilterEngine.Verdict.BLOCK && com.fitzy.apexcleaner.core.AppSettings.allowAdblockChecks(this) &&
+            AdblockCheckNames.matches(q.name) && !engine.userDeny.matches(q.name)
+        val verdict = if (letThrough) FilterEngine.Verdict.SAFE_PASSTHROUGH else rawVerdict
         var block = !paused && (verdict == FilterEngine.Verdict.BLOCK ||
             (verdict == FilterEngine.Verdict.ALLOW && MetaAds.isMetaAdName(q.name) && metaAdAsker(p, ihl)))
         var answer: ByteArray? = null

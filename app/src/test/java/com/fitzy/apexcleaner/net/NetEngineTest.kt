@@ -223,4 +223,9 @@ class MetaAdsTest {
         assertTrue(rt.flags and Packets.RST != 0); assertEquals(1001L, rt.ack); assertEquals(40000, rt.dstPort)
         assertNull(Packets.resetFor(r, rh)) // never answer a refusal with another
     }
+
+    @Test fun adblockCheckScriptsAreRecognisedNotOrdinaryAdServers() {
+        assertTrue(AdblockCheckNames.matches("html-load.com")); assertTrue(AdblockCheckNames.matches("cdn.html-load.com"))
+        assertTrue(!AdblockCheckNames.matches("doubleclick.net")); assertTrue(!AdblockCheckNames.matches("load.com"))
+    }
 }

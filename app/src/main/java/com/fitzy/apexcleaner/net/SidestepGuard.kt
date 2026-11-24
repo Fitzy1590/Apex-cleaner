@@ -24,3 +24,15 @@ object SidestepGuard {
 
     fun isPrivateLookupName(name: String) = privateLookupNames.matches(name)
 }
+
+/**
+ * Small checking scripts some sites use to detect ad blockers ("please allow ads on this site"). When they cannot load,
+ * the site shows a wall instead of the article. Letting only these through lets the page open while the real ad servers stay blocked.
+ * Your own Block choice in the log still wins. Pure, so it is unit-tested.
+ */
+object AdblockCheckNames {
+    private val names = DomainTrie().apply {
+        listOf("html-load.com", "css-load.com", "img-load.com", "content-loader.com", "error-report.com", "getadmiral.com").forEach(::add)
+    }
+    fun matches(name: String) = names.matches(name)
+}

@@ -231,3 +231,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Sofascore Torneo banner, "Ad" tag version (2026-11-24)
 - [x] Owner confirmed new version + helper on, banner still shown. The helper now also finds the banner by its small "Ad" tag near the bottom (Sofascore only) and covers the strip around it, matching the page colour. Test added.
 - [ ] Real-device check. If it still shows, Sofascore hides the banner completely from Android; only a position-based cover or the paid ad-free option is left.
+
+## Ad-blocker check scripts let through (2026-11-24)
+- [x] New switch "Let ad-blocker checks through" (on by default): the small scripts sites use to detect ad blockers (html-load.com and similar) load, so sites show the article instead of "please allow ads on this site". Real ad servers stay blocked; your own Block choice wins. Test added.
+- [ ] Real-device check on ladbible.com. If the wall stays, open Logs and tell me which names show as blocked right after.
