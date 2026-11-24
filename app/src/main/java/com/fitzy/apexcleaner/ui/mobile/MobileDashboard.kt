@@ -150,8 +150,9 @@ fun MobileDashboard(
                 }
                 if (tab == 1) {
                 item {
-                    val nowMs by produceState(System.currentTimeMillis(), state.shieldPausedUntil) {
-                        while (true) { value = System.currentTimeMillis(); kotlinx.coroutines.delay(5_000) }
+                    var nowMs by androidx.compose.runtime.remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
+                    androidx.compose.runtime.LaunchedEffect(state.shieldPausedUntil) {
+                        while (true) { nowMs = System.currentTimeMillis(); kotlinx.coroutines.delay(5_000) }
                     }
                     val shieldPaused = state.shieldOn && nowMs < state.shieldPausedUntil
                     Card(Modifier.fillMaxWidth()) {
