@@ -120,6 +120,10 @@ class AdBoxAndReplyTest {
         assertTrue(AdBoxRules.sofascoreBanner("com.sofascore.results", wv, 760, 120, 1080, 2400))
         assertTrue(!AdBoxRules.sofascoreBanner("com.other.app", wv, 760, 120, 1080, 2400))
         assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", "android.widget.TextView", 760, 120, 1080, 2400))
+        // Bottom-docked picture banner narrower than the screen is covered; a full-width bar (navigation) and a mid-screen picture are not.
+        assertTrue(AdBoxRules.sofascoreBanner("com.sofascore.results", "android.view.View", 760, 120, 1080, 2400, 2380))
+        assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", "android.view.View", 1080, 120, 1080, 2400, 2400))
+        assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", "android.view.View", 760, 120, 1080, 2400, 1200))
         assertTrue(!AdBoxRules.sofascoreBanner("com.sofascore.results", wv, 1080, 2000, 1080, 2400))
     }
 

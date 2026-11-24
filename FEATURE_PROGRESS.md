@@ -223,3 +223,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Tests added (aliases, damaged answers, wildcard list lines, private-lookup names, quick refusal packets). Not build-checked: no Android SDK in this cloud session.
 - [ ] Not built, on purpose: reading inside web pages (needs a security certificate and breaks the "no inspection" safety rule), and blocking by server address (would hit shared servers). Sofascore's own promo banner is still only handled by the optional "Hide leftover ad boxes" helper.
 - [ ] Real-device check: Sofascore box score and a few browsers; "Log in with Facebook" and apps using their own DNS settings.
+
+## Sofascore Torneo banner, picture version (2026-11-24)
+- [x] The Torneo promo is Sofascore's own banner (not an ad network), so only the optional "Hide leftover ad boxes" helper can cover it. It now also covers it when it is a plain picture docked at the very bottom (narrower than the screen, so never the navigation bar), not only a web view. Test added.
+- [ ] Real-device check: Hide leftover ad boxes + Accessibility helper both on, open the box score. If still visible, the banner may be hidden from the accessibility tree; tell me.

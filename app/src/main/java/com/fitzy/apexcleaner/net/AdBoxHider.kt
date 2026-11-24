@@ -52,8 +52,13 @@ object AdBoxRules {
     }
 
     /** Sofascore only: its in-feed promo banner is a wide, short web view anywhere on screen, with page background on both sides. */
-    fun sofascoreBanner(pkg: String, className: String?, w: Int, h: Int, screenW: Int, screenH: Int): Boolean =
-        pkg.contains("sofascore") && className?.contains("WebView") == true && w >= screenW * 0.5 && h >= 40 && h <= screenH * 0.18
+    fun sofascoreBanner(pkg: String, className: String?, w: Int, h: Int, screenW: Int, screenH: Int, bottom: Int = 0): Boolean {
+        if (!pkg.contains("sofascore") || w < screenW * 0.5 || h < 40 || h > screenH * 0.18) return false
+        if (className?.contains("WebView") == true) return true
+        // The promo docked just above the bottom edge may be a plain picture or Compose view rather than a web view.
+        // Narrower than the screen (so never the navigation bar) and sitting at the very bottom.
+        return w <= screenW * 0.9 && bottom >= screenH * 0.9
+    }
 
     fun isEnabled(ctx: Context): Boolean {
         val me = android.content.ComponentName(ctx, AdBoxHider::class.java)
@@ -150,7 +155,7 @@ class AdBoxHider : AccessibilityService() {
             }
             if (n.isVisibleToUser && !n.isEditable) {
                 val br = Rect(); n.getBoundsInScreen(br)
-                if (AdBoxRules.sofascoreBanner(pkg, n.className?.toString(), br.width(), br.height(), dm.widthPixels, dm.heightPixels) &&
+                if (AdBoxRules.sofascoreBanner(pkg, n.className?.toString(), br.width(), br.height(), dm.widthPixels, dm.heightPixels, br.bottom) &&
                     br.left >= 10 && br.top >= 0 && br.right <= dm.widthPixels - 10 && br.bottom <= dm.heightPixels) { found += br; outside += br; return }
             }
             if (n.isVisibleToUser && !n.isEditable && AdBoxRules.looksLikeAd(n.viewIdResourceName, n.className?.toString(), n.contentDescription?.toString())) {
