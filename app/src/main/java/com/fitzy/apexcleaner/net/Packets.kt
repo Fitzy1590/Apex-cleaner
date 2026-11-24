@@ -95,4 +95,13 @@ object Packets {
         put16(o, 26, if (c == 0) 0xffff else c)
         return o
     }
+
+    /** The "no thanks" reply to a TCP packet, so the app gives up at once instead of waiting for a time-out. Null for packets that need no reply. */
+    fun resetFor(p: ByteArray, h: Header): ByteArray? {
+        val t = tcp(p, h) ?: return null
+        if (t.flags and RST != 0) return null
+        return if (t.flags and SYN != 0) buildTcp(h.dst, h.src, t.dstPort, t.srcPort, 0, add(t.seq, 1), RST or ACK, 0)
+        else if (t.flags and ACK != 0) buildTcp(h.dst, h.src, t.dstPort, t.srcPort, t.ack, 0, RST, 0)
+        else null
+    }
 }

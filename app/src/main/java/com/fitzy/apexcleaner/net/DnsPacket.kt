@@ -55,4 +55,64 @@ object DnsPacket {
         }
         return out.toByteArray()
     }
+
+    /**
+     * Every CNAME target in a DNS answer, lower-case. Ad companies often hide behind an innocent-looking name that is
+     * really an alias for a tracker; checking the alias targets lets the shield see through that disguise.
+     * Safe on damaged data: returns what it could read and never loops.
+     */
+    fun cnameTargets(d: ByteArray, len: Int = d.size): List<String> {
+        val out = ArrayList<String>()
+        runCatching {
+            if (len < 12) return out
+            val qd = u16(d, 4); val an = u16(d, 6)
+            var i = 12
+            repeat(qd) { i = skipName(d, i, len) + 4 }
+            repeat(minOf(an, 32)) {
+                i = skipName(d, i, len)
+                if (i + 10 > len) return out
+                val type = u16(d, i); val rdLen = u16(d, i + 8)
+                val rdata = i + 10
+                if (rdata + rdLen > len) return out
+                if (type == 5) readName(d, rdata, len)?.let { out += it }
+                i = rdata + rdLen
+            }
+        }
+        return out
+    }
+
+    private fun u16(d: ByteArray, i: Int) = (d[i].toInt() and 0xff shl 8) or (d[i + 1].toInt() and 0xff)
+
+    /** Offset just after the name that starts at [start] (a pointer ends a name after 2 bytes). */
+    private fun skipName(d: ByteArray, start: Int, len: Int): Int {
+        var i = start
+        while (true) {
+            if (i >= len) throw IllegalArgumentException("short")
+            val l = d[i].toInt() and 0xff
+            if (l == 0) return i + 1
+            if (l and 0xC0 == 0xC0) return i + 2
+            i += 1 + l
+        }
+    }
+
+    private fun readName(d: ByteArray, start: Int, len: Int): String? {
+        val sb = StringBuilder()
+        var i = start
+        var jumps = 0
+        while (true) {
+            if (i >= len) return null
+            val l = d[i].toInt() and 0xff
+            if (l == 0) break
+            if (l and 0xC0 == 0xC0) {
+                if (i + 1 >= len || ++jumps > 8) return null
+                i = (l and 0x3F shl 8) or (d[i + 1].toInt() and 0xff)
+                continue
+            }
+            if (l and 0xC0 != 0 || i + 1 + l > len) return null
+            if (sb.isNotEmpty()) sb.append('.')
+            for (k in 1..l) sb.append((d[i + k].toInt() and 0xff).toChar())
+            i += 1 + l
+        }
+        return sb.toString().lowercase()
+    }
 }

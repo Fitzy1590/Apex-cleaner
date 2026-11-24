@@ -264,6 +264,8 @@ fun MobileDashboard(
                         val c = androidx.compose.ui.platform.LocalContext.current
                         var nx by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(c)) }
                         SettingRow("Collapse blocked ads", "Blocked ad names are answered \"this site does not exist\", so most apps drop the ad slot instead of showing an empty frame. Turn off if an app misbehaves.", nx) { nx = it; com.fitzy.apexcleaner.core.AppSettings.setNxdomainReply(c, it) }
+                        var sidestep by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.blockSidestep(c)) }
+                        SettingRow("Stop apps sneaking around the shield", "Turns away apps that try their own private lookup service, so their ad lookups go through the shield instead. Applies the next time the shield is switched on. Turn off if an app can no longer connect.", sidestep) { sidestep = it; com.fitzy.apexcleaner.core.AppSettings.setBlockSidestep(c, it) }
                     }
                     item {
                         val c = androidx.compose.ui.platform.LocalContext.current

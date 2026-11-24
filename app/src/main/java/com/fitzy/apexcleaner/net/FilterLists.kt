@@ -20,6 +20,9 @@ object FilterLists {
         "adguard.txt" to "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
         // Aggressive extras: Hagezi Pro++ (ads, trackers, telemetry) and Peter Lowe's ad servers.
         "hagezi_pro_plus.txt" to "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/pro.plus.txt",
+        // OISD small and 1Hosts Lite: the same community lists Rethink DNS and AdGuard-style apps rely on, kept to the "few false alarms" editions.
+        "oisd_small.txt" to "https://small.oisd.nl/domainswild2",
+        "1hosts_lite.txt" to "https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/hosts.txt",
         "peterlowe.txt" to "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext",
     )
     private const val MAX_BYTES = 20L shl 20
@@ -45,7 +48,14 @@ object FilterLists {
         return ok
     }
 
-    fun hasLists(ctx: Context): Boolean = sources.keys.all { File(dir(ctx), it).length() > 1000 }
+    /** True once at least one list is on the device (a single list that keeps failing to download must not trigger a re-download at every start). */
+    fun hasLists(ctx: Context): Boolean = sources.keys.any { File(dir(ctx), it).length() > 1000 }
+
+    /** True when the newest list file is older than [days], or none exists, so the shield can refresh them itself. */
+    fun isStale(ctx: Context, days: Int = 7, now: Long = System.currentTimeMillis()): Boolean {
+        val newest = dir(ctx).listFiles()?.filter { it.name.endsWith(".txt") }?.maxOfOrNull { it.lastModified() } ?: return true
+        return now - newest > days * 86_400_000L
+    }
 
     fun count(ctx: Context): Int = DomainTrie.fromList(load(ctx)).size
 

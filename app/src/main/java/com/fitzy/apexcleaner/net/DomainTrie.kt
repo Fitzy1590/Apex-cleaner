@@ -76,7 +76,8 @@ class DomainTrie {
                 val parts = line.split(' ', '\t').filter { it.isNotEmpty() }
                 if (parts.isEmpty()) continue
                 val host = if (parts.size >= 2 && (parts[0] == "0.0.0.0" || parts[0] == "127.0.0.1")) parts[1] else parts[0]
-                if (host.contains('.') && host != "0.0.0.0" && host != "localhost") add(host)
+                val clean = host.removePrefix("*.")
+                if (clean.contains('.') && !clean.contains('*') && clean != "0.0.0.0" && clean != "localhost") add(clean)
             }
         }
     }

@@ -215,3 +215,11 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [ ] Real-device check: open the same box-score screen. Side effect to watch: "Log in with Facebook" inside other apps may stop working; tap Allow on graph.facebook.com in Logs if so.
 
 - Shield screen now shows "Paused until <time>" when the 15-minute pause is started from the notification (was still showing On). Not build-checked: no Android SDK in this cloud session.
+
+## Shield accuracy upgrade (2026-11-24, owner said build all)
+- [x] Disguised trackers: the shield now also checks the alias names a lookup comes back through, so a harmless-looking name that is secretly a listed tracker is blocked. Your Allow choice and banking/push/clock names still win.
+- [x] No sneaking around: apps' private encrypted-lookup services are turned away (Firefox is told to stay on the phone's lookup), and hard-wired public lookup servers (8.8.8.8, 1.1.1.1, 9.9.9.9, OpenDNS) are caught. New switch "Stop apps sneaking around the shield" (on by default, applies next time the shield starts).
+- [x] Two more community lists (OISD small, 1Hosts Lite) and automatic weekly refresh by the shield itself, only on an unmetered connection. One failing list no longer causes a re-download at every start.
+- [x] Tests added (aliases, damaged answers, wildcard list lines, private-lookup names, quick refusal packets). Not build-checked: no Android SDK in this cloud session.
+- [ ] Not built, on purpose: reading inside web pages (needs a security certificate and breaks the "no inspection" safety rule), and blocking by server address (would hit shared servers). Sofascore's own promo banner is still only handled by the optional "Hide leftover ad boxes" helper.
+- [ ] Real-device check: Sofascore box score and a few browsers; "Log in with Facebook" and apps using their own DNS settings.

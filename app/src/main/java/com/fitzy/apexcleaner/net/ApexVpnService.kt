@@ -77,6 +77,8 @@ class ApexVpnService : VpnService() {
             limited.forEach { runCatching { b.addAllowedApplication(it) } }
         } else {
             b.addRoute(FAKE_DNS, 32)
+            // Public lookup servers some apps call by address: their traffic comes here so plain lookups are filtered and encrypted ones are turned away.
+            if (com.fitzy.apexcleaner.core.AppSettings.blockSidestep(this)) SidestepGuard.publicResolverAddresses.forEach { runCatching { b.addRoute(it, 32) } }
             bypassPackages().forEach { runCatching { b.addDisallowedApplication(it) } }
         }
         ShieldStats.failure.value = null
@@ -96,6 +98,13 @@ class ApexVpnService : VpnService() {
         Thread({
             runCatching { if (!FilterLists.hasLists(this)) FilterLists.update(this) }
             runCatching { ShieldRules.reloadLists(this); ShieldRules.apply(this, ShieldRules.live); ShieldStats.listNames.value = ShieldRules.live?.blocks?.size ?: 0 }
+            // Lists older than a week refresh by themselves, but only on an unmetered connection.
+            runCatching {
+                val cm = getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                if (FilterLists.isStale(this) && !cm.isActiveNetworkMetered && FilterLists.update(this) > 0) {
+                    ShieldRules.reloadLists(this); ShieldRules.apply(this, ShieldRules.live); ShieldStats.listNames.value = ShieldRules.live?.blocks?.size ?: 0
+                }
+            }
         }, "apex-lists").start()
         Thread({ loop(engine, full) }, "apex-dns").start()
     }
@@ -158,10 +167,20 @@ class ApexVpnService : VpnService() {
                 val n = input.read(buf)
                 if (n <= 0) continue
                 val pkt = buf.copyOf(n)
-                val h = if (full) Packets.header(pkt) else null
-                val isDns = h != null && h.proto == Packets.UDP && n >= h.ihl + 4 && Packets.u16(pkt, h.ihl + 2) == 53 && h.dst.contentEquals(FAKE_DNS_BYTES)
+                val h = Packets.header(pkt)
+                val sidestep = com.fitzy.apexcleaner.core.AppSettings.blockSidestep(this)
+                val isDns = h != null && h.proto == Packets.UDP && n >= h.ihl + 4 && Packets.u16(pkt, h.ihl + 2) == 53 &&
+                    (h.dst.contentEquals(FAKE_DNS_BYTES) || sidestep)
                 // A bad packet or a full thread pool must never end the loop or the app.
-                runCatching { if (h == null || isDns) pool.execute { runCatching { handle(pkt, engine, output) } } else flows?.onPacket(pkt, h) }
+                runCatching {
+                    when {
+                        h == null || isDns -> pool.execute { runCatching { handle(pkt, engine, output) } }
+                        full -> flows?.onPacket(pkt, h)
+                        // DNS-only mode: anything else that arrives is a hard-wired public lookup server (for example encrypted lookups by address). Refuse at once so the app falls back to the phone's lookup.
+                        h.proto == Packets.TCP -> Packets.resetFor(pkt, h)?.let { r -> synchronized(output) { output.write(r) } }
+                        else -> Unit
+                    }
+                }
             }
         } catch (_: Throwable) { /* tunnel closed */ } finally { stop() }
     }
@@ -173,16 +192,34 @@ class ApexVpnService : VpnService() {
         if (dport != 53 || p.size < ihl + 8) return
         val dns = p.copyOfRange(ihl + 8, p.size)
         val q = DnsPacket.parseQuestion(dns) ?: return
+        val paused = AdBlock.isPaused()
+        // Apps that try a private encrypted-lookup service are turned away so they use the phone's lookup (which is filtered).
+        // Firefox is told "does not exist" for its canary name, the official way to keep it on the phone's lookup.
+        if (!paused && com.fitzy.apexcleaner.core.AppSettings.blockSidestep(this) && !engine.userAllow.matches(q.name) &&
+            (q.name == SidestepGuard.FIREFOX_CANARY || SidestepGuard.isPrivateLookupName(q.name))) {
+            ShieldRules.record(this, q.name, true); ShieldStats.lookups.value++
+            synchronized(out) { out.write(wrap(p, ihl, DnsPacket.nxdomainResponse(dns, q))) }
+            return
+        }
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
         val verdict = engine.decide(q.name)
-        val block = !AdBlock.isPaused() && (verdict == FilterEngine.Verdict.BLOCK ||
+        var block = !paused && (verdict == FilterEngine.Verdict.BLOCK ||
             (verdict == FilterEngine.Verdict.ALLOW && MetaAds.isMetaAdName(q.name) && metaAdAsker(p, ihl)))
+        var answer: ByteArray? = null
+        if (!block) {
+            answer = resolve(dns)
+            // See through disguises: a harmless-looking name that is really an alias of a listed tracker is blocked too.
+            if (!paused && answer != null && verdict == FilterEngine.Verdict.ALLOW) {
+                val aliases = DnsPacket.cnameTargets(answer)
+                if (aliases.isNotEmpty() && engine.decideWithAliases(q.name, aliases) == FilterEngine.Verdict.BLOCK) block = true
+            }
+        }
         ShieldRules.record(this, q.name, block); ShieldStats.lookups.value++
-        val answer = if (block) {
+        if (block) {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
             ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
-            if (com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(this)) DnsPacket.nxdomainResponse(dns, q) else DnsPacket.blockedResponse(dns, dns.size, q)
-        } else resolve(dns)
+            answer = if (com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(this)) DnsPacket.nxdomainResponse(dns, q) else DnsPacket.blockedResponse(dns, dns.size, q)
+        }
         answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }
     }

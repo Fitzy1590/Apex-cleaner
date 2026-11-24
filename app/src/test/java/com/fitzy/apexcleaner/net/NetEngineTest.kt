@@ -164,4 +164,53 @@ class MetaAdsTest {
         org.junit.Assert.assertFalse(MetaAds.shouldBlockFor("graph.facebook.com", emptyList(), no))
         org.junit.Assert.assertFalse(MetaAds.shouldBlockFor("www.facebook.com", listOf("com.sofascore.results"), no))
     }
+
+    // --- accuracy upgrades (2026-11-24) ---
+    private fun dnsAnswer(name: String, cname: String): ByteArray {
+        fun enc(n: String) = n.split('.').flatMap { l -> listOf(l.length.toByte()) + l.toByteArray().toList() } + 0.toByte()
+        val q = enc(name)
+        val target = enc(cname)
+        val head = listOf<Byte>(0, 1, -127, -128, 0, 1, 0, 1, 0, 0, 0, 0)
+        val qtail = listOf<Byte>(0, 1, 0, 1)
+        val rr = listOf<Byte>(-64, 12, 0, 5, 0, 1, 0, 0, 0, 60, 0, target.size.toByte()) + target
+        return (head + q + qtail + rr).toByteArray()
+    }
+
+    @Test fun aliasTargetsAreReadFromAnswers() {
+        assertEquals(listOf("tracker.adnet.com"), DnsPacket.cnameTargets(dnsAnswer("metrics.news.com", "tracker.adnet.com")))
+        assertEquals(emptyList<String>(), DnsPacket.cnameTargets(ByteArray(5)))
+        val cut = dnsAnswer("metrics.news.com", "tracker.adnet.com").copyOf(40) // damaged answer must not crash
+        DnsPacket.cnameTargets(cut)
+    }
+
+    @Test fun disguisedTrackersAreBlockedButYourAllowAndSafeNamesWin() {
+        val e = FilterEngine.withDefaults(sequenceOf("tracker.adnet.com"))
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decide("metrics.news.com"))
+        assertEquals(FilterEngine.Verdict.BLOCK, e.decideWithAliases("metrics.news.com", listOf("edge.tracker.adnet.com")))
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decideWithAliases("metrics.news.com", listOf("cdn.fine.com")))
+        e.userAllow = DomainTrie().apply { add("metrics.news.com") }
+        assertEquals(FilterEngine.Verdict.ALLOW, e.decideWithAliases("metrics.news.com", listOf("tracker.adnet.com")))
+        val safe = FilterEngine.withDefaults(sequenceOf("tracker.adnet.com"))
+        assertEquals(FilterEngine.Verdict.SAFE_PASSTHROUGH, safe.decideWithAliases("chase.com", listOf("tracker.adnet.com")))
+    }
+
+    @Test fun listParserHandlesWildcardLines() {
+        val t = DomainTrie.fromList(sequenceOf("*.wild.example.com", "*.*.bad", "plain.example.org"))
+        assertTrue(t.matches("x.wild.example.com")); assertTrue(t.matches("plain.example.org")); assertEquals(2, t.size)
+    }
+
+    @Test fun privateLookupServicesAreRecognised() {
+        assertTrue(SidestepGuard.isPrivateLookupName("dns.google")); assertTrue(SidestepGuard.isPrivateLookupName("mozilla.cloudflare-dns.com"))
+        assertTrue(!SidestepGuard.isPrivateLookupName("www.google.com")); assertTrue(!SidestepGuard.isPrivateLookupName("google.com"))
+    }
+
+    @Test fun tcpToHardWiredResolverGetsAQuickRefusal() {
+        val src = byteArrayOf(10, 111, -34, 1); val dst = byteArrayOf(8, 8, 8, 8)
+        val syn = Packets.buildTcp(src, dst, 40000, 443, 1000, 0, Packets.SYN, 65535)
+        val h = Packets.header(syn)!!
+        val r = Packets.resetFor(syn, h)!!
+        val rh = Packets.header(r)!!; val rt = Packets.tcp(r, rh)!!
+        assertTrue(rt.flags and Packets.RST != 0); assertEquals(1001L, rt.ack); assertEquals(40000, rt.dstPort)
+        assertNull(Packets.resetFor(r, rh)) // never answer a refusal with another
+    }
 }
