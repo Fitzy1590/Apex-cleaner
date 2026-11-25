@@ -24,6 +24,10 @@ object AppSettings {
     fun allowAdblockChecks(ctx: Context) = p(ctx).getBoolean("allow_adblock_checks", true)
     fun setAllowAdblockChecks(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("allow_adblock_checks", on).apply()
 
+    /** Offer an "Allow" notification when a blocked ad name seems to be stopping an app or page from loading. On by default. */
+    fun offerAllow(ctx: Context) = p(ctx).getBoolean("offer_allow", true)
+    fun setOfferAllow(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("offer_allow", on).apply()
+
     /** Cover leftover empty ad boxes (needs the Accessibility service switched on). Off by default. */
     fun hideAdBoxes(ctx: Context) = p(ctx).getBoolean("hide_ad_boxes", false)
     fun setHideAdBoxes(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("hide_ad_boxes", on).apply()

@@ -222,11 +222,40 @@ class ApexVpnService : VpnService() {
         if (block) {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
             ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
+            watchForTrouble(p, ihl, q.name)
             answer = if (com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(this)) DnsPacket.nxdomainResponse(dns, q) else DnsPacket.blockedResponse(dns, dns.size, q)
         }
         answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }
     }
+
+    /**
+     * If the same app keeps asking for one blocked name, it may be stuck. Only offer to allow it when that app is a web
+     * browser or the app on screen (so background retries never nag). Needs Android 10+; names only, never content.
+     */
+    private fun watchForTrouble(p: ByteArray, ihl: Int, name: String) = runCatching {
+        if (android.os.Build.VERSION.SDK_INT < 29 || !com.fitzy.apexcleaner.core.AppSettings.offerAllow(this)) return@runCatching
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val sport = (p[ihl].toInt() and 0xff shl 8) or (p[ihl + 1].toInt() and 0xff)
+        val uid = cm.getConnectionOwnerUid(17, java.net.InetSocketAddress(InetAddress.getByAddress(p.copyOfRange(12, 16)), sport),
+            java.net.InetSocketAddress(InetAddress.getByAddress(FAKE_DNS_BYTES), 53))
+        val pkg = packageManager.getPackagesForUid(uid)?.firstOrNull() ?: return@runCatching
+        if (pkg == packageName) return@runCatching
+        val now = System.currentTimeMillis()
+        if (!TroubleWatch.monitor.onBlocked(pkg, name, now)) return@runCatching
+        if (!AdNoticeRules.isBrowser(pkg) && pkg != onScreenPackage(now)) return@runCatching
+        val label = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }.getOrDefault("An app")
+        com.fitzy.apexcleaner.core.Notifier.postTrouble(this, label, name)
+    }
+
+    /** The app most recently brought to the screen in the last minute, or null (also null without Usage Access). */
+    private fun onScreenPackage(now: Long): String? = runCatching {
+        val um = getSystemService(USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
+        val ev = um.queryEvents(now - 60_000L, now); val e = android.app.usage.UsageEvents.Event()
+        var last: String? = null
+        while (ev.hasNextEvent()) { ev.getNextEvent(e); if (e.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) last = e.packageName }
+        last
+    }.getOrNull()
 
     /** True when the app asking is an ordinary non-Meta, non-browser app, so Meta ad names can be blocked for it. */
     private fun metaAdAsker(p: ByteArray, ihl: Int): Boolean = runCatching {

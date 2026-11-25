@@ -229,3 +229,26 @@ class MetaAdsTest {
         assertTrue(!AdblockCheckNames.matches("doubleclick.net")); assertTrue(!AdblockCheckNames.matches("load.com"))
     }
 }
+
+class TroubleMonitorTest {
+    @Test fun asksOnlyAfterRepeatedTriesByTheSameApp() {
+        val m = TroubleMonitor()
+        assertTrue(!m.onBlocked("a", "ads.x.com", 0)); assertTrue(!m.onBlocked("a", "ads.x.com", 1000))
+        assertTrue(!m.onBlocked("b", "ads.x.com", 2000)); assertTrue(!m.onBlocked("a", "ads.x.com", 3000))
+        assertTrue(m.onBlocked("a", "ads.x.com", 4000))
+    }
+    @Test fun slowSinglesNeverTrigger() {
+        val m = TroubleMonitor()
+        for (i in 0 until 10) assertTrue(!m.onBlocked("a", "ads.x.com", i * 30_000L))
+    }
+    @Test fun doesNotNagAboutTheSameNameOrTooOften() {
+        val m = TroubleMonitor(maxPerHour = 2)
+        fun burst(d: String, t: Long) = (0 until 4).map { m.onBlocked("a", d, t + it) }.last()
+        assertTrue(burst("one.com", 0)); assertTrue(!burst("one.com", 60_000))
+        assertTrue(burst("two.com", 70_000)); assertTrue(!burst("three.com", 80_000))
+    }
+    @Test fun leaveBlockedSilencesForADay() {
+        val m = TroubleMonitor(); m.dismiss("ads.x.com", 0)
+        assertTrue(!(0 until 4).map { m.onBlocked("a", "ads.x.com", 1000L + it) }.last())
+    }
+}

@@ -235,3 +235,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ad-blocker check scripts let through (2026-11-24)
 - [x] New switch "Let ad-blocker checks through" (on by default): the small scripts sites use to detect ad blockers (html-load.com and similar) load, so sites show the article instead of "please allow ads on this site". Real ad servers stay blocked; your own Block choice wins. Test added.
 - [ ] Real-device check on ladbible.com. If the wall stays, open Logs and tell me which names show as blocked right after.
+
+## "Something won't load" prompt (2026-11-25)
+- [x] If an app on screen (or a web browser) keeps asking for one blocked ad address, a notification says it may be stuck and offers "Allow it" (lets only that address through, undo in Logs) or "Leave blocked" (stays quiet about it for a day). At most 3 prompts an hour. New switch "Ask me when something won't load" (on by default). Tests added. Not build-checked: no Android SDK in this cloud session.
+- [ ] Real-device check on ladbible.com or a stuck app. It is a guess from repeated tries, so a page that fails without retrying won't prompt; Logs still shows what was blocked. Usage Access helps pick the app on screen; browsers work without it.

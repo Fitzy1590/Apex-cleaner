@@ -269,6 +269,8 @@ fun MobileDashboard(
                         SettingRow("Stop apps sneaking around the shield", "Turns away apps that try their own private lookup service, so their ad lookups go through the shield instead. Applies the next time the shield is switched on. Turn off if an app can no longer connect.", sidestep) { sidestep = it; com.fitzy.apexcleaner.core.AppSettings.setBlockSidestep(c, it) }
                         var checks by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.allowAdblockChecks(c)) }
                         SettingRow("Let ad-blocker checks through", "Lets the small scripts that sites use to detect ad blockers load, so you see the page instead of \"please allow ads on this site\". The ads themselves stay blocked. Turn off if you would rather see no extra advertising at all.", checks) { checks = it; com.fitzy.apexcleaner.core.AppSettings.setAllowAdblockChecks(c, it) }
+                        var offer by androidx.compose.runtime.remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.offerAllow(c)) }
+                        SettingRow("Ask me when something won't load", "If an app or page keeps asking for a blocked ad address and seems stuck, you get a notification with an Allow button. Allowing only lets that one address through.", offer) { offer = it; com.fitzy.apexcleaner.core.AppSettings.setOfferAllow(c, it) }
                     }
                     item {
                         val c = androidx.compose.ui.platform.LocalContext.current

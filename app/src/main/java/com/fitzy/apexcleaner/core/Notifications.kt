@@ -21,6 +21,9 @@ const val ACTION_BOOST = "com.fitzy.apexcleaner.BOOST"
 const val ACTION_CLEAR_CACHE = "com.fitzy.apexcleaner.CLEAR_CACHE"
 const val ACTION_COOL_DOWN = "com.fitzy.apexcleaner.COOL_DOWN"
 const val ACTION_WHITELIST = "com.fitzy.apexcleaner.WHITELIST"
+const val ACTION_TROUBLE_ALLOW = "com.fitzy.apexcleaner.TROUBLE_ALLOW"
+const val ACTION_TROUBLE_KEEP = "com.fitzy.apexcleaner.TROUBLE_KEEP"
+const val EXTRA_DOMAIN = "domain"
 
 object Notifier {
     const val CHANNEL_SERVICE = "service"
@@ -117,6 +120,30 @@ object Notifier {
         ctx.getSystemService(NotificationManager::class.java).notify(ID_TIP, n)
     }
 
+    /** "Something may not be loading": offers to let one blocked address through. */
+    fun postTrouble(ctx: Context, appName: String, domain: String) {
+        ensureChannels(ctx)
+        val id = 1000 + (domain.hashCode() and 0xfff)
+        fun act(a: String, code: Int) = PendingIntent.getBroadcast(
+            ctx, id * 2 + code,
+            Intent(ctx, ActionReceiver::class.java).setAction(a).putExtra(EXTRA_DOMAIN, domain).putExtra("nid", id),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val text = "$appName keeps asking for an address the shield blocks ($domain) and may not be loading. Allow it so it can load?"
+        val n = Notification.Builder(ctx, CHANNEL_TIPS)
+            .setSmallIcon(R.drawable.ic_stat_apex)
+            .setContentTitle("Something may not be loading")
+            .setContentText("$appName seems stuck")
+            .setStyle(Notification.BigTextStyle().bigText(text))
+            .setContentIntent(openApp(ctx))
+            .setAutoCancel(true)
+            .setTimeoutAfter(10 * 60_000L)
+            .addAction(Notification.Action.Builder(null, "Allow it", act(ACTION_TROUBLE_ALLOW, 0)).build())
+            .addAction(Notification.Action.Builder(null, "Leave blocked", act(ACTION_TROUBLE_KEEP, 1)).build())
+            .build()
+        ctx.getSystemService(NotificationManager::class.java).notify(id, n)
+    }
+
     fun postResult(ctx: Context, message: String) {
         ensureChannels(ctx)
         val n = Notification.Builder(ctx, CHANNEL_TIPS)
@@ -149,6 +176,15 @@ class ActionReceiver : BroadcastReceiver() {
                         // Android needs the one-time VPN permission given inside the app first.
                         if (android.net.VpnService.prepare(context) == null) { ApexVpnService.start(context); null }
                         else "Open Apex Cleaner once to allow ad blocking"
+                    }
+                    ACTION_TROUBLE_ALLOW, ACTION_TROUBLE_KEEP -> {
+                        val d = intent.getStringExtra(EXTRA_DOMAIN)
+                        context.getSystemService(NotificationManager::class.java).cancel(intent.getIntExtra("nid", -1))
+                        if (d == null) null
+                        else if (intent.action == ACTION_TROUBLE_ALLOW) {
+                            com.fitzy.apexcleaner.net.ShieldRules.set(context, d, com.fitzy.apexcleaner.net.Rule.ALLOW)
+                            "Allowed $d. Reload the page or reopen the app. You can undo this in Logs."
+                        } else { com.fitzy.apexcleaner.net.TroubleWatch.monitor.dismiss(d, System.currentTimeMillis()); null }
                     }
                     else -> null
                 }
