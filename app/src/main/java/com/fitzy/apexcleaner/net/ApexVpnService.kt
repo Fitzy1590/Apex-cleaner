@@ -201,6 +201,15 @@ class ApexVpnService : VpnService() {
             synchronized(out) { out.write(wrap(p, ihl, DnsPacket.nxdomainResponse(dns, q))) }
             return
         }
+        // Quiet hours (PIN-locked time rules). Protected names are never touched. Not counted as ads; the 15-minute pause does not lift them.
+        if (!engine.isProtected(q.name)) {
+            val c = java.util.Calendar.getInstance()
+            if (QuietHours.blocks(this, q.name, c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE))) {
+                ShieldRules.record(this, q.name, true); ShieldStats.lookups.value++
+                synchronized(out) { out.write(wrap(p, ihl, DnsPacket.nxdomainResponse(dns, q))) }
+                return
+            }
+        }
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
         val rawVerdict = engine.decide(q.name)
         // Ad-blocker detection scripts may load (so sites show the page, not "please allow ads"); your own Block choice still wins.

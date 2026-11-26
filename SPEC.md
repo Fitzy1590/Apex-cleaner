@@ -73,11 +73,11 @@ Audit: pillars 1 (DNS firewall, trie), 4 (pacing), 5 (cache breakdown, no-kill),
 New: 7 Live Traffic + .pcapng/.har export, 8 PIN-gated Quiet hours, 9 router script generator. Big decisions: 2 HTTPS cosmetic engine (contradicts vpn-engine.md "no SSL interception"), 3 root iptables mode.
 Limits: Live Traffic sees only tunnel traffic; .har has names and sizes only unless Q2=2. Apps ignore user CAs by default since Android 7 (Q2 reaches browsers only).
 Q1 new pieces:
-- [ ] A: Live Traffic + Quiet hours + Router script (recommended)
+- [x] A: Live Traffic + Quiet hours + Router script (recommended)
 - [ ] B: nothing new
 Q2 HTTPS page cleaning:
 - [ ] 1: skip, keep safety rule (recommended)
-- [ ] 2: browsers only, wizard, off by default
+- [x] 2: browsers only, wizard, off by default
 Q3 root mode:
-- [ ] 1: skip for now (recommended)
+- [x] 1: skip for now (recommended)
 - [ ] 2: optional root switch

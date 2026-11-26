@@ -253,7 +253,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## 12-pillar brief, Phase 1 (2026-11-26): WAITING FOR VOTE
 - [x] Audit done: pillars 1, 4, 5, 6, 10, 11, 12 already built (skipped to avoid duplicates). Rust/Go core and shorter hook not re-asked.
 - [x] Voting card written: VOTING_CARD.html, .claude/VOTING_CARD.md, SPEC.md
-- [ ] Q1: A (Live Traffic + Quiet hours + Router script) / B (nothing new)
-- [ ] Q2: 1 (skip HTTPS cleaning) / 2 (browsers only)
-- [ ] Q3: 1 (skip root mode) / 2 (optional root switch)
+- [x] Q1: A (Live Traffic + Quiet hours + Router script) / B (nothing new)
+- [x] Q2: 2 (browsers only) chosen; 1 (skip) not chosen
+- [x] Q3: 1 (skip root mode) chosen; 2 (optional root switch)
 - [ ] `.claude/rules/mitm-cosmetic.md` written only if Q2 = 2

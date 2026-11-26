@@ -8,6 +8,9 @@ class FilterEngine(@Volatile var blocks: DomainTrie, private val safe: DomainTri
     @Volatile var userAllow: DomainTrie = DomainTrie()
     @Volatile var userDeny: DomainTrie = DomainTrie()
 
+    /** Names your Allow choice or the banking/push/clock lists cover: no time rule or list may block them. */
+    fun isProtected(domain: String) = userAllow.matches(domain) || safe.matches(domain)
+
     fun decide(domain: String): Verdict = when {
         userAllow.matches(domain) -> Verdict.ALLOW
         safe.matches(domain) -> Verdict.SAFE_PASSTHROUGH
