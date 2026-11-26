@@ -235,3 +235,8 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ad-blocker check scripts let through (2026-11-24)
 - [x] New switch "Let ad-blocker checks through" (on by default): the small scripts sites use to detect ad blockers (html-load.com and similar) load, so sites show the article instead of "please allow ads on this site". Real ad servers stay blocked; your own Block choice wins. Test added.
 - [ ] Real-device check on ladbible.com. If the wall stays, open Logs and tell me which names show as blocked right after.
+
+## Instant Mode brief, Phase 1 (2026-11-26): WAITING FOR VOTE
+- [x] Audit done: most of the brief already built. New: Instant Mode (system animations off via Shizuku), optional charge chime, housekeeping.
+- [x] Voting card written: VOTING_CARD.html, .claude/VOTING_CARD.md, SPEC.md
+- [ ] Q1 A / B   [ ] Q2 1 / 2   [ ] Q3 1 / 2  (no vote recorded yet)

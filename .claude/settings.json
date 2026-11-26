@@ -9,7 +9,9 @@
       "Read(node_modules/**)",
       "Read(build/**)",
       "Read(**/build/**)",
-      "Read(**/*.jks)"
+      "Read(**/*.jks)",
+      "Read(dist/**)",
+      "Read(**/*.lock)"
     ]
   },
   "hooks": {
@@ -23,5 +25,6 @@
         ]
       }
     ]
-  }
+  },
+  "outputStyle": "concise"
 }

@@ -1,98 +1,121 @@
-<title>Apex Voting Card</title>
+<title>Apex Instant Mode Vote</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500&family=Outfit:wght@600&display=swap">
 <style>
-/* Layout: one column of option cards; each card holds phone + TV mock screens and a built/new checklist. Dark-first to match the app. */
-:root{--bg:#0B0E14;--panel:#141925;--line:#262d3f;--fg:#E8EAF2;--mute:#9AA3B8;--violet:#7C3AED;--violet-soft:#7c3aed33;--good:#34D399;--warn:#FBBF24;--font:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--head:"Space Grotesk",Inter,system-ui,sans-serif;color-scheme:dark}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F4F5FA;--panel:#fff;--line:#d9dce8;--fg:#141725;--mute:#5a6277;--violet:#6D28D9;--violet-soft:#6d28d922;--good:#047857;--warn:#92400E;color-scheme:light}}
-:root[data-theme="light"]{--bg:#F4F5FA;--panel:#fff;--line:#d9dce8;--fg:#141725;--mute:#5a6277;--violet:#6D28D9;--violet-soft:#6d28d922;--good:#047857;--warn:#92400E;color-scheme:light}
-body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--font);padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
-h1,h2,h3{font-family:var(--head);text-wrap:balance;margin:0}
-h1{font-size:28px}h2{font-size:21px}h3{font-size:15px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
-p{margin:0;max-width:65ch}.mute{color:var(--mute)}
-.note{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
-.opt{display:block;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:18px;cursor:pointer}
-.opt:has(input:checked){border-color:var(--violet);box-shadow:0 0 0 3px var(--violet-soft)}
-.opt:focus-within{outline:3px solid var(--violet);outline-offset:2px}
-.head{display:flex;gap:12px;align-items:flex-start}
-.head input{margin-top:6px;accent-color:var(--violet);width:20px;height:20px;flex:none}
-.tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--violet);color:var(--violet);margin-left:6px;vertical-align:middle}
-.body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;margin-top:16px}
-@media(max-width:700px){.body{grid-template-columns:1fr}}
-.mocks{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;min-width:0}
-.phone{width:132px;border:3px solid #333b52;border-radius:18px;background:#0B0E14;padding:8px;display:flex;flex-direction:column;gap:6px;color:#E8EAF2;font-size:10px}
-.tv{flex:1;min-width:200px;max-width:300px;border:3px solid #333b52;border-radius:8px;background:#0B0E14;padding:8px;color:#E8EAF2;font-size:10px;display:flex;flex-direction:column;gap:6px}
-.bar{height:8px;border-radius:4px;background:#262d3f;overflow:hidden}.bar i{display:block;height:100%;background:#7C3AED}
-.mc{background:#141925;border-radius:8px;padding:6px 7px;display:flex;flex-direction:column;gap:4px}
-.mc b{font-size:10px}.row{display:flex;gap:4px;flex-wrap:wrap}
-.chip{background:#262d3f;border-radius:99px;padding:1px 6px;font-size:9px}.chip.on{background:#7C3AED}
-.tabs{display:flex;justify-content:space-around;border-top:1px solid #262d3f;padding-top:4px;color:#9AA3B8}
-.tabs .a{color:#fff;font-weight:700}
-.tvrow{display:flex;gap:6px}.tvc{flex:1;background:#141925;border-radius:6px;padding:6px;border:3px solid transparent}
-.tvc.f{border-color:#7C3AED;transform:scale(1.05);box-shadow:0 0 0 1px #7C3AED}
-.pal{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.sw{width:54px;font-size:10px;color:var(--mute);text-align:center}.sw i{display:block;height:26px;border-radius:6px;border:1px solid var(--line);margin-bottom:2px}
-ul.l{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;min-width:0}
-ul.l li{display:flex;gap:8px;align-items:flex-start}
-.s{flex:none;font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px;margin-top:2px}
-.s.done{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good)}
-.s.new{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
-.pick{font-weight:600;color:var(--violet)}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+/* Layout: one column of cards; each question = two mock phone screens beside the choices. Dark HUD first. */
+:root{--bg:#0B0E14;--panel:#121722;--line:#243044;--fg:#E6EAF2;--mute:#8A96AD;--mint:#10B981;--amber:#F59E0B;--violet:#7C3AED;
+--ui:'Inter',system-ui,sans-serif;--head:'Outfit','Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;color-scheme:dark}
+:root:not([data-theme="dark"]){}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F3F5F9;--panel:#FFFFFF;--line:#D5DCE8;--fg:#121722;--mute:#55627A;--mint:#047857;--amber:#B45309;--violet:#6D28D9;color-scheme:light}}
+:root[data-theme="light"]{--bg:#F3F5F9;--panel:#FFFFFF;--line:#D5DCE8;--fg:#121722;--mute:#55627A;--mint:#047857;--amber:#B45309;--violet:#6D28D9;color-scheme:light}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--ui);padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:980px;margin:0 auto;display:grid;gap:20px}
+h1{font:600 28px/1.15 var(--head);margin:0;text-wrap:balance}
+h2{font:600 19px/1.25 var(--head);margin:0 0 4px;text-wrap:balance}
+.lede{color:var(--mute);margin:6px 0 0;max-width:65ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px}
+.built{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 12px var(--mono);border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--mute)}
+.chip b{color:var(--mint);font-weight:500}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:700px){.row{grid-template-columns:minmax(0,1fr)}}
+.phones{display:flex;gap:14px;flex-wrap:wrap}
+.phone{width:200px;max-width:100%;background:#0B0E14;border:2px solid #2B3850;border-radius:22px;padding:12px;display:grid;gap:8px;color:#E6EAF2}
+.phone .bar{font:500 11px var(--mono);color:#8A96AD;display:flex;justify-content:space-between}
+.card{background:#121A28;border:1px solid #2B3850;border-radius:12px;padding:10px;display:grid;gap:6px;font-size:12px}
+.card b{font:600 13px var(--head)}
+.sw{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tog{width:38px;height:22px;border-radius:11px;background:#10B981;position:relative;flex:none}
+.tog::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#0B0E14}
+.tog.off{background:#2B3850}.tog.off::after{right:auto;left:3px;background:#8A96AD}
+.big{font:500 26px var(--mono);color:#10B981}
+.warn{color:#F59E0B}
+.btn{background:#7C3AED;color:#fff;border-radius:8px;padding:8px;text-align:center;font-weight:600;min-height:36px}
+.opts{display:grid;gap:10px;align-content:start}
+label.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;min-height:44px}
+label.opt:has(input:checked){border-color:var(--mint);background:color-mix(in srgb,var(--mint) 10%,transparent)}
+label.opt:focus-within{outline:2px solid var(--violet);outline-offset:2px}
+input[type=radio]{accent-color:var(--mint);width:20px;height:20px;margin-top:2px}
+.tag{font:500 11px var(--mono);color:var(--mint);text-transform:uppercase;letter-spacing:.06em}
+.small{color:var(--mute);font-size:13px;margin:2px 0 0}
+#out{font:500 13px var(--mono);border:1px dashed var(--line);border-radius:8px;padding:12px;color:var(--mute)}
 </style>
-
-<div class="wrap">
-<header style="display:flex;flex-direction:column;gap:8px">
-<h1>Apex Shield &amp; Cleaner: your vote</h1>
-<p class="mute">Phone and Android TV. Pick one card in each question, then reply in chat with your numbers (for example “1 and 1”).</p>
+<main>
+<header>
+<h1>Apex Instant Mode: what do we add?</h1>
+<p class="lede">Most of this brief is already inside the app. Only three things are genuinely new. Pick one answer per question below.</p>
 </header>
 
-<div class="note">
-<b>Where things stand</b>
-<p class="mute">You already voted Option A on 21 Nov and most of it is built and passing its checks. This card covers what is still missing, plus one big decision about the engine underneath.</p>
+<section class="panel" aria-label="Already built">
+<h2>Already in the app (not rebuilt)</h2>
+<div class="built">
+<span class="chip"><b>done</b> ad and tracker shield</span><span class="chip"><b>done</b> speed pacing, never drops</span>
+<span class="chip"><b>done</b> 288 banking names skip</span><span class="chip"><b>done</b> clock and video-licence skip</span>
+<span class="chip"><b>done</b> per-app cache breakdown</span><span class="chip"><b>done</b> 3 AM idle clean</span>
+<span class="chip"><b>done</b> heat alert 42 C</span><span class="chip"><b>done</b> 80% charge alert</span>
+<span class="chip"><b>done</b> instant tab switching</span><span class="chip"><b>done</b> TV violet focus, 1.05x</span>
+<span class="chip"><b>done</b> apps are never force-closed</span>
 </div>
+<p class="small">The engine question (Rust or Go core) was decided on 22 Nov: keep the current engine. It is not asked again.</p>
+</section>
 
-<h2>Question 1: which update do you want?</h2>
-
-<label class="opt"><div class="head"><input type="radio" name="q1" value="A" checked aria-label="Option A">
-<div><h2>Option A: complete update <span class="tag">Recommended</span></h2><p class="mute">Everything stays on, and the gaps below get filled. One suite for phone and TV, no root needed.</p></div></div>
-<div class="body">
-<div><div class="mocks">
-<div class="phone"><b>Shield</b><div class="mc"><b>Ads blocked today</b><div style="font-size:16px;font-weight:700">1,284</div><div class="bar"><i style="width:72%"></i></div></div><div class="mc"><b>Speed pacing</b><div class="row"><span class="chip on">Streaming first</span><span class="chip">Wi-Fi</span></div></div><div class="mc"><b>Banking apps</b><span>2 skip the shield</span></div><div class="tabs"><span class="a">Home</span><span>Shield</span><span>Storage</span><span>Apps</span></div></div>
-<div class="tv"><b>Storage on TV</b><div class="tvrow"><div class="tvc f"><b>Safe Clean</b><br>Focus: violet border</div><div class="tvc"><b>Boost</b></div><div class="tvc"><b>Cache</b></div></div><div class="mc"><b>YouTube cache</b><div class="bar"><i style="width:55%"></i></div><span>Thumbnails · Temp logs · Web pages</span></div></div>
+<section class="panel" aria-labelledby="q1">
+<div class="row">
+<div>
+<h2 id="q1">Question 1: which update?</h2>
+<div class="phones" aria-hidden="true">
+<div class="phone"><div class="bar"><span>Settings</span><span>Shizuku on</span></div>
+<div class="card"><div class="sw"><b>Instant Mode</b><span class="tog"></span></div><span>Phone animations off. Apps open with no slide or fade.</span><span class="warn">Switch off to restore the normal feel.</span></div>
+<div class="card"><div class="sw"><b>Charge chime</b><span class="tog"></span></div><span>Soft sound at your charge limit.</span></div></div>
+<div class="phone"><div class="bar"><span>Charging</span><span>43 C</span></div>
+<div class="card"><span>Battery</span><span class="big">80%</span><span class="warn">Chime played: limit reached. Unplug to protect battery life.</span></div>
+<div class="btn">Stop chime</div></div>
+</div></div>
+<div class="opts" role="radiogroup" aria-label="Question 1">
+<label class="opt"><input type="radio" name="q1" value="A"><span><span class="tag">Recommended</span><br><b>Option A: add the three missing pieces</b><p class="small">1) Instant Mode switch: turns phone animations off so apps open instantly, reversible in one tap. 2) Optional chime when charging reaches your limit. 3) Small housekeeping: TV rule file and a leaner settings file.</p></span></label>
+<label class="opt"><input type="radio" name="q1" value="B"><span><b>Option B: storage and tuner only</b><p class="small">Removes the ad and network shield, the speed limiter and the TV network tools you already use. Not advised.</p></span></label>
 </div>
-<div class="pal"><div class="sw"><i style="background:#0B0E14"></i>Night</div><div class="sw"><i style="background:#141925"></i>Card</div><div class="sw"><i style="background:#7C3AED"></i>Violet</div><div class="sw"><i style="background:#34D399"></i>Good</div><div class="sw"><i style="background:#FBBF24"></i>Warm</div></div></div>
-<ul class="l">
-<li><span class="s done">Built</span>Ad blocking at the name lookup, before a connection opens</li>
-<li><span class="s done">Built</span>Speed pacing that waits and never drops, with streaming protected</li>
-<li><span class="s done">Built</span>Per-app cache breakdown (needs the Shizuku helper)</li>
-<li><span class="s done">Built</span>3 AM clean: plugged in, battery over 80%, screen off 30 min</li>
-<li><span class="s done">Built</span>288 banking names skip the shield; clock apps protected</li>
-<li><span class="s done">Built</span>TV violet focus border, grow effect, instant switching</li>
-<li><span class="s new">New</span>Samsung time server and video-licence names added to the skip list</li>
-<li><span class="s new">New</span>Real-device checks on phone and TV, then fixes</li>
-</ul></div>
-</label>
-
-<label class="opt"><div class="head"><input type="radio" name="q1" value="B" aria-label="Option B">
-<div><h2>Option B: storage and tuner only</h2><p class="mute">No network shield. Ad blocking, speed pacing and the banking list would be switched off and removed.</p></div></div>
-<div class="body">
-<div class="mocks"><div class="phone"><b>Storage</b><div class="mc"><b>Cleanable now</b><div style="font-size:16px;font-weight:700">3.2 GB</div><div class="bar"><i style="width:40%"></i></div></div><div class="mc"><b>Night clean</b><span>3 AM when charging</span></div><div class="tabs"><span class="a">Home</span><span>Storage</span><span>Apps</span></div></div></div>
-<ul class="l"><li><span class="s done">Keeps</span>Safe cleaner, cache breakdown, 3 AM clean, no-kill battery saver, TV focus</li><li><span class="s new">Loses</span>Ad shield, speed pacing, banking list, network log</li></ul></div>
-</label>
-
-<h2>Question 2: how should the shield run underneath?</h2>
-<p class="mute">The brief asks for a faster compiled engine. Today the shield is plain app code. Swapping it is a big change, so it needs your say.</p>
-
-<div class="grid2">
-<label class="opt"><div class="head"><input type="radio" name="q2" value="1" checked aria-label="Keep current engine">
-<div><h2>1. Keep current engine <span class="tag">Recommended</span></h2><p class="mute">Already tested on your phone and TV. We measure battery and memory first, and only tune what is heavy.</p></div></div></label>
-<label class="opt"><div class="head"><input type="radio" name="q2" value="2" aria-label="Switch to native engine">
-<div><h2>2. Switch to a compiled engine</h2><p class="mute">Rust-based. Aims for under 2% idle use and under 50 MB. Bigger app file, new build tools, and weeks of re-testing on real devices.</p></div></div></label>
 </div>
+</section>
 
-<div class="note"><b>Also decided without a vote</b>
-<p class="mute">I keep the current check that runs after each task, because the shorter version in the brief would hide failed builds. Rule files will be added for the TV and the shield as the work starts.</p></div>
-
-<p class="pick">Reply 1 for Option A or 2 for Option B, then 1 or 2 for the engine. You can also type your own change.</p>
+<section class="panel" aria-labelledby="q2">
+<div class="row">
+<div>
+<h2 id="q2">Question 2: how far should Instant Mode go?</h2>
+<div class="phones" aria-hidden="true">
+<div class="phone"><div class="bar"><span>Apex only</span><span>0 ms</span></div><div class="card"><b>Inside Apex</b><span>Every Apex screen already changes with no animation.</span></div></div>
+<div class="phone"><div class="bar"><span>Whole phone</span><span>Shizuku</span></div><div class="card"><b>All apps</b><span>Android's three animation speeds set to zero. Needs the Shizuku helper running and a one-time permission.</span><span class="warn">Stays off until you switch it on.</span></div></div>
+</div></div>
+<div class="opts" role="radiogroup" aria-label="Question 2">
+<label class="opt"><input type="radio" name="q2" value="1"><span><span class="tag">Recommended</span><br><b>1. Whole phone, off by default</b><p class="small">Owner switches it on in Settings. Changes only the three animation speeds, remembers your old values and puts them back when switched off.</p></span></label>
+<label class="opt"><input type="radio" name="q2" value="2"><span><b>2. Apex screens only</b><p class="small">Nothing outside this app changes. Already how Apex behaves today.</p></span></label>
 </div>
+</div>
+</section>
+
+<section class="panel" aria-labelledby="q3">
+<div class="row">
+<div>
+<h2 id="q3">Question 3: the charge chime</h2>
+<div class="phones" aria-hidden="true">
+<div class="phone"><div class="bar"><span>Notification</span><span>now</span></div><div class="card"><b>Charge limit reached</b><span>Battery is at 80%. Unplug to protect its life.</span><span>Plays a short chime</span></div></div>
+</div></div>
+<div class="opts" role="radiogroup" aria-label="Question 3">
+<label class="opt"><input type="radio" name="q3" value="1"><span><span class="tag">Recommended</span><br><b>1. Chime off until you switch it on</b><p class="small">Today's silent 80% alert stays as is; the chime is an extra switch.</p></span></label>
+<label class="opt"><input type="radio" name="q3" value="2"><span><b>2. Chime on by default</b><p class="small">Plays once per charge at your limit.</p></span></label>
+</div>
+</div>
+</section>
+
+<div id="out" role="status" aria-live="polite">Your picks will show here. Reply in chat with, for example: 1A, 1, 1.</div>
+</main>
+<script>
+(function(){
+var out=document.getElementById('out');
+function upd(){
+var p=['q1','q2','q3'].map(function(n){var c=document.querySelector('input[name='+n+']:checked');return c?c.value:'-'});
+out.textContent='Your picks: Q1 '+p[0]+', Q2 '+p[1]+', Q3 '+p[2]+'. Reply in chat with these three.';
+}
+document.addEventListener('change',upd);
+})();
+</script>
