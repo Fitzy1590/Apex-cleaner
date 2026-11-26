@@ -384,12 +384,20 @@ private fun InstantRows() {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var instant by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.instantMode(ctx)) }
     var chime by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.chargeChime(ctx)) }
+    var privacy by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(com.fitzy.apexcleaner.core.PrivacyMode.isOn(ctx)) }
+    var pnote by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
     var note by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
     androidx.compose.foundation.layout.Column {
         SettingRow("Instant Mode", "Turns phone animations off so apps open with no slide or fade. Needs the helper app running. Switch off to get your old feel back. Clocks and alarms are never touched. $note", instant) { on ->
             scope.launch(kotlinx.coroutines.Dispatchers.Main) {
                 val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.fitzy.apexcleaner.core.InstantMode.set(ctx, on) }
                 if (ok) { instant = on; note = "" } else note = "Could not change it: start the helper app and allow it first."
+            }
+        }
+        SettingRow("Privacy Mode", "Blocks the camera and microphone for every app in one tap. Calls, voice assistants and video chats will not hear or see you until you switch it off. Clocks and alarms are not affected. Needs Android 12 or newer and the helper app running. $pnote", privacy) { on ->
+            scope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.fitzy.apexcleaner.core.PrivacyMode.set(ctx, on) }
+                if (ok) { privacy = on; pnote = "" } else pnote = "Your phone did not accept it. Nothing was changed."
             }
         }
         SettingRow("Charge chime", "A soft sound when charging reaches your limit.", chime) { on ->

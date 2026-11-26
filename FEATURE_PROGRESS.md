@@ -243,4 +243,4 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Instant Mode switch (Settings, phone): helper sets the 3 animation speeds to 0, remembers old values, restores on switch-off; off by default; only those 3 settings can be changed. Tests added. Not build-checked: no Android tools in this cloud session.
 - [x] Charge chime switch (Settings, phone): sound at the charge limit; off by default.
 - [x] Clock and alarm apps: already never filtered, slowed or killed; new test locks the clock apps into the protected list. Instant Mode touches only animation speeds.
-- [ ] Owner asked: one-tap "turn off sensors" (camera, mic). Not built: needs a vote (see chat).
+

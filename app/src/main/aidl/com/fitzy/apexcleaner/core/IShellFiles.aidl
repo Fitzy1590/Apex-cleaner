@@ -18,4 +18,10 @@ interface IShellFiles {
 
     /** Sets one of the three window-animation speeds. Refuses every other setting. */
     boolean setAnimScale(String key, String value) = 5;
+
+    /** Android's camera / microphone privacy switch: 1 = blocked, 0 = allowed, -1 = unknown or refused. */
+    int getSensorBlocked(String sensor) = 6;
+
+    /** Blocks or allows "camera" or "microphone" only. Returns true if the phone accepted it. */
+    boolean setSensorBlocked(String sensor, boolean blocked) = 7;
 }
