@@ -244,3 +244,4 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Charge chime switch (Settings, phone): sound at the charge limit; off by default.
 - [x] Clock and alarm apps: already never filtered, slowed or killed; new test locks the clock apps into the protected list. Instant Mode touches only animation speeds.
 
+- [x] Privacy Mode (Settings, phone): one tap blocks camera + microphone through Android's privacy switch via the helper (Android 12+); off by default; restores only what it blocked; a refused step is undone and says nothing changed. Tests added. Not build-checked, not device-tested: the helper command is unconfirmed on a real phone.
