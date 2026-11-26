@@ -26,6 +26,29 @@ class ShellFileService : IShellFiles.Stub() {
     override fun deleteCacheFiles(paths: Array<String>): BooleanArray =
         BooleanArray(paths.size) { i -> isCacheFile(paths[i]) && File(paths[i]).delete() }
 
+    override fun getAnimScale(key: String): String =
+        if (InstantModeRules.isAnimKey(key)) run(arrayOf("settings", "get", "global", key)).trim() else ""
+
+    override fun setAnimScale(key: String, value: String): Boolean =
+        InstantModeRules.isAnimKey(key) && InstantModeRules.isValidScale(value) &&
+            run(arrayOf("settings", "put", "global", key, value)).isEmpty()
+
+    override fun getSensorBlocked(sensor: String): Int {
+        if (!PrivacyModeRules.isSensor(sensor)) return -1
+        return PrivacyModeRules.parseBlocked(run(arrayOf("cmd", "sensor_privacy", "is_enabled", "0", sensor)))
+    }
+
+    override fun setSensorBlocked(sensor: String, blocked: Boolean): Boolean {
+        if (!PrivacyModeRules.isSensor(sensor)) return false
+        run(arrayOf("cmd", "sensor_privacy", if (blocked) "enable" else "disable", "0", sensor))
+        return getSensorBlocked(sensor) == (if (blocked) 1 else 0)
+    }
+
+    private fun run(cmd: Array<String>): String = runCatching {
+        val p = ProcessBuilder(*cmd).redirectErrorStream(true).start()
+        p.inputStream.bufferedReader().readText().also { p.waitFor() }
+    }.getOrDefault("error")
+
     companion object {
         const val DATA_ROOT = "/storage/emulated/0/Android/data"
         const val MAX_FILES = 3000

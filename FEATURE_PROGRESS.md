@@ -235,3 +235,17 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ad-blocker check scripts let through (2026-11-24)
 - [x] New switch "Let ad-blocker checks through" (on by default): the small scripts sites use to detect ad blockers (html-load.com and similar) load, so sites show the article instead of "please allow ads on this site". Real ad servers stay blocked; your own Block choice wins. Test added.
 - [ ] Real-device check on ladbible.com. If the wall stays, open Logs and tell me which names show as blocked right after.
+
+## Instant Mode brief, Phase 1 (2026-11-26): WAITING FOR VOTE
+- [x] Audit done: most of the brief already built. New: Instant Mode (system animations off via Shizuku), optional charge chime, housekeeping.
+- [x] Voting card written: VOTING_CARD.html, .claude/VOTING_CARD.md, SPEC.md
+- [x] Voted A, 1, 1: Q1 A, Q2 whole phone (off by default), Q3 chime off by default
+- [x] Instant Mode switch (Settings, phone): helper sets the 3 animation speeds to 0, remembers old values, restores on switch-off; off by default; only those 3 settings can be changed. Tests added. Not build-checked: no Android tools in this cloud session.
+- [x] Charge chime switch (Settings, phone): sound at the charge limit; off by default.
+- [x] Clock and alarm apps: already never filtered, slowed or killed; new test locks the clock apps into the protected list. Instant Mode touches only animation speeds.
+
+- [x] Privacy Mode (Settings, phone): one tap blocks camera + microphone through Android's privacy switch via the helper (Android 12+); off by default; restores only what it blocked; a refused step is undone and says nothing changed. Tests added. Not build-checked, not device-tested: the helper command is unconfirmed on a real phone.
+
+## Build check (2026-11-26, build passing)
+- [x] Compile, lint and all unit tests pass, including Instant Mode, Charge chime and Privacy Mode (Android tools installed on the cloud machine; no code changes needed).
+- [ ] Real-device tests: Instant Mode, Privacy Mode (helper command unconfirmed), charge chime.

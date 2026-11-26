@@ -1,15 +1,19 @@
-# Apex Shield & Cleaner: voting card
+# Apex Instant Mode: voting card (2026-11-26)
 
 Visual version: `VOTING_CARD.html` in the project root.
 
-Most of Option A is already built (voted 21 Nov). This card covers the gaps and one engine decision.
+Most of the brief is already built (see FEATURE_PROGRESS.md). Only three things are new. Engine choice stays "keep current engine" (voted 22 Nov).
 
 ## Question 1: which update?
-- [x] **1. Option A (recommended): complete update.** Ad shield, speed pacing, cache breakdown, 3 AM clean, banking and clock protection, TV remote controls. Gaps to fill: Samsung time server and video-licence names on the skip list; real-device checks.
-- [ ] **2. Option B: storage and tuner only.** Removes the network shield.
+- [x] **A (recommended): add the three missing pieces.** Instant Mode switch (phone animations off, reversible), optional chime at the charge limit, small housekeeping (TV rule file, leaner settings file).
+- [ ] **B: storage and tuner only.** Removes the ad shield, speed limiter and TV network tools.
 
-## Question 2: engine under the shield
-- [x] **1. Keep current engine (recommended).** Measure first, tune only what is heavy.
-- [ ] **2. Switch to a compiled (Rust) engine.** Bigger app, new build tools, weeks of re-testing.
+## Question 2: how far should Instant Mode go?
+- [x] **1 (recommended): whole phone, off by default.** Needs the Shizuku helper; remembers old values and restores them on switch-off.
+- [ ] **2: Apex screens only.** Already how Apex behaves.
 
-Reply "1 and 1" style, or type your own change.
+## Question 3: charge chime
+- [x] **1 (recommended): off until switched on.**
+- [ ] **2: on by default.**
+
+Reply like `A, 1, 1`, or type your own change.

@@ -53,3 +53,17 @@ Q2 engine under the shield (major architecture swap, needs a vote):
 - [x] 1. Keep current engine, measure first
 - [ ] 2. Switch to compiled Rust engine
 Kept as is: existing Stop hook (the shorter one in the brief would hide failed builds).
+
+## Instant Mode upgrade (2026-11-26): VOTED A, 1, 1 (2026-11-26)
+Audit: nearly the whole brief already exists. Not rebuilt: DNS shield, speed pacing, banking/clock/DRM skip, cache breakdown, 3 AM clean, 42 C heat alert, 80% limit alert, instant tabs, TV violet focus. Rust/Go engine stays "keep current" (voted 2026-11-22).
+Genuinely new: (1) Instant Mode = Shizuku sets window/transition/animator scale to 0, saves and restores old values; (2) optional chime at the charge limit; (3) housekeeping: `.claude/rules/tv-ui.md`, `outputStyle: concise`, extra deny rules.
+Kept as is: existing Stop hook (brief's `| head -50 || exit 2` would hide failed builds).
+Q1 update:
+- [x] A: add the three missing pieces (recommended)
+- [ ] B: storage and tuner only (removes network shield)
+Q2 Instant Mode reach:
+- [x] 1: whole phone, off by default (recommended)
+- [ ] 2: Apex screens only
+Q3 charge chime:
+- [x] 1: off until switched on (recommended)
+- [ ] 2: on by default

@@ -35,4 +35,12 @@ object AppSettings {
     /** Streaming priority (speed limiter for other apps while a video, music or game app is on screen). On by default. */
     fun limiter(ctx: Context) = p(ctx).getBoolean("limiter", true)
     fun setLimiter(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("limiter", on).apply()
+
+    /** Instant Mode (phone animations off via the Shizuku helper). Off by default. */
+    fun instantMode(ctx: Context) = p(ctx).getBoolean("instant_mode", false)
+    fun setInstantMode(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("instant_mode", on).apply()
+
+    /** Soft chime when charging reaches the limit. Off by default. */
+    fun chargeChime(ctx: Context) = p(ctx).getBoolean("charge_chime", false)
+    fun setChargeChime(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("charge_chime", on).apply()
 }
