@@ -21,6 +21,8 @@ interface RelayHost {
     fun ownerUid(proto: Int, appIp: ByteArray, appPort: Int, serverIp: ByteArray, serverPort: Int): Int = -1
     /** True while this app is on screen. Its traffic is never slowed. */
     fun uidOnScreen(uid: Int): Boolean = false
+    /** Called once when a connection ends, with the bytes each way (for Live Traffic). */
+    fun flowDone(proto: Int, uid: Int, serverIp: ByteArray, serverPort: Int, up: Long, down: Long) {}
 }
 
 /** Waits for the pacing gate unless the connection belongs to an app the user is looking at. */
@@ -51,6 +53,9 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     private var finSent = false
     private var finGot = false
     private var queued = 0
+    @Volatile private var upBytes = 0L
+    @Volatile private var downBytes = 0L
+    private var reported = false
     private val out = LinkedBlockingQueue<ByteArray>()
 
     val closed get() = st == St.CLOSED
@@ -110,7 +115,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 val chunk = out.take()
                 if (chunk === FIN_MARK) { runCatching { s.shutdownOutput() }; break }
                 host.pace(host.up, uid, chunk.size)
-                os.write(chunk); os.flush()
+                os.write(chunk); os.flush(); upBytes += chunk.size
                 synchronized(this) { queued -= chunk.size }
             }
         } catch (_: Exception) { close() }
@@ -128,7 +133,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 if (st == St.CLOSED) return
                 val n = ins.read(buf)
                 if (n < 0) break
-                host.pace(host.down, uid, n)
+                host.pace(host.down, uid, n); downBytes += n
                 synchronized(this) {
                     if (st == St.CLOSED) return
                     send(ourSeq, expected, Packets.ACK or Packets.PSH, buf, n)
@@ -151,6 +156,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     @Synchronized fun close() {
         if (st == St.CLOSED) return
         st = St.CLOSED; runCatching { sock?.close() }; out.offer(FIN_MARK); (this as Object).notifyAll()
+        if (!reported) { reported = true; runCatching { host.flowDone(6, uid, serverIp, serverPort, upBytes, downBytes) } }
     }
 
     private companion object {
@@ -166,6 +172,9 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     @Volatile var closed = false; private set
     private val sock = DatagramSocket()
     @Volatile private var uid = -1
+    @Volatile private var upBytes = 0L
+    @Volatile private var downBytes = 0L
+    private var reported = false
 
     init {
         host.keepOutside(sock)
@@ -175,7 +184,7 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     }
 
     fun toServer(payload: ByteArray) {
-        lastUse = System.currentTimeMillis()
+        lastUse = System.currentTimeMillis(); upBytes += payload.size
         runCatching { sock.send(DatagramPacket(payload, payload.size)) }
     }
 
@@ -187,13 +196,18 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 val pk = DatagramPacket(buf, buf.size)
                 try { sock.receive(pk) } catch (_: java.net.SocketTimeoutException) { continue }
                 lastUse = System.currentTimeMillis()
+                downBytes += pk.length
                 if (serverPort != 53) host.pace(host.down, uid, pk.length)
                 host.toApp(Packets.buildUdp(serverIp, appIp, serverPort, appPort, buf, pk.length))
             }
         } catch (_: Exception) { } finally { close() }
     }
 
-    fun close() { closed = true; runCatching { sock.close() } }
+    fun close() {
+        closed = true; runCatching { sock.close() }
+        synchronized(this) { if (reported) return; reported = true }
+        runCatching { host.flowDone(17, uid, serverIp, serverPort, upBytes, downBytes) }
+    }
     private companion object { const val IDLE_MS = 60_000L }
 }
 

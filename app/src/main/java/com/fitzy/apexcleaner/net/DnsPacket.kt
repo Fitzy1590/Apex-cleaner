@@ -81,6 +81,26 @@ object DnsPacket {
         return out
     }
 
+    /** IPv4 addresses in a DNS answer (used only to show names instead of numbers in Live Traffic). */
+    fun addresses(d: ByteArray, len: Int = d.size): List<ByteArray> {
+        val out = ArrayList<ByteArray>()
+        runCatching {
+            if (len < 12) return out
+            val qd = u16(d, 4); val an = u16(d, 6)
+            var i = 12
+            repeat(qd) { i = skipName(d, i, len) + 4 }
+            repeat(minOf(an, 32)) {
+                i = skipName(d, i, len)
+                if (i + 10 > len) return out
+                val type = u16(d, i); val rdLen = u16(d, i + 8); val rdata = i + 10
+                if (rdata + rdLen > len) return out
+                if (type == 1 && rdLen == 4) out += d.copyOfRange(rdata, rdata + 4)
+                i = rdata + rdLen
+            }
+        }
+        return out
+    }
+
     private fun u16(d: ByteArray, i: Int) = (d[i].toInt() and 0xff shl 8) or (d[i + 1].toInt() and 0xff)
 
     /** Offset just after the name that starts at [start] (a pointer ends a name after 2 bytes). */

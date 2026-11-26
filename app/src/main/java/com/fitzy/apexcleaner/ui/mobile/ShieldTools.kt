@@ -31,11 +31,19 @@ import androidx.compose.ui.unit.dp
 import com.fitzy.apexcleaner.net.PinLock
 import com.fitzy.apexcleaner.net.QuietHours
 import com.fitzy.apexcleaner.net.QuietRule
+import com.fitzy.apexcleaner.net.TrafficLog
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material3.Surface
 import com.fitzy.apexcleaner.net.RouterScripts
 
 /** Settings rows for the shield tools: Quiet hours (PIN-locked) and the router script maker. */
 @Composable
 fun ShieldToolsRows() {
+    LiveTrafficCard()
     QuietHoursCard()
     RouterScriptCard()
 }
@@ -162,6 +170,68 @@ private fun RouterScriptCard() {
             OutlinedTextField(value = ip, onValueChange = { ip = it; copied = false }, label = { Text("DNS server address") }, singleLine = true,
                 isError = script == null, supportingText = { if (script == null) Text("Type an IPv4 address like 192.168.1.1") })
             Button(onClick = { script?.let { clip.setText(AnnotatedString(it)); copied = true } }, enabled = script != null, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) { Text(if (copied) "Copied" else "Copy script") }
+        }
+    }
+}
+
+/** Writes [bytes] to the app's private export folder and offers it to Android's share sheet. */
+internal fun shareExport(ctx: android.content.Context, name: String, mime: String, bytes: ByteArray) {
+    runCatching {
+        val dir = java.io.File(ctx.cacheDir, "exports").apply { mkdirs(); listFiles()?.forEach { it.delete() } }
+        val f = java.io.File(dir, name).apply { writeBytes(bytes) }
+        val uri = androidx.core.content.FileProvider.getUriForFile(ctx, ctx.packageName + ".files", f)
+        ctx.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).setType(mime)
+            .putExtra(android.content.Intent.EXTRA_STREAM, uri).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION), "Export").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}
+
+private fun size(b: Long) = when { b >= 1_000_000 -> "%.1f MB".format(b / 1e6); b >= 1_000 -> "%.1f KB".format(b / 1e3); else -> "$b B" }
+
+@Composable
+private fun LiveTrafficCard() {
+    val ctx = LocalContext.current
+    var rec by remember { mutableStateOf(TrafficLog.recording) }
+    var open by remember { mutableStateOf(false) }
+    val flows by TrafficLog.flows.collectAsState()
+    val stamp = { java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date()) }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Live Traffic", style = MaterialTheme.typography.titleMedium)
+                    Text("Records which apps connect to which names and how much they send, only while this is on. Needs the shield on. Connection sizes show for apps inside the speed limiter; other apps show their lookups only. Keeps the last 500 entries on this phone and sends nothing anywhere.", style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = rec, onCheckedChange = { rec = it; TrafficLog.recording = it })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { open = true }, modifier = Modifier.weight(1f).heightIn(min = 44.dp)) { Text("Open list (${flows.size})") }
+                OutlinedButton(onClick = { TrafficLog.clear() }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Clear") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { shareExport(ctx, "apex-traffic-${stamp()}.pcapng", "application/octet-stream", TrafficLog.snapshotPcapng()) }, modifier = Modifier.weight(1f).heightIn(min = 44.dp)) { Text("Export .pcapng") }
+                Button(onClick = { shareExport(ctx, "apex-traffic-${stamp()}.har", "application/json", TrafficLog.snapshotHar().toByteArray()) }, modifier = Modifier.weight(1f).heightIn(min = 44.dp)) { Text("Export .har") }
+            }
+            Text(".pcapng holds the first 128 bytes of each packet (page contents are encrypted anyway). .har lists names and sizes only.", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+    if (open) Dialog(onDismissRequest = { open = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.fillMaxWidth().padding(8.dp)) {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (rec) "Live Traffic (recording)" else "Live Traffic (recording is off)", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { open = false }, modifier = Modifier.heightIn(min = 44.dp)) { Text("Close") }
+                }
+                if (flows.isEmpty()) Text("Nothing yet. Switch recording on, use your apps, then come back.", style = MaterialTheme.typography.bodySmall)
+                LazyColumn(Modifier.heightIn(max = 520.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(flows.take(200)) { e ->
+                        Column {
+                            Text("${e.proto}  ${e.host}${if (e.proto == "DNS") "" else ":" + e.port}", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                            Text("${e.app}  " + (if (e.blocked) "BLOCKED ${e.note}" else "allowed") + (if (e.proto != "DNS") "  up ${size(e.up)}  down ${size(e.down)}" else ""), style = MaterialTheme.typography.bodySmall,
+                                color = if (e.blocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
         }
     }
 }
