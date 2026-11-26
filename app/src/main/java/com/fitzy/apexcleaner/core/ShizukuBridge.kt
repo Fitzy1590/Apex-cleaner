@@ -54,7 +54,7 @@ object ShizukuBridge {
             override fun onServiceDisconnected(name: ComponentName) {}
         }
         val args = Shizuku.UserServiceArgs(ComponentName(ctx.packageName, ShellFileService::class.java.name))
-            .daemon(false).processNameSuffix("files").version(1)
+            .daemon(false).processNameSuffix("files").version(2)
         return try {
             Shizuku.bindUserService(args, conn)
             if (!latch.await(6, TimeUnit.SECONDS)) null else service?.let(block)

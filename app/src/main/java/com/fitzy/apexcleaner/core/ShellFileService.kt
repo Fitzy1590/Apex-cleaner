@@ -26,6 +26,18 @@ class ShellFileService : IShellFiles.Stub() {
     override fun deleteCacheFiles(paths: Array<String>): BooleanArray =
         BooleanArray(paths.size) { i -> isCacheFile(paths[i]) && File(paths[i]).delete() }
 
+    override fun getAnimScale(key: String): String =
+        if (InstantModeRules.isAnimKey(key)) run(arrayOf("settings", "get", "global", key)).trim() else ""
+
+    override fun setAnimScale(key: String, value: String): Boolean =
+        InstantModeRules.isAnimKey(key) && InstantModeRules.isValidScale(value) &&
+            run(arrayOf("settings", "put", "global", key, value)).isEmpty()
+
+    private fun run(cmd: Array<String>): String = runCatching {
+        val p = ProcessBuilder(*cmd).redirectErrorStream(true).start()
+        p.inputStream.bufferedReader().readText().also { p.waitFor() }
+    }.getOrDefault("error")
+
     companion object {
         const val DATA_ROOT = "/storage/emulated/0/Android/data"
         const val MAX_FILES = 3000

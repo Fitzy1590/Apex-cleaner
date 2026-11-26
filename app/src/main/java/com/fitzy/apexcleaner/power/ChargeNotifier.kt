@@ -13,6 +13,7 @@ import com.fitzy.apexcleaner.R
 object ChargeNotifier {
     private const val CH_HUD = "charging_hud"
     private const val CH_ALERT = "charging_alert"
+    private const val CH_CHIME = "charging_chime"
     private const val ID_HUD = 3
     private const val ID_ALERT = 4
 
@@ -20,6 +21,7 @@ object ChargeNotifier {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(NotificationChannel(CH_HUD, "Live charging", NotificationManager.IMPORTANCE_LOW))
         nm.createNotificationChannel(NotificationChannel(CH_ALERT, "Unplug alerts", NotificationManager.IMPORTANCE_HIGH))
+        nm.createNotificationChannel(NotificationChannel(CH_CHIME, "Charge limit chime", NotificationManager.IMPORTANCE_HIGH))
     }
 
     private fun openApp(ctx: Context): PendingIntent =
@@ -67,7 +69,8 @@ object ChargeNotifier {
         } else {
             "You asked for a reminder at $limit%. Unplugging here is gentler on the battery. You can change this limit in the app."
         }
-        val n = Notification.Builder(ctx, CH_ALERT)
+        val chime = alert == ChargeAlert.REACHED_LIMIT && com.fitzy.apexcleaner.core.AppSettings.chargeChime(ctx)
+        val n = Notification.Builder(ctx, if (chime) CH_CHIME else CH_ALERT)
             .setSmallIcon(R.drawable.ic_stat_apex)
             .setContentTitle(title)
             .setContentText(text)
