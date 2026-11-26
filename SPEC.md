@@ -67,3 +67,17 @@ Q2 Instant Mode reach:
 Q3 charge chime:
 - [x] 1: off until switched on (recommended)
 - [ ] 2: on by default
+
+## 12-pillar brief (2026-11-26): WAITING FOR VOTE
+Audit: pillars 1 (DNS firewall, trie), 4 (pacing), 5 (cache breakdown, no-kill), 6 (animations, 42 C, chime), 10 (night clean), 11 (284+ banking, clock/DRM, alarms/push), 12 (TV focus) already exist; not rebuilt. Rust/Go core stays "keep current" (voted 22 Nov); existing Stop hook kept.
+New: 7 Live Traffic + .pcapng/.har export, 8 PIN-gated Quiet hours, 9 router script generator. Big decisions: 2 HTTPS cosmetic engine (contradicts vpn-engine.md "no SSL interception"), 3 root iptables mode.
+Limits: Live Traffic sees only tunnel traffic; .har has names and sizes only unless Q2=2. Apps ignore user CAs by default since Android 7 (Q2 reaches browsers only).
+Q1 new pieces:
+- [ ] A: Live Traffic + Quiet hours + Router script (recommended)
+- [ ] B: nothing new
+Q2 HTTPS page cleaning:
+- [ ] 1: skip, keep safety rule (recommended)
+- [ ] 2: browsers only, wizard, off by default
+Q3 root mode:
+- [ ] 1: skip for now (recommended)
+- [ ] 2: optional root switch
