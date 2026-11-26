@@ -266,3 +266,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Rules: `.claude/rules/mitm-cosmetic.md` added; vpn-engine.md and CLAUDE.md updated for the owner-approved exception.
 - [ ] Real-device tests: install the certificate, open a news site in Chrome, check pages load and ads/boxes are gone, banking sites untouched; Live Traffic export opens in Wireshark; router scripts on a real router.
 - [ ] Known limits: Firefox and apps (e.g. Sofascore) are not cleaned; no HTTP/2 inside the cleaner (browsers are told to use HTTP/1.1); TV has no cleaner or Quiet hours UI yet.
+
+## Ad-blocker warning pop-ups on web pages (2026-11-26)
+- [x] Web page cleaner now removes "please turn off your ad blocker" pop-ups: a page-covering box that mentions an ad blocker is hidden and scrolling is given back. Cookie, sign-in and newsletter pop-ups are left alone. Test added.
+- [ ] Real-device check on xda-developers.com in Chrome (cleaner on). If the pop-up stays, tell me what its wording says.
