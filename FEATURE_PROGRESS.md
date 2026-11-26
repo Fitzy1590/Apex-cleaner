@@ -270,3 +270,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Ad-blocker warning pop-ups on web pages (2026-11-26)
 - [x] Web page cleaner now removes "please turn off your ad blocker" pop-ups: a page-covering box that mentions an ad blocker is hidden and scrolling is given back. Cookie, sign-in and newsletter pop-ups are left alone. Test added.
 - [ ] Real-device check on xda-developers.com in Chrome (cleaner on). If the pop-up stays, tell me what its wording says.
+
+## Claude app page hang fix (2026-11-26)
+- [x] AI assistant apps (Claude, ChatGPT, Gemini) now stay outside the shield tunnel; owner saw Claude mobile pages hang only while the shield was on.
+- [ ] Real-device check: shield on, open Claude app sessions, confirm they load. If other apps hang the same way, send me their names.
