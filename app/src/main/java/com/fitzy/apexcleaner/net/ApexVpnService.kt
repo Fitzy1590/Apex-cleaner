@@ -162,7 +162,7 @@ class ApexVpnService : VpnService() {
     }
 
     private fun bypassPackages(): Set<String> =
-        setOf(packageName) + SafeLists.bankingBypassPackages + ProtectedApps.ALWAYS_PROTECTED + WhitelistStore(this).all()
+        setOf(packageName) + SafeLists.bankingBypassPackages + SafeLists.assistantBypassPackages + ProtectedApps.ALWAYS_PROTECTED + WhitelistStore(this).all()
 
     private fun loop(engine: FilterEngine, full: Boolean) {
         val fd = tun ?: return

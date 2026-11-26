@@ -99,6 +99,11 @@ adtrafficquality.google ep1.adtrafficquality.google ads.google.com admob.com goo
     val starterBlocks: List<String> get() = words(STARTER_BLOCKS).distinct()
 
     /** Packages that bypass the tunnel completely, so their certificate pinning is never in play. */
+    /** AI assistant apps keep long-lived streaming connections; the tunnel made their pages hang (owner report 2026-11-26). */
+    val assistantBypassPackages = setOf(
+        "com.anthropic.claude", "com.openai.chatgpt", "com.google.android.apps.bard",
+    )
+
     val bankingBypassPackages = setOf(
         "com.chase.sig.android", "com.infonow.bofa", "com.wf.wellsfargomobile", "com.citi.citimobile",
         "com.usaa.mobile.android.usaa", "com.konylabs.capitalone", "com.paypal.android.p2pmobile",

@@ -12,7 +12,20 @@ object CosmeticRules {
     fun css() = hideSelectors.joinToString(",") + "{display:none!important}"
 
     /** Not a full scriptlet engine: only stubs the Google ad queue and a common "can ads run" flag. */
-    fun script() = "window.adsbygoogle=window.adsbygoogle||{push:function(){}};window.canRunAds=true;"
+    fun script() = "window.adsbygoogle=window.adsbygoogle||{push:function(){}};window.canRunAds=true;" + WALL_SCRIPT
+
+    /**
+     * Removes "please turn off your ad blocker" pop-ups: only a fixed, page-covering box whose short text mentions an ad blocker is hidden,
+     * then page scrolling is given back. Ordinary pop-ups (cookies, sign-in, newsletters) do not match and are left alone.
+     */
+    const val WALL_SCRIPT = "(function(){var re=/ad[\\s-]?block|ads? blocker|disable (your )?ad|turn off (your )?ad|allow ads|whitelist (this|our) (site|page)/i;" +
+        "function sweep(){try{var hit=false;var els=document.querySelectorAll('div,section,aside,dialog');" +
+        "for(var i=0;i<els.length;i++){var e=els[i];if(e.dataset.apexWall)continue;var cs=getComputedStyle(e);" +
+        "if((cs.position!=='fixed'&&cs.position!=='absolute')||e.offsetWidth<window.innerWidth*0.6||e.offsetHeight<window.innerHeight*0.25)continue;" +
+        "var t=e.innerText||'';if(t.length<600&&re.test(t)){e.dataset.apexWall='1';e.style.setProperty('display','none','important');hit=true}}" +
+        "if(hit){[document.documentElement,document.body].forEach(function(n){if(n){n.style.setProperty('overflow','auto','important');n.style.setProperty('position','static','important')}})}}catch(x){}}" +
+        "var t0=null;function later(){if(t0)return;t0=setTimeout(function(){t0=null;sweep()},300)}" +
+        "document.addEventListener('DOMContentLoaded',sweep);new MutationObserver(later).observe(document,{childList:true,subtree:true});setTimeout(sweep,1500)})();"
 
     /** Puts the style and script just before </head> (else after <head>, else before <body>). Null if the page has none of those. */
     fun inject(html: ByteArray, nonce: String): ByteArray? {

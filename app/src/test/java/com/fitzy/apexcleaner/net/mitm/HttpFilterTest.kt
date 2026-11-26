@@ -83,4 +83,9 @@ class HttpFilterTest {
         assertNotNull(CosmeticRules.inject("<body>x</body>".toByteArray(), "n")); assertNull(CosmeticRules.inject("plain text".toByteArray(), "n"))
         assertTrue(String(CosmeticRules.inject("<HEAD><TITLE>t</TITLE>".toByteArray(), "n")!!).startsWith("<HEAD><style"))
     }
+
+    @Test fun adBlockWallScriptIsInjectedAndNarrow() {
+        val out = String(CosmeticRules.inject("<head></head><body></body>".toByteArray(), "n")!!)
+        assertTrue(out.contains("ad[\\s-]?block")); assertTrue(out.contains("t.length<600"))
+    }
 }
