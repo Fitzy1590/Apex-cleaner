@@ -111,7 +111,7 @@ class ApexVpnService : VpnService() {
 
     private fun startLimiter() {
         val host = object : RelayHost {
-            override fun toApp(packet: ByteArray) { tunOut?.let { o -> synchronized(o) { runCatching { o.write(packet) } } } }
+            override fun toApp(packet: ByteArray) { TrafficLog.addPacket(packet, packet.size); tunOut?.let { o -> synchronized(o) { runCatching { o.write(packet) } } } }
             override fun keepOutside(s: java.net.Socket) = protect(s)
             override fun keepOutside(s: DatagramSocket) = protect(s)
             override val down get() = this@ApexVpnService.down
@@ -124,6 +124,13 @@ class ApexVpnService : VpnService() {
                         java.net.InetSocketAddress(InetAddress.getByAddress(appIp), appPort), java.net.InetSocketAddress(InetAddress.getByAddress(serverIp), serverPort))
                 }.getOrDefault(-1)
             override fun uidOnScreen(uid: Int) = uid >= 0 && (uid in visibleUids || uid in priorityUids)
+            override fun mitm(uid: Int, serverPort: Int) = com.fitzy.apexcleaner.net.mitm.MitmEngine.gateFor(this@ApexVpnService,
+                com.fitzy.apexcleaner.net.mitm.MitmEngine.isBrowserUid(this@ApexVpnService, uid), serverPort) { ShieldRules.live }
+            override fun refuseQuic(uid: Int) = com.fitzy.apexcleaner.net.mitm.MitmEngine.active(this@ApexVpnService) && com.fitzy.apexcleaner.net.mitm.MitmEngine.isBrowserUid(this@ApexVpnService, uid)
+            override fun flowDone(proto: Int, uid: Int, serverIp: ByteArray, serverPort: Int, up: Long, down: Long) {
+                if (!TrafficLog.recording || (up == 0L && down == 0L)) return
+                TrafficLog.addFlow(FlowEntry(System.currentTimeMillis(), appLabel(uid), if (proto == 6) "TCP" else "UDP", TrafficLog.nameFor(serverIp), serverPort, up, down, false))
+            }
         }
         flows = FlowTable(host)
         priority = runCatching { StreamingApps.priorityApps(this) }.getOrDefault(emptySet())
@@ -166,6 +173,7 @@ class ApexVpnService : VpnService() {
             while (running) {
                 val n = input.read(buf)
                 if (n <= 0) continue
+                TrafficLog.addPacket(buf, n)
                 val pkt = buf.copyOf(n)
                 val h = Packets.header(pkt)
                 val sidestep = com.fitzy.apexcleaner.core.AppSettings.blockSidestep(this)
@@ -201,6 +209,16 @@ class ApexVpnService : VpnService() {
             synchronized(out) { out.write(wrap(p, ihl, DnsPacket.nxdomainResponse(dns, q))) }
             return
         }
+        // Quiet hours (PIN-locked time rules). Protected names are never touched. Not counted as ads; the 15-minute pause does not lift them.
+        if (!engine.isProtected(q.name)) {
+            val c = java.util.Calendar.getInstance()
+            if (QuietHours.blocks(this, q.name, c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE))) {
+                ShieldRules.record(this, q.name, true); ShieldStats.lookups.value++
+                if (TrafficLog.recording) TrafficLog.addFlow(FlowEntry(System.currentTimeMillis(), dnsAsker(p, ihl), "DNS", q.name, 53, 0, 0, true, "Quiet hours"))
+                synchronized(out) { out.write(wrap(p, ihl, DnsPacket.nxdomainResponse(dns, q))) }
+                return
+            }
+        }
         // While paused, every name is answered normally; the lists come back by themselves when the 15 minutes end.
         val rawVerdict = engine.decide(q.name)
         // Ad-blocker detection scripts may load (so sites show the page, not "please allow ads"); your own Block choice still wins.
@@ -223,6 +241,10 @@ class ApexVpnService : VpnService() {
             AdBlock.recordBlocked(this); ShieldStats.blocked.value++
             ShieldStats.recent.value = (listOf(q.name) + ShieldStats.recent.value).distinct().take(40)
             answer = if (com.fitzy.apexcleaner.core.AppSettings.nxdomainReply(this)) DnsPacket.nxdomainResponse(dns, q) else DnsPacket.blockedResponse(dns, dns.size, q)
+        }
+        if (TrafficLog.recording) {
+            if (!block && answer != null) DnsPacket.addresses(answer).forEach { TrafficLog.learn(it, q.name) }
+            TrafficLog.addFlow(FlowEntry(System.currentTimeMillis(), dnsAsker(p, ihl), "DNS", q.name, 53, 0, 0, block, if (block) "Ad or tracker list" else ""))
         }
         answer ?: return
         synchronized(out) { out.write(wrap(p, ihl, answer)) }
@@ -260,6 +282,16 @@ class ApexVpnService : VpnService() {
     }.getOrNull()
 
     /** Builds the reply packet: addresses and ports swapped, new IPv4 header checksum, UDP checksum left at 0. */
+    private fun appLabel(uid: Int): String = if (uid < 0) "unknown app" else runCatching { packageManager.getPackagesForUid(uid)?.firstOrNull() }.getOrNull() ?: "uid $uid"
+
+    /** Names the app behind a DNS question for Live Traffic; only called while recording. */
+    private fun dnsAsker(p: ByteArray, ihl: Int): String = runCatching {
+        if (android.os.Build.VERSION.SDK_INT < 29) return "unknown app"
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val sport = (p[ihl].toInt() and 0xff shl 8) or (p[ihl + 1].toInt() and 0xff)
+        appLabel(cm.getConnectionOwnerUid(17, java.net.InetSocketAddress(InetAddress.getByAddress(p.copyOfRange(12, 16)), sport), java.net.InetSocketAddress(InetAddress.getByAddress(p.copyOfRange(16, 20)), 53)))
+    }.getOrDefault("unknown app")
+
     private fun wrap(req: ByteArray, ihl: Int, payload: ByteArray): ByteArray {
         val total = 20 + 8 + payload.size
         val o = ByteArray(total)
@@ -272,6 +304,7 @@ class ApexVpnService : VpnService() {
         System.arraycopy(req, ihl + 2, o, 20, 2); System.arraycopy(req, ihl, o, 22, 2)
         val ul = 8 + payload.size; o[24] = (ul shr 8).toByte(); o[25] = ul.toByte()
         System.arraycopy(payload, 0, o, 28, payload.size)
+        TrafficLog.addPacket(o, o.size)
         return o
     }
 

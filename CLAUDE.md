@@ -21,6 +21,7 @@ Android system optimizer: safe storage cleaner, quiet background tuner, no-kill 
 - `core/` engine: PathGuard (delete gatekeeper), SafeCleaner, HealthMonitor, Whitelist/ProtectedApps,
   PowerPolicy (WorkManager + screen state), Workers, TunerService, Notifications/Actions.
 - `power/` charging engine (ChargeMath, ChargeEngine, ChargeNotifier): rules in `.claude/rules/charging-engine.md`.
+- `net/mitm/` browser web page cleaner (owner-approved, off by default): rules in `.claude/rules/mitm-cosmetic.md`.
 - `net/` DNS firewall VPN (ApexVpnService, DomainTrie, SafeLists, TokenBucket, NetPolicy): rules in `.claude/rules/vpn-engine.md`.
 - `ui/` MainViewModel, `mobile/MobileDashboard`, `tv/TvDashboard`, `theme/`.
 - `MainActivity` picks TV or phone UI from UiModeManager.

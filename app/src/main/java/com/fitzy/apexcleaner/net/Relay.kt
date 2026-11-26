@@ -21,6 +21,12 @@ interface RelayHost {
     fun ownerUid(proto: Int, appIp: ByteArray, appPort: Int, serverIp: ByteArray, serverPort: Int): Int = -1
     /** True while this app is on screen. Its traffic is never slowed. */
     fun uidOnScreen(uid: Int): Boolean = false
+    /** Called once when a connection ends, with the bytes each way (for Live Traffic). */
+    /** Gate for cleaning this connection's web pages, or null to leave it alone. Asked once per secure connection from a browser. */
+    fun mitm(uid: Int, serverPort: Int): com.fitzy.apexcleaner.net.mitm.MitmGate? = null
+    /** True if secure-web-over-UDP (QUIC) from this app should be refused so the browser falls back to the cleanable kind. */
+    fun refuseQuic(uid: Int): Boolean = false
+    fun flowDone(proto: Int, uid: Int, serverIp: ByteArray, serverPort: Int, up: Long, down: Long) {}
 }
 
 /** Waits for the pacing gate unless the connection belongs to an app the user is looking at. */
@@ -51,6 +57,9 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     private var finSent = false
     private var finGot = false
     private var queued = 0
+    @Volatile private var upBytes = 0L
+    @Volatile private var downBytes = 0L
+    private var reported = false
     private val out = LinkedBlockingQueue<ByteArray>()
 
     val closed get() = st == St.CLOSED
@@ -95,6 +104,8 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 sock = s; ourSeq = Packets.add(ourIsn, 1); appAck = ourSeq; st = St.OPEN
                 send(ourIsn, expected, Packets.SYN or Packets.ACK, mss = 1400)
             }
+            val gate = runCatching { host.mitm(uid, serverPort) }.getOrNull()
+            if (gate != null) { runMitm(s, gate); return }
             host.pool.execute { writer(s) }
             reader(s)
         } catch (_: Exception) {
@@ -110,7 +121,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 val chunk = out.take()
                 if (chunk === FIN_MARK) { runCatching { s.shutdownOutput() }; break }
                 host.pace(host.up, uid, chunk.size)
-                os.write(chunk); os.flush()
+                os.write(chunk); os.flush(); upBytes += chunk.size
                 synchronized(this) { queued -= chunk.size }
             }
         } catch (_: Exception) { close() }
@@ -128,7 +139,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 if (st == St.CLOSED) return
                 val n = ins.read(buf)
                 if (n < 0) break
-                host.pace(host.down, uid, n)
+                host.pace(host.down, uid, n); downBytes += n
                 synchronized(this) {
                     if (st == St.CLOSED) return
                     send(ourSeq, expected, Packets.ACK or Packets.PSH, buf, n)
@@ -143,6 +154,69 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
         } catch (_: Exception) { synchronized(this) { if (st != St.CLOSED) { send(ourSeq, expected, Packets.RST or Packets.ACK); close() } } }
     }
 
+    /** Next bytes from the app (waits for the upload pacing gate), or null when the app has closed. */
+    private fun takeApp(): ByteArray? {
+        val c = out.take(); if (c === FIN_MARK) return null
+        host.pace(host.up, uid, c.size)
+        synchronized(this) { queued -= c.size }; upBytes += c.size
+        return c
+    }
+
+    /** Sends bytes to the app in segments, waiting for its window and the pacing gate (used by the web page cleaner). */
+    private fun deliver(b: ByteArray, n: Int) {
+        var off = 0
+        while (off < n && st != St.CLOSED) {
+            synchronized(this) { while (st != St.CLOSED && Packets.diff(ourSeq, appAck) >= minOf(appWin, MAX_WINDOW)) (this as Object).wait(50) }
+            if (st == St.CLOSED) return
+            val k = minOf(appMss, n - off)
+            host.pace(host.down, uid, k); downBytes += k
+            synchronized(this) {
+                if (st == St.CLOSED) return
+                send(ourSeq, expected, Packets.ACK or Packets.PSH, b.copyOfRange(off, off + k), k)
+                ourSeq = Packets.add(ourSeq, k)
+            }
+            off += k
+        }
+    }
+
+    private fun finishDown() {
+        synchronized(this) {
+            if (st == St.CLOSED) return
+            send(ourSeq, expected, Packets.FIN or Packets.ACK); ourSeq = Packets.add(ourSeq, 1); finSent = true
+            if (finGot) scheduleClose()
+        }
+    }
+
+    /**
+     * A browser's secure connection when the web page cleaner is on: read the first bytes to learn the site name. If the site may be
+     * opened, hand the connection to [MitmSession]; otherwise (banking, sign-in, no name, ...) carry on as a plain byte copy.
+     */
+    private fun runMitm(s: Socket, gate: com.fitzy.apexcleaner.net.mitm.MitmGate) {
+        var first = ByteArray(0); var fin = false
+        while (true) {
+            val c = takeApp() ?: run { fin = true; null } ?: break
+            first += c
+            val need = com.fitzy.apexcleaner.net.mitm.Sni.recordSize(first, first.size)
+            if ((need > 0 && need <= first.size) || first.size > 20000) break
+        }
+        if (first.isEmpty()) { close(); return }
+        val hello = com.fitzy.apexcleaner.net.mitm.Sni.parse(first)
+        val name = hello?.host
+        val ctx = name?.let { runCatching { gate.contextFor(it) }.getOrNull() }
+        if (name == null || ctx == null) {
+            runCatching { s.getOutputStream().write(first); s.getOutputStream().flush() }
+            if (fin) runCatching { s.shutdownOutput() } else host.pool.execute { writer(s) }
+            reader(s); return
+        }
+        val pipe = object : com.fitzy.apexcleaner.net.mitm.MitmPipe {
+            override fun fromApp() = takeApp()
+            override fun toApp(b: ByteArray, n: Int) = deliver(b, n)
+            override fun appDone() = finishDown()
+        }
+        try { com.fitzy.apexcleaner.net.mitm.MitmSession(pipe, s, name, ctx, gate, first).run() }
+        catch (_: Exception) { synchronized(this) { if (st != St.CLOSED) { send(ourSeq, expected, Packets.RST or Packets.ACK); close() } } }
+    }
+
     private fun send(seq: Long, ack: Long, flags: Int, data: ByteArray? = null, len: Int = 0, mss: Int = 0) =
         host.toApp(Packets.buildTcp(serverIp, appIp, serverPort, appPort, seq, ack, flags, 65535, data, 0, len, mss))
 
@@ -151,6 +225,7 @@ class TcpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     @Synchronized fun close() {
         if (st == St.CLOSED) return
         st = St.CLOSED; runCatching { sock?.close() }; out.offer(FIN_MARK); (this as Object).notifyAll()
+        if (!reported) { reported = true; runCatching { host.flowDone(6, uid, serverIp, serverPort, upBytes, downBytes) } }
     }
 
     private companion object {
@@ -166,6 +241,9 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     @Volatile var closed = false; private set
     private val sock = DatagramSocket()
     @Volatile private var uid = -1
+    @Volatile private var upBytes = 0L
+    @Volatile private var downBytes = 0L
+    private var reported = false
 
     init {
         host.keepOutside(sock)
@@ -175,7 +253,7 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
     }
 
     fun toServer(payload: ByteArray) {
-        lastUse = System.currentTimeMillis()
+        lastUse = System.currentTimeMillis(); upBytes += payload.size
         runCatching { sock.send(DatagramPacket(payload, payload.size)) }
     }
 
@@ -187,13 +265,18 @@ class UdpFlow(private val host: RelayHost, private val appIp: ByteArray, private
                 val pk = DatagramPacket(buf, buf.size)
                 try { sock.receive(pk) } catch (_: java.net.SocketTimeoutException) { continue }
                 lastUse = System.currentTimeMillis()
+                downBytes += pk.length
                 if (serverPort != 53) host.pace(host.down, uid, pk.length)
                 host.toApp(Packets.buildUdp(serverIp, appIp, serverPort, appPort, buf, pk.length))
             }
         } catch (_: Exception) { } finally { close() }
     }
 
-    fun close() { closed = true; runCatching { sock.close() } }
+    fun close() {
+        closed = true; runCatching { sock.close() }
+        synchronized(this) { if (reported) return; reported = true }
+        runCatching { host.flowDone(17, uid, serverIp, serverPort, upBytes, downBytes) }
+    }
     private companion object { const val IDLE_MS = 60_000L }
 }
 
@@ -202,6 +285,7 @@ class FlowTable(private val host: RelayHost) {
     private val tcp = ConcurrentHashMap<String, TcpFlow>()
     private val udp = ConcurrentHashMap<String, UdpFlow>()
     private val maxFlows = 300
+    private val quic = ConcurrentHashMap<String, Boolean>()
 
     /** Too many open conversations use up threads and memory on a TV; the quietest ones are closed first. */
     private fun makeRoom() {
@@ -228,6 +312,7 @@ class FlowTable(private val host: RelayHost) {
                 if (h.total < h.ihl + 8) return
                 val sp = Packets.u16(p, h.ihl); val dp = Packets.u16(p, h.ihl + 2)
                 val k = key(17, sp, h.dst, dp)
+                if (dp == 443 && quic.getOrPut(k) { runCatching { host.refuseQuic(host.ownerUid(17, h.src, sp, h.dst, dp)) }.getOrDefault(false) }) return
                 makeRoom()
                 val f = udp[k]?.takeIf { !it.closed } ?: UdpFlow(host, h.src, h.dst, sp, dp).also { udp[k] = it }
                 f.toServer(p.copyOfRange(h.ihl + 8, h.total))
@@ -239,6 +324,7 @@ class FlowTable(private val host: RelayHost) {
         val now = System.currentTimeMillis()
         tcp.entries.removeIf { (_, f) -> (f.closed || now - f.lastUse > 120_000).also { dead -> if (dead) f.close() } }
         udp.entries.removeIf { (_, f) -> f.closed }
+        if (quic.size > 500) quic.clear()
     }
 
     fun closeAll() { tcp.values.forEach { it.close() }; udp.values.forEach { it.close() }; tcp.clear(); udp.clear() }

@@ -40,6 +40,10 @@ object AppSettings {
     fun instantMode(ctx: Context) = p(ctx).getBoolean("instant_mode", false)
     fun setInstantMode(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("instant_mode", on).apply()
 
+    /** Web page cleaner for browsers (needs the local certificate installed in Android). Off by default. */
+    fun httpsCleaner(ctx: Context) = p(ctx).getBoolean("https_cleaner", false)
+    fun setHttpsCleaner(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("https_cleaner", on).apply()
+
     /** Soft chime when charging reaches the limit. Off by default. */
     fun chargeChime(ctx: Context) = p(ctx).getBoolean("charge_chime", false)
     fun setChargeChime(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("charge_chime", on).apply()

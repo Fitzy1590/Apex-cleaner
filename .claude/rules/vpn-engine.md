@@ -7,5 +7,6 @@ paths: ["app/src/main/java/**/net/**/*.kt"]
 - An app on screen (including split-screen) is never paced; owner rule.
 - Pacing (TokenBucket) must suspend, never drop packets. DNS is never paced.
 - Banking/payment domains and apps, FCM/push, clock and system apps always bypass filtering (SafeLists wins over blocklists).
-- This app is excluded from its own tunnel. No packet inspection of content, no SSL interception.
+- This app is excluded from its own tunnel. No inspection of content, EXCEPT the owner-approved browser web page cleaner (vote 2026-11-26): see mitm-cosmetic.md. Live Traffic keeps only the first 128 bytes of each packet, only while recording is on.
+- Quiet hours (QuietHours) are checked after Allow/safe lists, so banking, clock and push names can never be blocked by a time rule. Changes need the PIN.
 - Keep Trie, token bucket, DNS parsing and NetPolicy pure and unit-tested.

@@ -67,3 +67,21 @@ Q2 Instant Mode reach:
 Q3 charge chime:
 - [x] 1: off until switched on (recommended)
 - [ ] 2: on by default
+
+## 12-pillar brief (2026-11-26): WAITING FOR VOTE
+Audit: pillars 1 (DNS firewall, trie), 4 (pacing), 5 (cache breakdown, no-kill), 6 (animations, 42 C, chime), 10 (night clean), 11 (284+ banking, clock/DRM, alarms/push), 12 (TV focus) already exist; not rebuilt. Rust/Go core stays "keep current" (voted 22 Nov); existing Stop hook kept.
+New: 7 Live Traffic + .pcapng/.har export, 8 PIN-gated Quiet hours, 9 router script generator. Big decisions: 2 HTTPS cosmetic engine (contradicts vpn-engine.md "no SSL interception"), 3 root iptables mode.
+Limits: Live Traffic sees only tunnel traffic; .har has names and sizes only unless Q2=2. Apps ignore user CAs by default since Android 7 (Q2 reaches browsers only).
+Q1 new pieces:
+- [x] A: Live Traffic + Quiet hours + Router script (recommended)
+- [ ] B: nothing new
+Q2 HTTPS page cleaning:
+- [ ] 1: skip, keep safety rule (recommended)
+- [x] 2: browsers only, wizard, off by default
+Q3 root mode:
+- [x] 1: skip for now (recommended)
+- [ ] 2: optional root switch
+
+## 12-pillar build (2026-11-26): VOTED Q1 A, Q2 2, Q3 1
+Built: Live Traffic (record switch, list, .har/.pcapng export), Quiet hours (PIN, wrap-past-midnight windows, social list + custom names), router script maker (OpenWrt, AsusWRT-Merlin, pfSense steps), browser web page cleaner (local CA in KeyStore, per-site certs, HTTP/1.1 rewriting, CSS/script injection with CSP nonce, QUIC refused for those browsers). Root mode not built (Q3 = 1).
+Limits: cleaner needs Android 10+, shield + Streaming priority on (full tunnel), Chrome-family and Samsung Internet only; Live Traffic connection sizes only for apps in the tunnel; `.har` has names and sizes only; router scripts untested on real routers; nothing device-tested yet.

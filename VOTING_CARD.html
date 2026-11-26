@@ -1,11 +1,10 @@
-<title>Apex Instant Mode Vote</title>
+<title>Apex Shield Voting Card</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@500&family=Outfit:wght@600&display=swap">
 <style>
-/* Layout: one column of cards; each question = two mock phone screens beside the choices. Dark HUD first. */
+/* Layout: summary of what exists, then three questions; each = mock phone screens beside the choices. Dark HUD first. */
 :root{--bg:#0B0E14;--panel:#121722;--line:#243044;--fg:#E6EAF2;--mute:#8A96AD;--mint:#10B981;--amber:#F59E0B;--violet:#7C3AED;
 --ui:'Inter',system-ui,sans-serif;--head:'Outfit','Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;color-scheme:dark}
-:root:not([data-theme="dark"]){}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F3F5F9;--panel:#FFFFFF;--line:#D5DCE8;--fg:#121722;--mute:#55627A;--mint:#047857;--amber:#B45309;--violet:#6D28D9;color-scheme:light}}
 :root[data-theme="light"]{--bg:#F3F5F9;--panel:#FFFFFF;--line:#D5DCE8;--fg:#121722;--mute:#55627A;--mint:#047857;--amber:#B45309;--violet:#6D28D9;color-scheme:light}
 body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--ui);padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -17,20 +16,31 @@ h2{font:600 19px/1.25 var(--head);margin:0 0 4px;text-wrap:balance}
 .built{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font:500 12px var(--mono);border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--mute)}
 .chip b{color:var(--mint);font-weight:500}
-.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
-@media(max-width:700px){.row{grid-template-columns:minmax(0,1fr)}}
-.phones{display:flex;gap:14px;flex-wrap:wrap}
-.phone{width:200px;max-width:100%;background:#0B0E14;border:2px solid #2B3850;border-radius:22px;padding:12px;display:grid;gap:8px;color:#E6EAF2}
-.phone .bar{font:500 11px var(--mono);color:#8A96AD;display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.row{grid-template-columns:minmax(0,1fr)}}
+.phones{display:flex;gap:12px;flex-wrap:wrap}
+.phone{width:196px;max-width:100%;background:#0B0E14;border:2px solid #2B3850;border-radius:22px;padding:12px;display:grid;gap:8px;color:#E6EAF2;align-content:start}
+.phone .bar{font:500 11px 'JetBrains Mono',ui-monospace,monospace;color:#8A96AD;display:flex;justify-content:space-between}
 .card{background:#121A28;border:1px solid #2B3850;border-radius:12px;padding:10px;display:grid;gap:6px;font-size:12px}
-.card b{font:600 13px var(--head)}
+.card b{font:600 13px 'Outfit','Inter',system-ui,sans-serif}
 .sw{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .tog{width:38px;height:22px;border-radius:11px;background:#10B981;position:relative;flex:none}
 .tog::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#0B0E14}
 .tog.off{background:#2B3850}.tog.off::after{right:auto;left:3px;background:#8A96AD}
-.big{font:500 26px var(--mono);color:#10B981}
-.warn{color:#F59E0B}
-.btn{background:#7C3AED;color:#fff;border-radius:8px;padding:8px;text-align:center;font-weight:600;min-height:36px}
+.mono{font:500 11px 'JetBrains Mono',ui-monospace,monospace;color:#8A96AD;overflow-wrap:anywhere}
+.big{font:500 22px 'JetBrains Mono',ui-monospace,monospace;color:#10B981}
+.warn{color:#F59E0B}.ok{color:#10B981}.bad{color:#F87171}
+.btn{background:#7C3AED;color:#fff;border-radius:8px;padding:8px;text-align:center;font-weight:600;min-height:36px;font-size:12px}
+.btn.ghost{background:transparent;border:1px solid #7C3AED;color:#C4B5FD}
+.fl{display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid #243044;padding-bottom:4px;font-size:11px}
+.fl:last-child{border:0}
+.pill{font:500 10px 'JetBrains Mono',ui-monospace,monospace;border-radius:4px;padding:1px 5px;border:1px solid currentColor}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.pad span{background:#0B0E14;border:1px solid #2B3850;border-radius:8px;padding:6px 0;font:500 13px 'JetBrains Mono',ui-monospace,monospace}
+.dots{display:flex;gap:8px;justify-content:center}.dots i{width:10px;height:10px;border-radius:50%;background:#7C3AED}.dots i.e{background:#2B3850}
+.adbox{height:44px;border-radius:8px;display:grid;place-items:center;font-size:11px}
+.adbox.before{background:#2B3850;color:#8A96AD;border:1px dashed #8A96AD}
+.adbox.after{background:#0B0E14;border:1px solid #243044;color:#10B981}
 .opts{display:grid;gap:10px;align-content:start}
 label.opt{display:grid;grid-template-columns:auto 1fr;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;min-height:44px}
 label.opt:has(input:checked){border-color:var(--mint);background:color-mix(in srgb,var(--mint) 10%,transparent)}
@@ -42,38 +52,44 @@ input[type=radio]{accent-color:var(--mint);width:20px;height:20px;margin-top:2px
 </style>
 <main>
 <header>
-<h1>Apex Instant Mode: what do we add?</h1>
-<p class="lede">Most of this brief is already inside the app. Only three things are genuinely new. Pick one answer per question below.</p>
+<h1>Apex Shield: what do we add this round?</h1>
+<p class="lede">Most of this 12-point brief is already inside the app, so it is not rebuilt. Three pieces are new and safe, two are bigger decisions. Pick one answer per question.</p>
 </header>
 
 <section class="panel" aria-label="Already built">
-<h2>Already in the app (not rebuilt)</h2>
+<h2>Already in the app (skipped, not rebuilt)</h2>
 <div class="built">
-<span class="chip"><b>done</b> ad and tracker shield</span><span class="chip"><b>done</b> speed pacing, never drops</span>
-<span class="chip"><b>done</b> 288 banking names skip</span><span class="chip"><b>done</b> clock and video-licence skip</span>
-<span class="chip"><b>done</b> per-app cache breakdown</span><span class="chip"><b>done</b> 3 AM idle clean</span>
-<span class="chip"><b>done</b> heat alert 42 C</span><span class="chip"><b>done</b> 80% charge alert</span>
-<span class="chip"><b>done</b> instant tab switching</span><span class="chip"><b>done</b> TV violet focus, 1.05x</span>
-<span class="chip"><b>done</b> apps are never force-closed</span>
+<span class="chip"><b>done</b> DNS ad firewall + trie lists</span><span class="chip"><b>done</b> speed pacing, never drops</span>
+<span class="chip"><b>done</b> 288 banking names skip</span><span class="chip"><b>done</b> clock + video-licence skip</span>
+<span class="chip"><b>done</b> alarms, push, listeners safe</span><span class="chip"><b>done</b> cache breakdown (Shizuku)</span>
+<span class="chip"><b>done</b> animations off (Instant Mode)</span><span class="chip"><b>done</b> heat alert 42 C</span>
+<span class="chip"><b>done</b> chime at charge limit</span><span class="chip"><b>done</b> night clean: plugged, 80%+, idle</span>
+<span class="chip"><b>done</b> TV violet focus, 1.05x</span><span class="chip"><b>done</b> apps never force-closed</span>
 </div>
-<p class="small">The engine question (Rust or Go core) was decided on 22 Nov: keep the current engine. It is not asked again.</p>
+<p class="small">Not asked again: the Rust or Go engine (you voted to keep the current engine on 22 Nov), and the shorter check hook in the brief (it would hide failed builds, so the existing one stays).</p>
 </section>
 
 <section class="panel" aria-labelledby="q1">
 <div class="row">
 <div>
-<h2 id="q1">Question 1: which update?</h2>
+<h2 id="q1">Question 1: the three safe new pieces</h2>
 <div class="phones" aria-hidden="true">
-<div class="phone"><div class="bar"><span>Settings</span><span>Shizuku on</span></div>
-<div class="card"><div class="sw"><b>Instant Mode</b><span class="tog"></span></div><span>Phone animations off. Apps open with no slide or fade.</span><span class="warn">Switch off to restore the normal feel.</span></div>
-<div class="card"><div class="sw"><b>Charge chime</b><span class="tog"></span></div><span>Soft sound at your charge limit.</span></div></div>
-<div class="phone"><div class="bar"><span>Charging</span><span>43 C</span></div>
-<div class="card"><span>Battery</span><span class="big">80%</span><span class="warn">Chime played: limit reached. Unplug to protect battery life.</span></div>
-<div class="btn">Stop chime</div></div>
+<div class="phone"><div class="bar"><span>Live Traffic</span><span class="ok">3 apps</span></div>
+<div class="card"><div class="fl"><span>Chrome</span><span class="pill bad">blocked</span></div><div class="fl"><span class="mono">ads.example.net</span><span>0.4 KB</span></div>
+<div class="fl"><span>YouTube</span><span class="pill ok">allowed</span></div><div class="fl"><span class="mono">rr3.googlevideo.com</span><span>8.2 MB</span></div></div>
+<div class="btn">Export .pcapng</div><div class="btn ghost">Export .har</div></div>
+<div class="phone"><div class="bar"><span>Quiet hours</span><span>locked</span></div>
+<div class="card"><b>Social apps off</b><span>10 PM to 6 AM</span><div class="sw"><span>Rule on</span><span class="tog"></span></div></div>
+<div class="card"><span>Enter PIN to change</span><div class="dots"><i></i><i></i><i class="e"></i><i class="e"></i></div></div>
+<div class="pad"><span>1</span><span>2</span><span>3</span></div></div>
+<div class="phone"><div class="bar"><span>Router script</span><span>OpenWrt</span></div>
+<div class="card"><span class="mono"># send DNS to the phone,<br># block port 853 (DoT)<br>nft add rule ... dport 53 dnat ...<br>nft add rule ... dport 853 drop</span></div>
+<div class="btn">Copy script</div><div class="btn ghost">AsusWRT / pfSense</div></div>
 </div></div>
 <div class="opts" role="radiogroup" aria-label="Question 1">
-<label class="opt"><input type="radio" name="q1" value="A"><span><span class="tag">Recommended</span><br><b>Option A: add the three missing pieces</b><p class="small">1) Instant Mode switch: turns phone animations off so apps open instantly, reversible in one tap. 2) Optional chime when charging reaches your limit. 3) Small housekeeping: TV rule file and a leaner settings file.</p></span></label>
-<label class="opt"><input type="radio" name="q1" value="B"><span><b>Option B: storage and tuner only</b><p class="small">Removes the ad and network shield, the speed limiter and the TV network tools you already use. Not advised.</p></span></label>
+<label class="opt"><input type="radio" name="q1" value="A"><span><span class="tag">Recommended</span><br><b>A: add all three</b>
+<p class="small"><b>Live Traffic:</b> see each app's connections, names and sizes, export a .pcapng file (real packets, contents stay scrambled) or a .har file (names and sizes only). Only sees traffic that goes through the shield.<br><b>Quiet hours:</b> block chosen groups (e.g. social media, ad networks) between set times, changed only with a 4-digit PIN. Banking, clock and alarms can never be blocked.<br><b>Router script:</b> copy-ready settings for AsusWRT-Merlin, pfSense and OpenWrt so TVs and Chromecasts cannot dodge ad blocking with 8.8.8.8.</p></span></label>
+<label class="opt"><input type="radio" name="q1" value="B"><span><b>B: add nothing new</b><p class="small">The app stays exactly as it is today.</p></span></label>
 </div>
 </div>
 </section>
@@ -81,14 +97,21 @@ input[type=radio]{accent-color:var(--mint);width:20px;height:20px;margin-top:2px
 <section class="panel" aria-labelledby="q2">
 <div class="row">
 <div>
-<h2 id="q2">Question 2: how far should Instant Mode go?</h2>
+<h2 id="q2">Question 2: clean ads inside web pages (HTTPS)</h2>
+<p class="small">This is a major change: it breaks today's safety rule "no looking inside web traffic". It needs a vote.</p>
 <div class="phones" aria-hidden="true">
-<div class="phone"><div class="bar"><span>Apex only</span><span>0 ms</span></div><div class="card"><b>Inside Apex</b><span>Every Apex screen already changes with no animation.</span></div></div>
-<div class="phone"><div class="bar"><span>Whole phone</span><span>Shizuku</span></div><div class="card"><b>All apps</b><span>Android's three animation speeds set to zero. Needs the Shizuku helper running and a one-time permission.</span><span class="warn">Stays off until you switch it on.</span></div></div>
+<div class="phone"><div class="bar"><span>Setup 1 of 3</span><span>Chrome only</span></div>
+<div class="card"><b>Create your private certificate</b><span>Made on this phone. The key never leaves it and is locked in Android's secure storage.</span></div>
+<div class="btn">Save AdShield-Root-CA.crt</div></div>
+<div class="phone"><div class="bar"><span>Setup 3 of 3</span><span>Settings</span></div>
+<div class="card"><b>Install it in Android</b><span>Settings, Security, Encryption and credentials, Install a certificate, CA certificate. Android shows a warning; that is normal.</span><span class="warn">Remove it any time in the same menu.</span></div></div>
+<div class="phone"><div class="bar"><span>A web page</span><span>Chrome</span></div>
+<div class="adbox before">before: empty grey ad box</div><div class="adbox after">after: box removed</div>
+<div class="card"><span class="mono">hidden: display:none</span><span class="ok">Banking, payment, DRM skipped</span></div></div>
 </div></div>
 <div class="opts" role="radiogroup" aria-label="Question 2">
-<label class="opt"><input type="radio" name="q2" value="1"><span><span class="tag">Recommended</span><br><b>1. Whole phone, off by default</b><p class="small">Owner switches it on in Settings. Changes only the three animation speeds, remembers your old values and puts them back when switched off.</p></span></label>
-<label class="opt"><input type="radio" name="q2" value="2"><span><b>2. Apex screens only</b><p class="small">Nothing outside this app changes. Already how Apex behaves today.</p></span></label>
+<label class="opt"><input type="radio" name="q2" value="1"><span><span class="tag">Recommended</span><br><b>1. Skip it, keep the safety rule</b><p class="small">Current blocking by name plus the optional "Hide leftover ad boxes" helper stay. Nothing is installed in Android's security settings.</p></span></label>
+<label class="opt"><input type="radio" name="q2" value="2"><span><b>2. Build it for web browsers only</b><p class="small">Setup wizard, then ad boxes and nag pop-ups removed on web pages in browsers that accept your certificate. Off by default. Banking, payment and video-licence names are never opened. Limits: most apps (including Sofascore) ignore user certificates, so it will not touch them; sites that hard-pin certificates stop loading in the browser until you allow them.</p></span></label>
 </div>
 </div>
 </section>
@@ -96,18 +119,19 @@ input[type=radio]{accent-color:var(--mint);width:20px;height:20px;margin-top:2px
 <section class="panel" aria-labelledby="q3">
 <div class="row">
 <div>
-<h2 id="q3">Question 3: the charge chime</h2>
+<h2 id="q3">Question 3: root mode (rooted phones only)</h2>
 <div class="phones" aria-hidden="true">
-<div class="phone"><div class="bar"><span>Notification</span><span>now</span></div><div class="card"><b>Charge limit reached</b><span>Battery is at 80%. Unplug to protect its life.</span><span>Plays a short chime</span></div></div>
+<div class="phone"><div class="bar"><span>Settings</span><span class="ok">Root found</span></div>
+<div class="card"><div class="sw"><b>Root mode</b><span class="tog off"></span></div><span>Redirects lookups without a VPN. The key icon in the status bar disappears.</span><span class="warn">Shown only if root is detected.</span></div></div>
 </div></div>
 <div class="opts" role="radiogroup" aria-label="Question 3">
-<label class="opt"><input type="radio" name="q3" value="1"><span><span class="tag">Recommended</span><br><b>1. Chime off until you switch it on</b><p class="small">Today's silent 80% alert stays as is; the chime is an extra switch.</p></span></label>
-<label class="opt"><input type="radio" name="q3" value="2"><span><b>2. Chime on by default</b><p class="small">Plays once per charge at your limit.</p></span></label>
+<label class="opt"><input type="radio" name="q3" value="1"><span><span class="tag">Recommended</span><br><b>1. Skip for now</b><p class="small">Cannot be tested on the build machine, and your phone and TV use the helper app, not root. Can be added later if you root a device.</p></span></label>
+<label class="opt"><input type="radio" name="q3" value="2"><span><b>2. Build the optional root switch</b><p class="small">Hidden unless root is found. Untested until you try it on a rooted phone.</p></span></label>
 </div>
 </div>
 </section>
 
-<div id="out" role="status" aria-live="polite">Your picks will show here. Reply in chat with, for example: 1A, 1, 1.</div>
+<div id="out" role="status" aria-live="polite">Your picks will show here. Reply in chat with, for example: A, 2, 1.</div>
 </main>
 <script>
 (function(){

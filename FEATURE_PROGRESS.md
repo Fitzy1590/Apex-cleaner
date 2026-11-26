@@ -249,3 +249,20 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Build check (2026-11-26, build passing)
 - [x] Compile, lint and all unit tests pass, including Instant Mode, Charge chime and Privacy Mode (Android tools installed on the cloud machine; no code changes needed).
 - [ ] Real-device tests: Instant Mode, Privacy Mode (helper command unconfirmed), charge chime.
+
+## 12-pillar brief, Phase 1 (2026-11-26): WAITING FOR VOTE
+- [x] Audit done: pillars 1, 4, 5, 6, 10, 11, 12 already built (skipped to avoid duplicates). Rust/Go core and shorter hook not re-asked.
+- [x] Voting card written: VOTING_CARD.html, .claude/VOTING_CARD.md, SPEC.md
+- [x] Q1: A (Live Traffic + Quiet hours + Router script) / B (nothing new)
+- [x] Q2: 2 (browsers only) chosen; 1 (skip) not chosen
+- [x] Q3: 1 (skip root mode) chosen; 2 (optional root switch)
+- [ ] `.claude/rules/mitm-cosmetic.md` written only if Q2 = 2
+
+## 12-pillar build (2026-11-26, build passing)
+- [x] Router script maker (Settings, phone): OpenWrt, AsusWRT-Merlin scripts, pfSense steps; address checked; copy button. Tests added.
+- [x] Quiet hours (Settings, phone): time-window rules (social media + your own names), 4-digit PIN (salted, 5 wrong tries lock 5 minutes), banking/clock/push names can never be blocked. Tests added.
+- [x] Live Traffic (Settings, phone): off until switched on; list of lookups and connections with app, size and blocked/allowed; export .pcapng (first 128 bytes of each packet) and .har (names and sizes). Tests added.
+- [x] Web page cleaner for browsers (Settings, phone): setup wizard (save certificate, install in Android, check), local certificate kept in Android's secure key storage, only Chrome-family browsers and Samsung Internet, off by default; full local TLS round-trip test passes.
+- [x] Rules: `.claude/rules/mitm-cosmetic.md` added; vpn-engine.md and CLAUDE.md updated for the owner-approved exception.
+- [ ] Real-device tests: install the certificate, open a news site in Chrome, check pages load and ads/boxes are gone, banking sites untouched; Live Traffic export opens in Wireshark; router scripts on a real router.
+- [ ] Known limits: Firefox and apps (e.g. Sofascore) are not cleaned; no HTTP/2 inside the cleaner (browsers are told to use HTTP/1.1); TV has no cleaner or Quiet hours UI yet.
