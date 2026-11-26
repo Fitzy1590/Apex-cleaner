@@ -43,6 +43,7 @@ import com.fitzy.apexcleaner.net.RouterScripts
 /** Settings rows for the shield tools: Quiet hours (PIN-locked) and the router script maker. */
 @Composable
 fun ShieldToolsRows() {
+    HttpsCleanerCard()
     LiveTrafficCard()
     QuietHoursCard()
     RouterScriptCard()
@@ -231,6 +232,39 @@ private fun LiveTrafficCard() {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/** Setup wizard and switch for the browser web page cleaner. Needs the one-time certificate install in Android. */
+@Composable
+private fun HttpsCleanerCard() {
+    val ctx = LocalContext.current
+    val sdkOk = android.os.Build.VERSION.SDK_INT >= 29
+    var installed by remember { mutableStateOf(sdkOk && com.fitzy.apexcleaner.net.mitm.MitmEngine.isInstalled(ctx)) }
+    var on by remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.httpsCleaner(ctx)) }
+    var msg by remember { mutableStateOf("") }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Web page cleaner (browsers)", style = MaterialTheme.typography.titleMedium)
+                    Text("Removes empty ad boxes and ad containers from web pages in Chrome-family browsers and Samsung Internet. Works by opening those pages on this phone with a private certificate that only this phone holds. It never touches banking, payment, sign-in, government or video-licence sites, your Allow list, Firefox, or other apps. Needs Android 10+, the shield on, and Streaming priority on. Off by default.", style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = on && installed, enabled = installed && sdkOk, onCheckedChange = { on = it; com.fitzy.apexcleaner.core.AppSettings.setHttpsCleaner(ctx, it) })
+            }
+            if (!sdkOk) Text("This phone is older than Android 10, so the cleaner is not available.", style = MaterialTheme.typography.bodySmall)
+            else {
+                Text(if (installed) "Certificate installed in Android: yes" else "Certificate installed in Android: not yet", style = MaterialTheme.typography.bodyMedium)
+                if (!installed) {
+                    Text("Step 1: save the certificate file. Step 2: open Android's security settings and install it (usually Security, More security settings, Encryption and credentials, Install a certificate, CA certificate, then pick AdShield-Root-CA.crt from Downloads; Android shows a warning, that is normal). Step 3: come back and tap Check again. You can remove it later in the same menu.", style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { msg = if (com.fitzy.apexcleaner.net.mitm.MitmEngine.saveToDownloads(ctx)) "Saved AdShield-Root-CA.crt in Downloads." else "Could not save the file." }, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) { Text("1. Save certificate to Downloads") }
+                    OutlinedButton(onClick = { runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) { Text("2. Open Android security settings") }
+                }
+                OutlinedButton(onClick = { installed = com.fitzy.apexcleaner.net.mitm.MitmEngine.recheck(ctx); msg = if (installed) "Certificate found." else "Not found yet." }, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) { Text("3. Check again") }
+                if (msg.isNotEmpty()) Text(msg, style = MaterialTheme.typography.bodySmall)
+                Text("Limits: pages already loaded keep their ads until reloaded; sites that refuse our certificate show an error until you tap Allow on them in Network Logs.", style = MaterialTheme.typography.bodySmall)
             }
         }
     }

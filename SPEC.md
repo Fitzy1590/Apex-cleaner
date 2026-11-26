@@ -81,3 +81,7 @@ Q2 HTTPS page cleaning:
 Q3 root mode:
 - [x] 1: skip for now (recommended)
 - [ ] 2: optional root switch
+
+## 12-pillar build (2026-11-26): VOTED Q1 A, Q2 2, Q3 1
+Built: Live Traffic (record switch, list, .har/.pcapng export), Quiet hours (PIN, wrap-past-midnight windows, social list + custom names), router script maker (OpenWrt, AsusWRT-Merlin, pfSense steps), browser web page cleaner (local CA in KeyStore, per-site certs, HTTP/1.1 rewriting, CSS/script injection with CSP nonce, QUIC refused for those browsers). Root mode not built (Q3 = 1).
+Limits: cleaner needs Android 10+, shield + Streaming priority on (full tunnel), Chrome-family and Samsung Internet only; Live Traffic connection sizes only for apps in the tunnel; `.har` has names and sizes only; router scripts untested on real routers; nothing device-tested yet.

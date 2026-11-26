@@ -124,6 +124,9 @@ class ApexVpnService : VpnService() {
                         java.net.InetSocketAddress(InetAddress.getByAddress(appIp), appPort), java.net.InetSocketAddress(InetAddress.getByAddress(serverIp), serverPort))
                 }.getOrDefault(-1)
             override fun uidOnScreen(uid: Int) = uid >= 0 && (uid in visibleUids || uid in priorityUids)
+            override fun mitm(uid: Int, serverPort: Int) = com.fitzy.apexcleaner.net.mitm.MitmEngine.gateFor(this@ApexVpnService,
+                com.fitzy.apexcleaner.net.mitm.MitmEngine.isBrowserUid(this@ApexVpnService, uid), serverPort) { ShieldRules.live }
+            override fun refuseQuic(uid: Int) = com.fitzy.apexcleaner.net.mitm.MitmEngine.active(this@ApexVpnService) && com.fitzy.apexcleaner.net.mitm.MitmEngine.isBrowserUid(this@ApexVpnService, uid)
             override fun flowDone(proto: Int, uid: Int, serverIp: ByteArray, serverPort: Int, up: Long, down: Long) {
                 if (!TrafficLog.recording || (up == 0L && down == 0L)) return
                 TrafficLog.addFlow(FlowEntry(System.currentTimeMillis(), appLabel(uid), if (proto == 6) "TCP" else "UDP", TrafficLog.nameFor(serverIp), serverPort, up, down, false))
