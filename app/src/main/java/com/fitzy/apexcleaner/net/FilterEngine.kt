@@ -7,6 +7,8 @@ class FilterEngine(@Volatile var blocks: DomainTrie, private val safe: DomainTri
     /** Your own choices from the log. Allow beats every blocklist; Block cannot override banking or push names. */
     @Volatile var userAllow: DomainTrie = DomainTrie()
     @Volatile var userDeny: DomainTrie = DomainTrie()
+    /** Piano/Tinypass paywall script names; filled only while the paywall reader is on. */
+    @Volatile var paywallBlocks: DomainTrie = DomainTrie()
 
     /** Names your Allow choice or the banking/push/clock lists cover: no time rule or list may block them. */
     fun isProtected(domain: String) = userAllow.matches(domain) || safe.matches(domain)
@@ -15,6 +17,7 @@ class FilterEngine(@Volatile var blocks: DomainTrie, private val safe: DomainTri
         userAllow.matches(domain) -> Verdict.ALLOW
         safe.matches(domain) -> Verdict.SAFE_PASSTHROUGH
         userDeny.matches(domain) -> Verdict.BLOCK
+        paywallBlocks.matches(domain) -> Verdict.BLOCK
         blocks.matches(domain) -> Verdict.BLOCK
         else -> Verdict.ALLOW
     }

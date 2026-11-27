@@ -12,7 +12,7 @@ class HttpShared { val methods = ConcurrentLinkedQueue<String>(); @Volatile var 
  * Requests: asks for uncompressed replies (so pages can be read). Responses: web pages (text/html, uncompressed, up to 3 MB) get the cosmetic
  * rules added; everything else passes through byte for byte. WebSocket and other upgrades switch to plain pass-through.
  */
-class HttpDirection(private val isResponse: Boolean, private val shared: HttpShared, private val emit: (ByteArray) -> Unit, private val injectOn: Boolean = isResponse) {
+class HttpDirection(private val isResponse: Boolean, private val shared: HttpShared, private val emit: (ByteArray) -> Unit, private val injectOn: Boolean = isResponse, private val paywall: Boolean = false) {
     private enum class S { HEAD, FIXED, CHUNKED, UNTIL_CLOSE, BUFFER, PASS }
     private var st = S.HEAD
     private val head = ByteArrayOutputStream()
@@ -71,7 +71,7 @@ class HttpDirection(private val isResponse: Boolean, private val shared: HttpSha
 
     private fun finishBuffer() {
         val body = decoded.toByteArray(); val nonce = ByteArray(12).also { rnd.nextBytes(it) }.joinToString("") { "%02x".format(it) }
-        val out = if (CosmeticRulesHolder.enabled) CosmeticRules.inject(body, nonce) else null
+        val out = if (CosmeticRulesHolder.enabled) CosmeticRules.inject(body, nonce, if (paywall) PaywallRules.html(nonce) else "") else null
         if (out == null) { emit(pendHead!!); emit(if (bufferChunked) rawBody.toByteArray() else body) }
         else {
             val hs = pendHeaders.filter { !it.first.equals("content-length", true) && !it.first.equals("transfer-encoding", true) }
@@ -92,7 +92,7 @@ class HttpDirection(private val isResponse: Boolean, private val shared: HttpSha
         if (!isResponse) {
             shared.methods.add(first.substringBefore(' ').uppercase())
             if (upgrade) shared.upgraded = true
-            val nh = hs.filter { !it.first.equals("accept-encoding", true) } + ("Accept-Encoding" to "identity")
+            val nh = hs.filter { !it.first.equals("accept-encoding", true) }.let { if (paywall) PaywallRules.rewrite(it) else it } + ("Accept-Encoding" to "identity")
             emit(if (upgrade) raw else build(first, nh))
             if (upgrade) { st = S.PASS; return }
             frame(te, cl)

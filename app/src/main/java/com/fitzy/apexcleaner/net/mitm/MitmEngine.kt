@@ -106,6 +106,7 @@ object MitmEngine {
             }
             override val upstreamFactory: SSLSocketFactory = javax.net.ssl.SSLContext.getDefault().socketFactory
             override val restrictAlpn = true
+            override val paywallReader = AppSettings.paywallReader(ctx)
         }
     }
 

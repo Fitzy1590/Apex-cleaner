@@ -44,6 +44,10 @@ object AppSettings {
     fun httpsCleaner(ctx: Context) = p(ctx).getBoolean("https_cleaner", false)
     fun setHttpsCleaner(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("https_cleaner", on).apply()
 
+    /** Paywall reader for news sites in browsers (needs the web page cleaner). Off by default. */
+    fun paywallReader(ctx: Context) = p(ctx).getBoolean("paywall_reader", false)
+    fun setPaywallReader(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("paywall_reader", on).apply()
+
     /** Soft chime when charging reaches the limit. Off by default. */
     fun chargeChime(ctx: Context) = p(ctx).getBoolean("charge_chime", false)
     fun setChargeChime(ctx: Context, on: Boolean) = p(ctx).edit().putBoolean("charge_chime", on).apply()

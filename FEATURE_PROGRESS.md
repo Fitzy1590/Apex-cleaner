@@ -279,8 +279,13 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Pausing from the notification now flips the "Ad & tracker shield" switch to Off; turning it On again ends the pause. Blocking itself was already paused.
 - [ ] Real-device check: tap Pause in the notification, open the app, switch shows Off with "Paused until"; flip it On, notification returns to "Pause 15 min".
 
-## Apex Shield V4 brief, Phase 1 (2026-11-27): WAITING FOR VOTE
+## Apex Shield V4 brief, Phase 1 (2026-11-27): VOTED Q1 1, Q2 1 (2026-11-27)
 - [x] Audit done: 12 of 13 pillars already built; Rust/Go, root, shorter hook not re-asked.
 - [x] Voting card written: VOTING_CARD.html, .claude/VOTING_CARD.md, SPEC.md
-- [ ] Q1: 1 (Option A, paywall reader only) / 2 (Option B)
-- [ ] Q2: 1 (full) / 2 (pop-ups only) / 3 (skip)
+- [x] Q1: 1 (Option A, paywall reader only) / 2 (Option B)
+- [x] Q2: 1 (full) / 2 (pop-ups only) / 3 (skip)
+
+## Paywall reader build (2026-11-27, build passing)
+- [x] Settings (phone, under the web page cleaner): "Paywall reader (news sites)" switch, off by default. On ~32 listed news sites the browser says Googlebot arriving from Google; paywall pop-ups hidden and scrolling restored; Piano/Tinypass names blocked while on; "Archived copy" and "Smry.ai" buttons for hard paywalls. Tests added; rules in `.claude/rules/paywall-engine.md`.
+- [ ] Real-device check: cleaner on, reader on, open a listed news site in Chrome; confirm full article or archive button. Tell me which sites stay locked.
+- [ ] Known limits: only sites that show crawlers the full article respond; sites may block the look-alike; TV has no reader; Firefox and apps not covered.

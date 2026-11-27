@@ -86,13 +86,13 @@ Q3 root mode:
 Built: Live Traffic (record switch, list, .har/.pcapng export), Quiet hours (PIN, wrap-past-midnight windows, social list + custom names), router script maker (OpenWrt, AsusWRT-Merlin, pfSense steps), browser web page cleaner (local CA in KeyStore, per-site certs, HTTP/1.1 rewriting, CSS/script injection with CSP nonce, QUIC refused for those browsers). Root mode not built (Q3 = 1).
 Limits: cleaner needs Android 10+, shield + Streaming priority on (full tunnel), Chrome-family and Samsung Internet only; Live Traffic connection sizes only for apps in the tunnel; `.har` has names and sizes only; router scripts untested on real routers; nothing device-tested yet.
 
-## Apex Shield V4 brief (2026-11-27): WAITING FOR VOTE
+## Apex Shield V4 brief (2026-11-27): VOTED Q1 1, Q2 1 (2026-11-27)
 Audit: pillars 1 (DNS + trie), 3 (page cleaner + CA wizard), 5 (pacing), 6 (no-kill, cache), 7 (Instant Mode, 42 C, chimes), 8 (Live Traffic), 9 (PIN Quiet hours), 10 (router scripts), 11 (night clean), 12 (banking/clock/DRM/alarms), 13 (TV focus 1.05x, 3dp violet) already built. Root iptables (voted skip 26 Nov) and Rust/Go core (kept 22 Nov) not re-asked.
 New: pillar 2 paywall reader (crawler User-Agent + Google Referer rewrite, Piano/Tinypass sinkhole, pop-up hiding, archive fallback). Rewrites ride on the existing `net/mitm/` browser-only cleaner; no `paywall-engine.md` until voted.
 Q1 overall:
-- [ ] 1: Option A, add the missing piece (recommended)
+- [x] 1: Option A, add the missing piece (recommended)
 - [ ] 2: Option B, storage + basic DNS only
 Q2 paywall reader:
-- [ ] 1: full (recommended)
+- [x] 1: full (recommended)
 - [ ] 2: pop-ups only
 - [ ] 3: skip
