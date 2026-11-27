@@ -244,6 +244,7 @@ private fun HttpsCleanerCard() {
     val sdkOk = android.os.Build.VERSION.SDK_INT >= 29
     var installed by remember { mutableStateOf(sdkOk && com.fitzy.apexcleaner.net.mitm.MitmEngine.isInstalled(ctx)) }
     var on by remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.httpsCleaner(ctx)) }
+    var paywall by remember { mutableStateOf(com.fitzy.apexcleaner.core.AppSettings.paywallReader(ctx)) }
     var msg by remember { mutableStateOf("") }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -264,6 +265,13 @@ private fun HttpsCleanerCard() {
                 }
                 OutlinedButton(onClick = { installed = com.fitzy.apexcleaner.net.mitm.MitmEngine.recheck(ctx); msg = if (installed) "Certificate found." else "Not found yet." }, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) { Text("3. Check again") }
                 if (msg.isNotEmpty()) Text(msg, style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Paywall reader (news sites)", style = MaterialTheme.typography.titleMedium)
+                        Text("On a list of news sites, your browser says it is Googlebot arriving from Google, paywall pop-ups are hidden and scrolling comes back, Piano and Tinypass names are blocked, and an Archived copy button appears for hard paywalls. Only sites that show search engines the full article respond; some sites forbid this in their terms and may block your visit. Needs the web page cleaner switched on. Off by default.", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(checked = paywall && on && installed, enabled = on && installed, onCheckedChange = { paywall = it; com.fitzy.apexcleaner.core.AppSettings.setPaywallReader(ctx, it); com.fitzy.apexcleaner.net.ShieldRules.apply(ctx, com.fitzy.apexcleaner.net.ShieldRules.live) })
+                }
                 Text("Limits: pages already loaded keep their ads until reloaded; sites that refuse our certificate show an error until you tap Allow on them in Network Logs.", style = MaterialTheme.typography.bodySmall)
             }
         }

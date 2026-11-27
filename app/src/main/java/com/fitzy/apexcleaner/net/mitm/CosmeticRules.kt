@@ -28,10 +28,10 @@ object CosmeticRules {
         "document.addEventListener('DOMContentLoaded',sweep);new MutationObserver(later).observe(document,{childList:true,subtree:true});setTimeout(sweep,1500)})();"
 
     /** Puts the style and script just before </head> (else after <head>, else before <body>). Null if the page has none of those. */
-    fun inject(html: ByteArray, nonce: String): ByteArray? {
+    fun inject(html: ByteArray, nonce: String, extraHtml: String = ""): ByteArray? {
         val s = String(html, Charsets.ISO_8859_1)
         val low = s.lowercase()
-        val add = "<style nonce=\"$nonce\">${css()}</style><script nonce=\"$nonce\">${script()}</script>"
+        val add = "<style nonce=\"$nonce\">${css()}</style><script nonce=\"$nonce\">${script()}</script>$extraHtml"
         val at = low.indexOf("</head>").takeIf { it >= 0 }
             ?: low.indexOf("<head").takeIf { it >= 0 }?.let { h -> low.indexOf('>', h).takeIf { it >= 0 }?.plus(1) }
             ?: low.indexOf("<body").takeIf { it >= 0 } ?: return null

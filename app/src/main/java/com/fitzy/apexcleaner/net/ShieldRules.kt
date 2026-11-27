@@ -1,6 +1,7 @@
 package com.fitzy.apexcleaner.net
 
 import android.content.Context
+import com.fitzy.apexcleaner.core.AppSettings
 import java.io.File
 
 enum class Rule { ALLOW, DENY }
@@ -43,6 +44,7 @@ object ShieldRules {
         val r = rules(ctx)
         engine.userAllow = DomainTrie().also { t -> r.filterValues { it == Rule.ALLOW }.keys.forEach(t::add) }
         engine.userDeny = DomainTrie().also { t -> r.filterValues { it == Rule.DENY }.keys.forEach(t::add) }
+        engine.paywallBlocks = DomainTrie().also { t -> if (AppSettings.paywallReader(ctx)) com.fitzy.apexcleaner.net.mitm.PaywallRules.scriptHosts.forEach(t::add) }
     }
 
     /** Swaps freshly downloaded ad lists into the running shield, no restart needed. */

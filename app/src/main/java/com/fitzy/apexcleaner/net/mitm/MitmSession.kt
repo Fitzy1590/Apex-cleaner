@@ -27,6 +27,8 @@ interface MitmGate {
     fun contextFor(host: String): SSLContext?
     val upstreamFactory: SSLSocketFactory
     val restrictAlpn: Boolean
+    /** Paywall reader switch (owner voted 2026-11-27); only applies to the news-site names in [PaywallRules]. */
+    val paywallReader: Boolean get() = false
 }
 
 /**
@@ -57,8 +59,9 @@ class MitmSession(private val pipe: MitmPipe, private val plain: Socket, private
         }
         up = us
         val shared = HttpShared()
-        val req = HttpDirection(false, shared, { us.outputStream.write(it); us.outputStream.flush() })
-        val resp = HttpDirection(true, shared, { sendPlain(it) })
+        val pw = gate.paywallReader && PaywallRules.matches(host)
+        val req = HttpDirection(false, shared, { us.outputStream.write(it); us.outputStream.flush() }, paywall = pw)
+        val resp = HttpDirection(true, shared, { sendPlain(it) }, paywall = pw)
         val t = Thread({
             try {
                 val buf = ByteArray(16384); val ins = us.inputStream

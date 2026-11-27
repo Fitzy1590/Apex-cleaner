@@ -90,3 +90,36 @@ class HttpFilterTest {
         assertTrue(out.contains("ad[\\s-]?block")); assertTrue(out.contains("t.length<600"))
     }
 }
+
+class PaywallRulesTest {
+    @Test fun matchesListedSitesAndSubdomainsOnly() {
+        assertTrue(PaywallRules.matches("www.nytimes.com")); assertTrue(PaywallRules.matches("NYTIMES.com."))
+        assertFalse(PaywallRules.matches("notnytimes.com")); assertFalse(PaywallRules.matches("example.com"))
+    }
+    @Test fun requestGetsCrawlerAndGoogleReferer() {
+        val out = java.io.ByteArrayOutputStream()
+        val d = HttpDirection(false, HttpShared(), { out.write(it) }, paywall = true)
+        d.feed("GET /a HTTP/1.1\r\nHost: www.nytimes.com\r\nUser-Agent: Chrome\r\nReferer: https://x.com/\r\n\r\n".toByteArray())
+        val o = out.toString("ISO-8859-1")
+        assertTrue(o.contains("Googlebot/2.1")); assertTrue(o.contains("Referer: https://www.google.com/")); assertFalse(o.contains("User-Agent: Chrome")); assertFalse(o.contains("x.com"))
+    }
+    @Test fun requestUntouchedWhenReaderOff() {
+        val out = java.io.ByteArrayOutputStream()
+        HttpDirection(false, HttpShared(), { out.write(it) }).feed("GET / HTTP/1.1\r\nHost: a.com\r\nUser-Agent: Chrome\r\n\r\n".toByteArray())
+        assertFalse(out.toString("ISO-8859-1").contains("Googlebot"))
+    }
+    @Test fun responseGetsPaywallHidingAndArchiveButton() {
+        val html = "<html><head></head><body>hi</body></html>"
+        val out = java.io.ByteArrayOutputStream(); val s = HttpShared().also { it.methods.add("GET") }
+        val d = HttpDirection(true, s, { out.write(it) }, paywall = true)
+        d.feed("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ${html.length}\r\n\r\n$html".toByteArray())
+        val o = out.toString("ISO-8859-1")
+        assertTrue(o.contains(".tp-modal")); assertTrue(o.contains("archive.ph")); assertTrue(o.contains("overflow:auto!important"))
+    }
+    @Test fun pianoNamesBlockedOnlyWhenListed() {
+        val e = com.fitzy.apexcleaner.net.FilterEngine.withDefaults()
+        assertEquals(com.fitzy.apexcleaner.net.FilterEngine.Verdict.ALLOW, e.decide("c2.piano.io"))
+        e.paywallBlocks = com.fitzy.apexcleaner.net.DomainTrie().also { t -> PaywallRules.scriptHosts.forEach(t::add) }
+        assertEquals(com.fitzy.apexcleaner.net.FilterEngine.Verdict.BLOCK, e.decide("c2.piano.io"))
+    }
+}

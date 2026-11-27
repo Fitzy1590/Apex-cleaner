@@ -1,19 +1,16 @@
-# Apex Shield: voting card (2026-11-26, 12-point brief)
+# Apex Shield V4: voting card (2026-11-27)
 
 Visual version: `VOTING_CARD.html` in the project root.
 
-Most of the brief is already built (see FEATURE_PROGRESS.md). Not asked again: Rust/Go engine (keep current, voted 22 Nov); shorter check hook (would hide failed builds).
+Almost all of the 13-point brief already exists (see FEATURE_PROGRESS.md). New: the paywall reader. Not asked again: Rust/Go engine (keep current, voted 22 Nov), root mode (skip, voted 26 Nov), shorter check hook (hides failed builds).
 
-## Question 1: the three safe new pieces
-- [x] **A (recommended): add all three.** Live Traffic (connections, names, sizes; export .pcapng and .har), Quiet hours (time-window blocking behind a 4-digit PIN), Router script generator (AsusWRT-Merlin, pfSense, OpenWrt).
-- [ ] **B: add nothing new.**
+## Question 1: overall update
+- [ ] **1 (recommended): Option A, add the missing piece** (paywall reader only; everything else already works)
+- [ ] **2: Option B, storage cleaner + basic DNS filter only** (removes pacing, page cleaner, Live Traffic, Quiet hours, router scripts)
 
-## Question 2: clean ads inside web pages (HTTPS). Major change: breaks the "no looking inside web traffic" rule
-- [ ] **1 (recommended): skip, keep the safety rule.**
-- [x] **2: build for web browsers only.** Setup wizard, own certificate, off by default, banking/payment/video-licence names never opened. Most apps (e.g. Sofascore) ignore user certificates, so they are not affected.
+## Question 2: paywall reader (browsers only, off by default, needs the page-cleaner certificate)
+- [ ] **1 (recommended): full.** Googlebot look-alike + Google referrer for news sites, Piano/Tinypass names blocked, pop-ups hidden, archive button. Limit: only sites that show crawlers the full article respond; some terms of service forbid it.
+- [ ] **2: pop-ups only.** No crawler look-alike.
+- [ ] **3: skip.**
 
-## Question 3: root mode
-- [x] **1 (recommended): skip for now.** Untestable here; phone and TV use the helper app, not root.
-- [ ] **2: build the optional root switch** (hidden unless root is found).
-
-Reply like `A, 2, 1`, or type your own change.
+Reply like `1, 1`, or type your own change.
