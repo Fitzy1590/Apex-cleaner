@@ -168,7 +168,7 @@ fun MobileDashboard(
                                 )
                                 if (state.bankingAppsFound > 0) Text("${state.bankingAppsFound} banking or payment apps found here skip the shield completely, so their security checks stay valid.", style = MaterialTheme.typography.bodySmall)
                             }
-                            Switch(checked = state.shieldOn, onCheckedChange = onShield)
+                            Switch(checked = state.shieldOn && !shieldPaused, onCheckedChange = onShield)
                         }
                         Row(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
                             OutlinedButton(onClick = onUpdateLists, enabled = !state.busy, modifier = Modifier.heightIn(min = 44.dp)) { Text("Update ad lists") }

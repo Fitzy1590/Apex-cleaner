@@ -63,7 +63,11 @@ class MainActivity : ComponentActivity() {
                 if (it.resultCode == RESULT_OK) startShieldWithRetry()
             }
             val shield: (Boolean) -> Unit = { on ->
-                if (!on) com.fitzy.apexcleaner.net.ApexVpnService.stop(this)
+                if (on && com.fitzy.apexcleaner.net.AdBlock.isPaused() && com.fitzy.apexcleaner.net.ShieldStats.running.value) {
+                    // Switch shows Off while paused; turning it On ends the pause.
+                    com.fitzy.apexcleaner.net.AdBlock.resume(this)
+                    com.fitzy.apexcleaner.core.Notifier.refresh(this, force = true)
+                } else if (!on) com.fitzy.apexcleaner.net.ApexVpnService.stop(this)
                 else android.net.VpnService.prepare(this)?.let { vpnConsent.launch(it) }
                     ?: startShieldWithRetry()
             }

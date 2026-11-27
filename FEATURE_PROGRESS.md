@@ -274,3 +274,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Claude app page hang fix (2026-11-26)
 - [x] AI assistant apps (Claude, ChatGPT, Gemini) now stay outside the shield tunnel; owner saw Claude mobile pages hang only while the shield was on.
 - [ ] Real-device check: shield on, open Claude app sessions, confirm they load. If other apps hang the same way, send me their names.
+
+## Pause now shows on the in-app switch (2026-11-26)
+- [x] Pausing from the notification now flips the "Ad & tracker shield" switch to Off; turning it On again ends the pause. Blocking itself was already paused.
+- [ ] Real-device check: tap Pause in the notification, open the app, switch shows Off with "Paused until"; flip it On, notification returns to "Pause 15 min".
