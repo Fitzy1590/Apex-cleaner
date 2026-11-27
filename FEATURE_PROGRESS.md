@@ -278,3 +278,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Pause now shows on the in-app switch (2026-11-26)
 - [x] Pausing from the notification now flips the "Ad & tracker shield" switch to Off; turning it On again ends the pause. Blocking itself was already paused.
 - [ ] Real-device check: tap Pause in the notification, open the app, switch shows Off with "Paused until"; flip it On, notification returns to "Pause 15 min".
+
+## Web pages showing unstyled (2026-11-27)
+- [x] Cleaner no longer breaks pages that allow inline styles in their security policy (adding our one-time code switched those off, so pages lost their look). Those pages are left alone; others still get our code. Test added. Not build-checked: Android tools unavailable offline in this session.
+- [ ] Real-device check: reload xda-developers.com and the news article in Chrome; pages should look normal again. If still bare, tell me the site.

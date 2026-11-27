@@ -46,7 +46,9 @@ object CosmeticRules {
         val targets = setOf("script-src", "script-src-elem", "style-src", "style-src-elem") + if (needDefault) setOf("default-src") else emptySet()
         return dirs.joinToString("; ") { d ->
             val n = d.substringBefore(' ').lowercase()
-            if (n in targets && !d.contains("'none'")) "$d 'nonce-$nonce'" else d
+            // A nonce makes browsers ignore 'unsafe-inline', which un-styles pages that rely on it. Those pages already allow our tag, so leave them alone.
+            val relies = d.contains("'unsafe-inline'", true) && !d.contains("'nonce-", true) && !d.contains("'sha", true)
+            if (n in targets && !d.contains("'none'") && !relies) "$d 'nonce-$nonce'" else d
         }
     }
 }
