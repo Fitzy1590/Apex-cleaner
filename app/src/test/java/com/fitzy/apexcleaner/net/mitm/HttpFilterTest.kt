@@ -77,6 +77,7 @@ class HttpFilterTest {
         assertFalse(p.contains("img-src * 'nonce"))
         assertEquals("script-src 'none'", CosmeticRules.patchCsp("script-src 'none'", "N1").let { it.substringBefore("; ") })
         assertEquals("img-src *", CosmeticRules.patchCsp("img-src *", "N1"))
+        assertEquals("default-src 'self' 'unsafe-inline'", CosmeticRules.patchCsp("default-src 'self' 'unsafe-inline'", "N1"))
     }
 
     @Test fun injectionFallsBackToBodyOrNothing() {

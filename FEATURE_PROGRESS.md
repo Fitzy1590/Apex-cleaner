@@ -289,3 +289,7 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 - [x] Settings (phone, under the web page cleaner): "Paywall reader (news sites)" switch, off by default. On ~32 listed news sites the browser says Googlebot arriving from Google; paywall pop-ups hidden and scrolling restored; Piano/Tinypass names blocked while on; "Archived copy" and "Smry.ai" buttons for hard paywalls. Tests added; rules in `.claude/rules/paywall-engine.md`.
 - [ ] Real-device check: cleaner on, reader on, open a listed news site in Chrome; confirm full article or archive button. Tell me which sites stay locked.
 - [ ] Known limits: only sites that show crawlers the full article respond; sites may block the look-alike; TV has no reader; Firefox and apps not covered.
+
+## Web pages showing unstyled (2026-11-27)
+- [x] Cleaner no longer breaks pages that allow inline styles in their security policy (adding our one-time code switched those off, so pages lost their look). Those pages are left alone; others still get our code. Test added. Not build-checked: Android tools unavailable offline in this session.
+- [ ] Real-device check: reload xda-developers.com and the news article in Chrome; pages should look normal again. If still bare, tell me the site.
