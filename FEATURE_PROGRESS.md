@@ -278,3 +278,9 @@ Build check PASSED (compile, lint, unit tests) after installing Android SDK 35 o
 ## Pause now shows on the in-app switch (2026-11-26)
 - [x] Pausing from the notification now flips the "Ad & tracker shield" switch to Off; turning it On again ends the pause. Blocking itself was already paused.
 - [ ] Real-device check: tap Pause in the notification, open the app, switch shows Off with "Paused until"; flip it On, notification returns to "Pause 15 min".
+
+## Apex Shield V4 brief, Phase 1 (2026-11-27): WAITING FOR VOTE
+- [x] Audit done: 12 of 13 pillars already built; Rust/Go, root, shorter hook not re-asked.
+- [x] Voting card written: VOTING_CARD.html, .claude/VOTING_CARD.md, SPEC.md
+- [ ] Q1: 1 (Option A, paywall reader only) / 2 (Option B)
+- [ ] Q2: 1 (full) / 2 (pop-ups only) / 3 (skip)
